@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Build the compact JSON bundle for the Montpellier tram/bus commute map."""
+"""Build the compact JSON bundle of a city for the transit time map.
+
+Usage: python3 build_data.py <city>   (reads data/<city>/, writes site/data/<city>.json)
+"""
 
 from __future__ import annotations
 
@@ -8,17 +11,15 @@ import io
 import json
 import math
 import statistics
+import sys
 import zipfile
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
-SITE_DATA_PATH = ROOT / "site" / "data" / "commute_map_data.json"
 
-LAT0 = 43.61
 LAND_PAD_METERS = 1200.0
 VIEW_PAD_METERS = 900.0
 
@@ -28,7 +29,7 @@ WALK_METERS_PER_MINUTE = 75.0
 # Tram and bus stops are at street level: no corridors or escalators.
 STATION_ACCESS_PENALTY = 0.0
 CELL_NEAREST_STATIONS = 5
-CELL_NEAREST_TRAM_STATIONS = 3
+CELL_NEAREST_RAIL_STATIONS = 3
 ORIGIN_NEAREST_STATIONS = 6
 DEFAULT_BOARD_WAIT = 5.0
 TRANSFER_WALK = 1.5
@@ -42,12 +43,35 @@ SERVICE_WINDOW = (7 * 3600, 20 * 3600)
 MIN_RING_DISTANCE = 45.0
 MIN_LINE_DISTANCE = 25.0
 MIN_PARK_AREA = 20_000.0
-TRAM_ROUTE_REFS = {"1": "1", "2": "2", "3": "3", "4A": "4", "4B": "4", "5": "5"}
+MIN_WATER_AREA = 15_000.0
+# Water bodies at least this large (or lagoons) are not land: no heatmap, no pins.
+WATER_MASK_AREA = 1_000_000.0
+
+# GTFS route_type → mode (basic and extended types).
+RAIL_MODES = {"tram", "metro", "funicular", "cable"}
+
+
+def route_mode(route_type: str) -> str:
+    value = int(route_type or 3)
+    if value == 0 or 900 <= value < 1000:
+        return "tram"
+    if value in (1, 2) or 100 <= value < 200 or 400 <= value < 500:
+        return "metro"
+    if value == 7 or 1400 <= value < 1500:
+        return "funicular"
+    if value in (5, 6) or 1300 <= value < 1400:
+        return "cable"
+    if value == 4 or 1000 <= value < 1300:
+        return "ferry"
+    return "bus"
+
 
 Point = Tuple[float, float]
 Ring = List[Point]
 Polygon = List[Ring]
 MultiPolygon = List[Polygon]
+
+LAT0 = 0.0  # set from the city config in main()
 
 
 def lonlat_to_xy(lon: float, lat: float) -> Point:
@@ -125,14 +149,26 @@ def point_in_ring(point: Point, ring: Sequence[Point]) -> bool:
     return inside
 
 
-def point_in_polygon(point: Point, polygon: Polygon) -> bool:
-    if not polygon or not point_in_ring(point, polygon[0]):
+def ring_bounds(ring: Sequence[Point]) -> Tuple[float, float, float, float]:
+    xs = [x for x, _ in ring]
+    ys = [y for _, y in ring]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+class PolygonSet:
+    """Point-in-polygon tests with a bounding-box pre-check (big rivers have thousands of vertices)."""
+
+    def __init__(self, polygons: MultiPolygon):
+        self.items = [(ring_bounds(polygon[0]), polygon) for polygon in polygons if polygon and len(polygon[0]) >= 4]
+
+    def contains(self, point: Point) -> bool:
+        x, y = point
+        for (min_x, min_y, max_x, max_y), polygon in self.items:
+            if x < min_x or x > max_x or y < min_y or y > max_y:
+                continue
+            if point_in_ring(point, polygon[0]) and not any(point_in_ring(point, hole) for hole in polygon[1:]):
+                return True
         return False
-    return not any(point_in_ring(point, hole) for hole in polygon[1:])
-
-
-def point_in_multipolygon(point: Point, multipolygon: MultiPolygon) -> bool:
-    return any(point_in_polygon(point, polygon) for polygon in multipolygon)
 
 
 def multipolygon_bounds(multipolygon: MultiPolygon, pad: float) -> Tuple[float, float, float, float]:
@@ -169,11 +205,53 @@ def serialize_polygon(polygon: Polygon) -> List[List[List[float]]]:
     return [[round_point(point) for point in ring] for ring in polygon]
 
 
+class StationIndex:
+    """Bucket grid for nearest-station queries (cities have thousands of stops)."""
+
+    def __init__(self, points: Sequence[Point], indexes: Sequence[int], size: float = 800.0):
+        self.size = size
+        self.points = points
+        self.buckets: Dict[Tuple[int, int], List[int]] = defaultdict(list)
+        for index in indexes:
+            x, y = points[index]
+            self.buckets[(int(x // size), int(y // size))].append(index)
+        self.empty = not indexes
+
+    def nearest(self, point: Point, count: int, max_rings: int = 40) -> List[Tuple[float, int]]:
+        if self.empty:
+            return []
+        cx, cy = int(point[0] // self.size), int(point[1] // self.size)
+        found: List[Tuple[float, int]] = []
+        for ring in range(max_rings + 1):
+            for gx in range(cx - ring, cx + ring + 1):
+                for gy in range(cy - ring, cy + ring + 1):
+                    if max(abs(gx - cx), abs(gy - cy)) != ring:
+                        continue
+                    for index in self.buckets.get((gx, gy), ()):
+                        found.append((dist(point, self.points[index]), index))
+            found.sort()
+            # Every station closer than `ring * size` is already found.
+            if len(found) >= count and found[count - 1][0] <= ring * self.size:
+                break
+        return found[:count]
+
+    def within(self, point: Point, radius: float) -> List[int]:
+        reach = int(radius // self.size) + 1
+        cx, cy = int(point[0] // self.size), int(point[1] // self.size)
+        return [
+            index
+            for gx in range(cx - reach, cx + reach + 1)
+            for gy in range(cy - reach, cy + reach + 1)
+            for index in self.buckets.get((gx, gy), ())
+            if dist(point, self.points[index]) <= radius
+        ]
+
+
 # --- Land, water, parks -----------------------------------------------------
 
 
-def extract_communes() -> Tuple[List[dict], MultiPolygon]:
-    payload = load_json(DATA_DIR / "communes_3m.geojson")
+def extract_communes(data_dir: Path) -> Tuple[List[dict], MultiPolygon]:
+    payload = load_json(data_dir / "communes.geojson")
     communes = []
     all_polygons: MultiPolygon = []
     for feature in sorted(payload["features"], key=lambda f: f["properties"]["nom"]):
@@ -193,73 +271,131 @@ def extract_communes() -> Tuple[List[dict], MultiPolygon]:
     return communes, all_polygons
 
 
-def closed_way_ring(element: dict) -> Ring | None:
-    geometry = element.get("geometry") or []
-    if len(geometry) < 4:
-        return None
-    first, last = geometry[0], geometry[-1]
-    if (first["lon"], first["lat"]) != (last["lon"], last["lat"]):
-        return None
-    return [lonlat_to_xy(node["lon"], node["lat"]) for node in geometry]
+def way_points(geometry: Sequence[dict]) -> List[Point]:
+    return [lonlat_to_xy(node["lon"], node["lat"]) for node in geometry if node]
 
 
-def extract_water_and_parks(bounds: Tuple[float, float, float, float]) -> Tuple[MultiPolygon, MultiPolygon, MultiPolygon]:
-    """Return (lagoons that are not land, other water shown on the map, parks)."""
-    payload = load_json(DATA_DIR / "osm_water_parks.json")
+def assemble_rings(ways: List[List[Point]]) -> List[Ring]:
+    """Join open ways end to end into closed rings (OSM multipolygon members)."""
+    rings: List[Ring] = []
+    pending = [list(way) for way in ways if len(way) >= 2]
+    while pending:
+        ring = pending.pop()
+        while ring[0] != ring[-1]:
+            for i, way in enumerate(pending):
+                if way[0] == ring[-1]:
+                    ring.extend(way[1:])
+                elif way[-1] == ring[-1]:
+                    ring.extend(reversed(way[:-1]))
+                elif way[-1] == ring[0]:
+                    ring[:0] = way[:-1]
+                elif way[0] == ring[0]:
+                    ring[:0] = list(reversed(way[1:]))
+                else:
+                    continue
+                pending.pop(i)
+                break
+            else:
+                break  # cut by the query bounding box: drop it
+        if ring[0] == ring[-1] and len(ring) >= 4:
+            rings.append(ring)
+    return rings
+
+
+def osm_polygons(element: dict) -> MultiPolygon:
+    if element["type"] == "way":
+        points = way_points(element.get("geometry") or [])
+        return [[points]] if len(points) >= 4 and points[0] == points[-1] else []
+    members = [m for m in element.get("members", []) if m["type"] == "way" and m.get("geometry")]
+    outers = assemble_rings([way_points(m["geometry"]) for m in members if m.get("role") != "inner"])
+    inners = assemble_rings([way_points(m["geometry"]) for m in members if m.get("role") == "inner"])
+    polygons: MultiPolygon = []
+    for outer in outers:
+        holes = [inner for inner in inners if point_in_ring(inner[0], outer)]
+        polygons.append([outer, *holes])
+    return polygons
+
+
+def extract_water_and_parks(data_dir: Path, bounds) -> Tuple[MultiPolygon, MultiPolygon, MultiPolygon]:
+    """Return (water that is not land, other water shown on the map, parks)."""
+    payload = load_json(data_dir / "osm_water_parks.json")
     min_x, min_y, max_x, max_y = bounds
-    lagoons: MultiPolygon = []
+    masked: MultiPolygon = []
     water: MultiPolygon = []
     parks: MultiPolygon = []
     for element in payload["elements"]:
-        if element["type"] != "way":
-            continue
         tags = element.get("tags", {})
-        ring = closed_way_ring(element)
-        if not ring:
-            continue
-        xs = [x for x, _ in ring]
-        ys = [y for _, y in ring]
-        if max(xs) < min_x or min(xs) > max_x or max(ys) < min_y or min(ys) > max_y:
-            continue
-        area = abs(ring_area(ring))
-        if tags.get("natural") == "water":
-            if area < 15_000:
+        for polygon in osm_polygons(element):
+            ring_min_x, ring_min_y, ring_max_x, ring_max_y = ring_bounds(polygon[0])
+            if ring_max_x < min_x or ring_min_x > max_x or ring_max_y < min_y or ring_min_y > max_y:
                 continue
-            target = lagoons if tags.get("water") == "lagoon" else water
-            target.append([simplify_ring(ring, MIN_RING_DISTANCE if area > 1e6 else 12.0)])
-        elif tags.get("leisure") == "park" and area >= MIN_PARK_AREA:
-            parks.append([simplify_ring(ring, 15.0)])
-    return lagoons, water, parks
+            area = abs(ring_area(polygon[0]))
+            if tags.get("natural") == "water":
+                if area < MIN_WATER_AREA:
+                    continue
+                tolerance = MIN_RING_DISTANCE if area > 1e6 else 12.0
+                simplified = [simplify_ring(ring, tolerance) for ring in polygon]
+                target = masked if tags.get("water") == "lagoon" or area >= WATER_MASK_AREA else water
+                target.append(simplified)
+            elif tags.get("leisure") == "park" and area >= MIN_PARK_AREA:
+                parks.append([simplify_ring(ring, 15.0) for ring in polygon])
+    return masked, water, parks
 
 
 # --- GTFS -------------------------------------------------------------------
 
 
 def read_gtfs_table(archive: zipfile.ZipFile, name: str) -> Iterable[dict]:
+    if name not in archive.namelist():
+        return
     with archive.open(name) as handle:
         yield from csv.DictReader(io.TextIOWrapper(handle, encoding="utf-8-sig"))
 
 
 def parse_time(value: str) -> int:
-    hours, minutes, seconds = (int(part) for part in value.split(":"))
+    hours, minutes, seconds = (int(part) for part in value.strip().split(":"))
     return hours * 3600 + minutes * 60 + seconds
 
 
-def pick_reference_date(calendar_dates: Sequence[dict]) -> str:
+def parse_date(value: str) -> date:
+    return date(int(value[:4]), int(value[4:6]), int(value[6:8]))
+
+
+WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+
+def services_by_date(calendar: Sequence[dict], calendar_dates: Sequence[dict]) -> Dict[date, frozenset]:
+    """Active services for every day of the feed (calendar.txt rules + calendar_dates.txt exceptions)."""
+    active: Dict[date, set] = defaultdict(set)
+    for row in calendar:
+        day, end = parse_date(row["start_date"]), parse_date(row["end_date"])
+        while day <= end:
+            if row[WEEKDAYS[day.weekday()]] == "1":
+                active[day].add(row["service_id"])
+            day += timedelta(days=1)
+    for row in calendar_dates:
+        day = parse_date(row["date"])
+        if row["exception_type"] == "1":
+            active[day].add(row["service_id"])
+        else:
+            active[day].discard(row["service_id"])
+    return {day: frozenset(services) for day, services in active.items()}
+
+
+def pick_reference_date(services: Dict[date, frozenset], trips_per_service: Counter) -> date:
     """A plain school-term Tuesday or Thursday: the most common set of services among those days.
 
-    Picking the busiest day instead would favour holidays with works and substitution buses.
+    Picking the busiest day instead would favour holidays with works and substitution buses. Days
+    with a thin timetable are left out: feeds often run months ahead with only a few lines filled in.
     """
-    services: Dict[str, set] = defaultdict(set)
-    for row in calendar_dates:
-        if row["exception_type"] == "1":
-            services[row["date"]].add(row["service_id"])
-    weekdays = sorted(
-        day for day in services if date(int(day[:4]), int(day[4:6]), int(day[6:])).weekday() in (1, 3)
-    )
-    signatures = Counter(frozenset(services[day]) for day in weekdays)
+    weekdays = sorted(day for day, active in services.items() if day.weekday() in (1, 3) and active)
+    upcoming = [day for day in weekdays if day >= date.today()] or weekdays
+    volume = {day: sum(trips_per_service[service] for service in services[day]) for day in upcoming}
+    busiest = max(volume.values())
+    candidates = [day for day in upcoming if volume[day] >= 0.6 * busiest]
+    signatures = Counter(services[day] for day in candidates)
     typical = signatures.most_common(1)[0][0]
-    return next(day for day in weekdays if frozenset(services[day]) == typical)
+    return next(day for day in candidates if services[day] == typical)
 
 
 def normalize_name(name: str) -> str:
@@ -308,27 +444,33 @@ def group_stops(stops: Dict[str, dict], used_stop_ids: set) -> Tuple[List[dict],
     return complexes, complex_of
 
 
-def extract_network():
-    with zipfile.ZipFile(DATA_DIR / "gtfs_tam.zip") as archive:
+def read_stop_times(archive: zipfile.ZipFile, trips: Dict[str, dict]) -> Dict[str, List[Tuple[int, str, int, int]]]:
+    """Stream stop_times.txt (hundreds of MB for big networks), keeping only the reference day's trips."""
+    stop_times: Dict[str, List[Tuple[int, str, int, int]]] = defaultdict(list)
+    with archive.open("stop_times.txt") as handle:
+        reader = csv.reader(io.TextIOWrapper(handle, encoding="utf-8-sig"))
+        header = next(reader)
+        trip_col, seq_col, stop_col = header.index("trip_id"), header.index("stop_sequence"), header.index("stop_id")
+        arr_col, dep_col = header.index("arrival_time"), header.index("departure_time")
+        for row in reader:
+            trip_id = row[trip_col]
+            if trip_id not in trips or not row[arr_col]:
+                continue
+            stop_times[trip_id].append((int(row[seq_col]), row[stop_col], parse_time(row[arr_col]), parse_time(row[dep_col])))
+    return stop_times
+
+
+def extract_network(data_dir: Path):
+    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
         routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
         stops = {row["stop_id"]: row for row in read_gtfs_table(archive, "stops.txt")}
-        calendar_dates = list(read_gtfs_table(archive, "calendar_dates.txt"))
-        reference_date = pick_reference_date(calendar_dates)
-        active_services = {
-            row["service_id"] for row in calendar_dates if row["date"] == reference_date and row["exception_type"] == "1"
-        }
-        trips = {
-            row["trip_id"]: row
-            for row in read_gtfs_table(archive, "trips.txt")
-            if row["service_id"] in active_services and not (row.get("TAD") or "").strip()
-        }
-        stop_times: Dict[str, List[Tuple[int, str, int, int]]] = defaultdict(list)
-        for row in read_gtfs_table(archive, "stop_times.txt"):
-            if row["trip_id"] not in trips:
-                continue
-            stop_times[row["trip_id"]].append(
-                (int(row["stop_sequence"]), row["stop_id"], parse_time(row["arrival_time"]), parse_time(row["departure_time"]))
-            )
+        services = services_by_date(list(read_gtfs_table(archive, "calendar.txt")), list(read_gtfs_table(archive, "calendar_dates.txt")))
+        # Demand-responsive trips (TaM flags them in a "TAD" column) cannot be modelled with fixed times.
+        all_trips = [row for row in read_gtfs_table(archive, "trips.txt") if not (row.get("TAD") or "").strip()]
+        reference_date = pick_reference_date(services, Counter(row["service_id"] for row in all_trips))
+        active_services = services[reference_date]
+        trips = {row["trip_id"]: row for row in all_trips if row["service_id"] in active_services}
+        stop_times = read_stop_times(archive, trips)
 
     used_stop_ids = {stop_id for sequence in stop_times.values() for _, stop_id, _, _ in sequence}
     complexes, complex_of = group_stops(stops, used_stop_ids)
@@ -347,7 +489,7 @@ def extract_network():
             if a == b or not window_start <= dep_a < window_end:
                 continue
             ride_samples[(a, b, route_id)].append(max(0, arr_b - dep_a) / 60.0)
-            departures[(a, route_id)][trip["direction_id"]] += 1
+            departures[(a, route_id)][trip.get("direction_id") or "0"] += 1
 
     edges = {key: max(MIN_RIDE_MINUTES, statistics.median(samples)) for key, samples in ride_samples.items()}
     window_minutes = (window_end - window_start) / 60.0
@@ -357,15 +499,22 @@ def extract_network():
         headway = window_minutes / mean_departures
         waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, headway / 2.0)), 2)
 
-    route_info = {
-        route_id: {
-            "mode": "tram" if row["route_type"] == "0" else "bus",
-            "color": f"#{(row.get('route_color') or '888888').strip().lstrip('#')}",
-            "name": row["route_short_name"],
+    served = {route_id for station in complexes for route_id in station["routes"]}
+    route_info = {}
+    for route_id in served:
+        row = routes[route_id]
+        mode = route_mode(row.get("route_type", "3"))
+        route_info[route_id] = {
+            "mode": mode,
+            "rail": mode in RAIL_MODES,
+            "color": f"#{(row.get('route_color') or '888888').strip().lstrip('#') or '888888'}",
+            "name": row.get("route_short_name") or row.get("route_long_name") or route_id,
         }
-        for route_id, row in routes.items()
+    rail_shape_ids = {
+        trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
     }
-    return reference_date, complexes, edges, waits, route_info
+    shape_routes = {trip["shape_id"]: trip["route_id"] for trip in trips.values() if trip.get("shape_id") in rail_shape_ids}
+    return reference_date, complexes, edges, waits, route_info, shape_routes
 
 
 def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], float], waits: Dict[Tuple[int, str], float]):
@@ -390,7 +539,7 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
     def add_edge(src: int, dst: int, weight: float) -> None:
         adjacency[src].append([dst, round(weight, 2)])
 
-    # Ride edges are directed: one-way loops (line 4) and branches stay correct.
+    # Ride edges are directed: one-way loops and branches stay correct.
     for (a, b, route_id), minutes in edges.items():
         add_edge(lookup[(a, route_id)], lookup[(b, route_id)], minutes)
 
@@ -402,14 +551,13 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
                     add_edge(src, dst, TRANSFER_WALK + route_states[dst]["wait"])
 
     # Walking to a nearby stop with another name.
+    points = [station["point"] for station in complexes]
+    index = StationIndex(points, range(len(points)))
     for i, a in enumerate(complexes):
-        for j, b in enumerate(complexes):
+        for j in index.within(a["point"], INTER_COMPLEX_WALK_RADIUS):
             if i == j:
                 continue
-            meters = dist(a["point"], b["point"])
-            if meters > INTER_COMPLEX_WALK_RADIUS:
-                continue
-            walk = meters / WALK_METERS_PER_MINUTE + TRANSFER_WALK
+            walk = dist(a["point"], complexes[j]["point"]) / WALK_METERS_PER_MINUTE + TRANSFER_WALK
             for src in station_states[i]:
                 for dst in station_states[j]:
                     if route_states[src]["routeId"] != route_states[dst]["routeId"]:
@@ -417,22 +565,45 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
     return route_states, station_states, adjacency
 
 
-# --- Tram geometry ----------------------------------------------------------
+# --- Rail geometry ----------------------------------------------------------
 
 
-def extract_tram_routes(route_info: Dict[str, dict]) -> List[dict]:
-    payload = load_json(DATA_DIR / "tram_osm.json")
+def rail_routes_from_gtfs(data_dir: Path, shape_routes: Dict[str, str], route_info: Dict[str, dict]) -> List[dict]:
+    points: Dict[str, List[Tuple[int, Point]]] = defaultdict(list)
+    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
+        for row in read_gtfs_table(archive, "shapes.txt"):
+            if row["shape_id"] in shape_routes:
+                points[row["shape_id"]].append(
+                    (int(row["shape_pt_sequence"]), lonlat_to_xy(float(row["shape_pt_lon"]), float(row["shape_pt_lat"])))
+                )
+    shapes, seen = [], set()
+    for shape_id, sequence in sorted(points.items()):
+        line = simplify_polyline([point for _, point in sorted(sequence)], MIN_LINE_DISTANCE)
+        key = (shape_routes[shape_id], tuple(sorted({tuple(round_point(p)) for p in line[:: max(1, len(line) // 20)]})))
+        if len(line) < 2 or key in seen:
+            continue
+        seen.add(key)
+        route_id = shape_routes[shape_id]
+        shapes.append({"id": route_id, "color": route_info[route_id]["color"], "points": [round_point(p) for p in line]})
+    return shapes
+
+
+def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]) -> List[dict]:
+    payload = load_json(data_dir / "osm_rail.json")
+    by_name = {info["name"]: route_id for route_id, info in route_info.items() if info["rail"]}
+    aliases = city.get("osmRefAliases", {})
     seen: Dict[str, set] = defaultdict(set)
     shapes = []
     for relation in sorted(payload["elements"], key=lambda item: item["id"]):
-        route_id = TRAM_ROUTE_REFS.get(relation.get("tags", {}).get("ref", ""))
+        ref = relation.get("tags", {}).get("ref", "")
+        route_id = by_name.get(aliases.get(ref, ref))
         if not route_id:
             continue
         for member in relation.get("members", []):
             if member["type"] != "way" or member.get("role") not in ("", None) or member["ref"] in seen[route_id]:
                 continue
             seen[route_id].add(member["ref"])
-            points = [lonlat_to_xy(node["lon"], node["lat"]) for node in member.get("geometry", [])]
+            points = way_points(member.get("geometry", []))
             if len(points) >= 2:
                 shapes.append(
                     {
@@ -447,22 +618,23 @@ def extract_tram_routes(route_info: Dict[str, dict]) -> List[dict]:
 # --- Grid -------------------------------------------------------------------
 
 
-def build_grid(land: MultiPolygon, lagoons: MultiPolygon, stations: Sequence[dict], bounds, cols: int, rows: int):
+def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequence[dict], bounds, cols: int, rows: int):
     min_x, min_y, max_x, max_y = bounds
     cell_w = (max_x - min_x) / cols
     cell_h = (max_y - min_y) / rows
-    tram_indexes = [index for index, station in enumerate(stations) if station["tram"]]
+    land_set, water_set = PolygonSet(land), PolygonSet(masked_water)
+    points = [station["point"] for station in stations]
+    all_index = StationIndex(points, range(len(points)))
+    rail_index = StationIndex(points, [i for i, station in enumerate(stations) if station["rail"]])
     cells = []
     mask = [-1] * (cols * rows)
     for row in range(rows):
         for col in range(cols):
             point = (min_x + (col + 0.5) * cell_w, min_y + (row + 0.5) * cell_h)
-            if not point_in_multipolygon(point, land) or point_in_multipolygon(point, lagoons):
+            if not land_set.contains(point) or water_set.contains(point):
                 continue
-            ranked = sorted(((dist(point, station["point"]), index) for index, station in enumerate(stations)))
-            nearest = {index: meters for meters, index in ranked[:CELL_NEAREST_STATIONS]}
-            tram_ranked = sorted((dist(point, stations[index]["point"]), index) for index in tram_indexes)
-            for meters, index in tram_ranked[:CELL_NEAREST_TRAM_STATIONS]:
+            nearest = {index: meters for meters, index in all_index.nearest(point, CELL_NEAREST_STATIONS)}
+            for meters, index in rail_index.nearest(point, CELL_NEAREST_RAIL_STATIONS):
                 nearest[index] = meters
             mask[row * cols + col] = len(cells)
             cells.append(
@@ -477,39 +649,50 @@ def build_grid(land: MultiPolygon, lagoons: MultiPolygon, stations: Sequence[dic
 
 
 def main() -> None:
-    communes, land = extract_communes()
+    global LAT0
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    city = load_json(ROOT / "cities" / f"{sys.argv[1]}.json")
+    LAT0 = city["lat0"]
+    data_dir = ROOT / "data" / city["slug"]
+    output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
+
+    communes, land = extract_communes(data_dir)
     bounds = multipolygon_bounds(land, LAND_PAD_METERS)
     cols = round((bounds[2] - bounds[0]) / GRID_CELL_METERS)
     rows = round((bounds[3] - bounds[1]) / GRID_CELL_METERS)
-    lagoons, water, parks = extract_water_and_parks(bounds)
+    masked_water, water, parks = extract_water_and_parks(data_dir, bounds)
 
-    reference_date, complexes, edges, waits, route_info = extract_network()
+    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir)
     route_states, station_states, adjacency = build_graph(complexes, edges, waits)
-    routes = extract_tram_routes(route_info)
+    if city.get("railGeometry") == "osm":
+        routes = rail_routes_from_osm(data_dir, city, route_info)
+    else:
+        routes = rail_routes_from_gtfs(data_dir, shape_routes, route_info)
 
     stations = [
         {
             "id": station["id"],
             "name": station["name"],
             "point": station["point"],
-            "routes": sorted(station["routes"], key=lambda r: (len(r), r)),
-            "tram": any(route_info[route_id]["mode"] == "tram" for route_id in station["routes"]),
+            "routes": sorted(station["routes"], key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
+            "rail": any(route_info[route_id]["rail"] for route_id in station["routes"]),
         }
         for station in complexes
     ]
-    tram_points = [station["point"] for station in stations if station["tram"]]
+    rail_points = [station["point"] for station in stations if station["rail"]]
     view_bounds = (
-        min(x for x, _ in tram_points) - VIEW_PAD_METERS,
-        min(y for _, y in tram_points) - VIEW_PAD_METERS,
-        max(x for x, _ in tram_points) + VIEW_PAD_METERS,
-        max(y for _, y in tram_points) + VIEW_PAD_METERS,
+        min(x for x, _ in rail_points) - VIEW_PAD_METERS,
+        min(y for _, y in rail_points) - VIEW_PAD_METERS,
+        max(x for x, _ in rail_points) + VIEW_PAD_METERS,
+        max(y for _, y in rail_points) + VIEW_PAD_METERS,
     )
-    cells, mask = build_grid(land, lagoons, stations, bounds, cols, rows)
+    cells, mask = build_grid(land, masked_water, stations, bounds, cols, rows)
 
     output = {
         "meta": {
             "lat0": LAT0,
-            "referenceDate": reference_date,
+            "referenceDate": reference_date.strftime("%Y%m%d"),
             "bounds": [round(v, 1) for v in bounds],
             "viewBounds": [round(v, 1) for v in view_bounds],
             "gridCols": cols,
@@ -521,7 +704,7 @@ def main() -> None:
             "defaultBoardWait": DEFAULT_BOARD_WAIT,
         },
         "boroughs": communes,
-        "water": [serialize_polygon(polygon) for polygon in lagoons + water],
+        "water": [serialize_polygon(polygon) for polygon in masked_water + water],
         "parks": [serialize_polygon(polygon) for polygon in parks],
         "routes": routes,
         "routeInfo": route_info,
@@ -533,14 +716,15 @@ def main() -> None:
         "mask": mask,
     }
 
-    SITE_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SITE_DATA_PATH.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    tram_count = sum(1 for station in stations if station["tram"])
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    rail_count = sum(1 for station in stations if station["rail"])
+    modes = Counter(info["mode"] for info in route_info.values())
     print(
-        f"Wrote {SITE_DATA_PATH} "
-        f"({SITE_DATA_PATH.stat().st_size / 1_000_000:.2f} MB, GTFS du {reference_date}, "
-        f"{len(stations)} arrêts dont {tram_count} tram, {len(route_states)} states, "
-        f"{sum(len(a) for a in adjacency)} edges, {len(cells)} cells ({cols}×{rows}), {len(routes)} tram segments)"
+        f"Wrote {output_path.relative_to(ROOT)} "
+        f"({output_path.stat().st_size / 1_000_000:.2f} MB, GTFS du {reference_date}, lignes {dict(modes)}, "
+        f"{len(stations)} arrêts dont {rail_count} tram/métro, {len(route_states)} states, "
+        f"{sum(len(a) for a in adjacency)} edges, {len(cells)} cells ({cols}×{rows}), {len(routes)} tracés)"
     )
 
 

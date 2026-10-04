@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Render the 1200×630 social preview of a city (site/og/<city>.jpg) with headless Chrome.
+
+Usage: python3 tools/render_og.py <city>
+Needs Google Chrome and ImageMagick (`magick`).
+"""
+
+from __future__ import annotations
+
+import functools
+import http.server
+import json
+import subprocess
+import sys
+import tempfile
+import threading
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SITE = ROOT / "site"
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+OVERLAY = """<style>
+  html, body { width: 1200px; height: 630px; overflow: hidden; margin: 0; }
+  .topbar, .hero, .controls, .reach, .notes, .map-buttons, .segmented, .link-button { display: none !important; }
+  .page { max-width: none; padding: 0; }
+  .map-card { border: 0; border-radius: 0; }
+  .map-stage { height: 630px !important; min-height: 0; }
+  .trip-panel { top: auto; bottom: 24px; left: 24px; width: 330px; }
+  .legend { left: auto; right: 24px; bottom: 24px; }
+  .og-title { position: absolute; top: 24px; left: 24px; z-index: 5; padding: 18px 22px; border: 1px solid #e6e6e6;
+    border-radius: 16px; background: rgba(255,255,255,0.96); box-shadow: 0 6px 24px rgba(0,0,0,.08); }
+  .og-title h1 { margin: 0; font-size: 42px; }
+  .og-title p { margin: 6px 0 0; color: #4b4b4b; font-size: 19px; font-weight: 500; }
+</style>
+</head>"""
+
+
+def main() -> None:
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    city = json.loads((ROOT / "cities" / f"{sys.argv[1]}.json").read_text(encoding="utf-8"))
+    page = (SITE / city["path"] / "index.html").read_text(encoding="utf-8")
+    title = f'<div class="og-title"><h1>{city["title"]}</h1><p>La ville redessinée par le temps de trajet, depuis où vous voulez</p></div>'
+    page = page.replace("</head>", OVERLAY, 1).replace('<canvas id="mapCanvas"></canvas>', '<canvas id="mapCanvas"></canvas>\n' + title, 1)
+    preview = SITE / city["path"] / "_og.html"
+    preview.write_text(page, encoding="utf-8")
+
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(SITE))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        trip = city["ogTrip"]
+        url = f"http://127.0.0.1:{server.server_port}/{city['path']}_og.html?to={trip['lat']},{trip['lon']}"
+        with tempfile.TemporaryDirectory() as tmp:
+            png = Path(tmp) / "og.png"
+            subprocess.run(
+                [CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
+                 "--window-size=1200,630", "--virtual-time-budget=10000", f"--screenshot={png}", url],
+                check=True, capture_output=True,
+            )
+            out = SITE / "og" / f"{city['slug']}.jpg"
+            out.parent.mkdir(exist_ok=True)
+            subprocess.run(["magick", str(png), "-strip", "-quality", "90", str(out)], check=True)
+            print(f"Wrote {out.relative_to(ROOT)}")
+    finally:
+        server.shutdown()
+        preview.unlink()
+
+
+if __name__ == "__main__":
+    main()

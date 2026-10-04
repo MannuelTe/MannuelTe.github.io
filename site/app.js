@@ -1,10 +1,20 @@
-// Montpellier à portée de tram
+// Carte des temps de trajet en transports en commun (tram.camilleroux.com).
+// La ville affichée est décrite par le bloc JSON #city-config de la page.
 // Carte des temps de trajet en tram (et bus) sur le réseau TaM.
 
-const DATA_URL = new URL("./data/commute_map_data.json?v=5", import.meta.url);
+const CITY = JSON.parse(document.getElementById("city-config").textContent);
+const DATA_URL = new URL(`./data/${CITY.slug}.json?v=${CITY.dataVersion}`, import.meta.url);
 const GEOCODER_URL = "https://api-adresse.data.gouv.fr/search/";
 
-const DEFAULT_FROM = { lat: 43.60853, lon: 3.8799, label: "Place de la Comédie" };
+const DEFAULT_FROM = CITY.defaultFrom;
+const MODE_LABELS = {
+  tram: "Tram",
+  metro: "Métro",
+  funicular: "Funiculaire",
+  cable: "Téléphérique",
+  ferry: "Bateau",
+  bus: "Bus",
+};
 const DEFAULT_MAX = 45;
 const ISOCHRONE_OPTIONS = [15, 30, 45, 60];
 const DEFAULT_ISOCHRONES = [15, 30];
@@ -16,6 +26,7 @@ const CLICK_SLOP = { mouse: 5, touch: 12 };
 const MIN_ZOOM_FACTOR = 0.5;
 const MAX_ZOOM_FACTOR = 14;
 const STOP_LABEL_SCALE = 0.13; // pixels par mètre au-delà desquels on nomme les arrêts
+const RAIL_NAME_RADIUS = 400; // mètres
 
 // Du plus proche (vert) au plus lointain (rouge) ; au-delà du max : gris.
 const PALETTE = [
@@ -209,7 +220,7 @@ function prepareGraph(data) {
     station: Int32Array.from(data.routeStates, (state) => state.stationIndex),
     wait: Float32Array.from(data.routeStates, (state) => state.wait),
     route: data.routeStates.map((state) => state.routeId),
-    isBus: Uint8Array.from(data.routeStates, (state) => (data.routeInfo[state.routeId]?.mode === "tram" ? 0 : 1)),
+    isBus: Uint8Array.from(data.routeStates, (state) => (data.routeInfo[state.routeId]?.rail ? 0 : 1)),
   };
 }
 
@@ -218,7 +229,7 @@ function walkMinutes(meters) {
 }
 
 function stationUsable(index) {
-  return app.includeBus || app.data.stations[index].tram;
+  return app.includeBus || app.data.stations[index].rail;
 }
 
 /** Plus courts chemins depuis un point : temps d'arrivée à chaque arrêt + prédécesseurs. */
@@ -291,7 +302,7 @@ function travelTo(solution, point) {
 
 function routeLabel(routeId) {
   const info = app.data.routeInfo[routeId];
-  return `${info.mode === "tram" ? "Tram" : "Bus"} ${info.name}`;
+  return `${MODE_LABELS[info.mode] ?? "Ligne"} ${info.name}`;
 }
 
 /** Reconstitue l'itinéraire (marche, lignes, correspondances) vers un point. */
@@ -636,14 +647,14 @@ function drawStops() {
   if (app.includeBus) {
     ctx.fillStyle = "rgba(60, 60, 60, 0.45)";
     for (const station of stations) {
-      if (station.tram) continue;
+      if (station.rail) continue;
       const [x, y] = project(station.point);
       ctx.fillRect(x - 1, y - 1, 2, 2);
     }
   }
   const radius = app.view.scale > STOP_LABEL_SCALE ? 3.2 : 2.2;
   for (const station of stations) {
-    if (!station.tram) continue;
+    if (!station.rail) continue;
     const [x, y] = project(station.point);
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -657,7 +668,7 @@ function drawStops() {
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     for (const station of stations) {
-      if (!station.tram) continue;
+      if (!station.rail) continue;
       const [x, y] = project(station.point);
       if (x < -50 || y < -20 || x > app.size.width + 50 || y > app.size.height + 20) continue;
       drawHaloText(station.name, x + 6, y, { font: "500 11px Inter, sans-serif", color: "#333" });
@@ -783,23 +794,30 @@ function resize() {
 
 // --- État, panneau et URL -------------------------------------------------------
 
+/** Nom de lieu : la station de tram/métro proche si elle existe (plus parlante qu'un arrêt de bus), sinon l'arrêt le plus proche. */
 function nearestStopName(point) {
   let best = null;
   let bestDistance = Infinity;
+  let rail = null;
+  let railDistance = Infinity;
   for (const station of app.data.stations) {
     const d = hypot(point, station.point);
     if (d < bestDistance) {
       bestDistance = d;
       best = station.name;
     }
+    if (station.rail && d < railDistance) {
+      railDistance = d;
+      rail = station.name;
+    }
   }
-  return best;
+  return railDistance <= RAIL_NAME_RADIUS ? rail : best;
 }
 
 function describePlace(point) {
   const stop = nearestStopName(point);
   const commune = communeAt(point);
-  return commune && commune !== "Montpellier" ? `Près de ${stop} (${commune})` : `Près de ${stop}`;
+  return commune && commune !== CITY.name ? `Près de ${stop} (${commune})` : `Près de ${stop}`;
 }
 
 function heatSource() {
@@ -893,15 +911,15 @@ function updatePanel() {
 
   if (app.heatSolution) {
     const source = heatSource();
-    const tram = app.data.stations.map((station, index) => ({ station, index })).filter(({ station }) => station.tram);
+    const tram = app.data.stations.map((station, index) => ({ station, index })).filter(({ station }) => station.rail);
     const reachable = tram.filter(({ station, index }) => {
       const byFoot = walkMinutes(hypot(source.point, station.point));
       return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
     }).length;
     const percent = Math.round((reachable / tram.length) * 100);
     const where = source === app.from ? "de ce départ" : "de cette arrivée";
-    $("reach").textContent = `${percent} % des stations de tram sont à moins de ${REACH_MINUTES} minutes ${where}${
-      app.includeBus ? " (tram + bus)" : ""
+    $("reach").textContent = `${percent} % des ${CITY.railStations} sont à moins de ${REACH_MINUTES} minutes ${where}${
+      app.includeBus ? ` (${CITY.railNoun} + ${CITY.busNoun})` : ""
     }.`;
   }
 }
@@ -1183,11 +1201,14 @@ function normalize(text) {
 function searchStops(query) {
   const words = normalize(query).split(" ");
   return app.data.stations
-    .filter((station) => station.tram && words.every((word) => normalize(station.name).includes(word)))
+    .filter((station) => station.rail && words.every((word) => normalize(station.name).includes(word)))
     .slice(0, 3)
     .map((station) => ({
       label: station.name,
-      context: `Station de tram · ${station.routes.filter((id) => app.data.routeInfo[id]?.mode === "tram").map((id) => `ligne ${id}`).join(", ")}`,
+      context: `Station · ${station.routes
+        .filter((id) => app.data.routeInfo[id]?.rail)
+        .map((id) => routeLabel(id))
+        .join(", ")}`,
       point: station.point,
     }));
 }
@@ -1196,7 +1217,7 @@ async function searchAddress(query) {
   const stops = searchStops(query);
   searchController?.abort();
   searchController = new AbortController();
-  const params = new URLSearchParams({ q: query, limit: "6", lat: "43.61", lon: "3.877" });
+  const params = new URLSearchParams({ q: query, limit: "6", lat: String(DEFAULT_FROM.lat), lon: String(DEFAULT_FROM.lon) });
   let payload = { features: [] };
   try {
     const response = await fetch(`${GEOCODER_URL}?${params}`, { signal: searchController.signal });

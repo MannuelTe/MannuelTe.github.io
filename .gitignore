@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .venv/
+
+# GTFS bruts : retéléchargés par fetch_data.py, trop lourds pour être versionnés
+data/*/gtfs.zip

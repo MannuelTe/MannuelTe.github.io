@@ -1,40 +1,37 @@
 #!/usr/bin/env python3
-"""Download the raw sources used by build_data.py into data/."""
+"""Download the raw sources of a city into data/<city>/.
+
+Usage: python3 fetch_data.py <city> [--gtfs-only]
+"""
 
 from __future__ import annotations
 
 import json
+import sys
 import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
-USER_AGENT = "montpellier-temps-transport/0.1"
-
-GTFS_URL = "https://www.data.gouv.fr/api/1/datasets/r/93a29ce2-cfc8-44ff-b712-bcfd814b7f00"
-# Montpellier Méditerranée Métropole (EPCI 243400017).
-COMMUNES_URL = "https://geo.api.gouv.fr/epcis/243400017/communes?fields=nom,code&format=geojson&geometry=contour"
+USER_AGENT = "tram.camilleroux.com/0.2 (build script)"
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
 ]
-TRAM_QUERY = '[out:json][timeout:110];relation["route"="tram"](43.50,3.70,43.72,4.05);out geom;'
-WATER_PARKS_QUERY = (
-    "[out:json][timeout:110];("
-    'relation["natural"="water"](43.45,3.68,43.75,4.08);'
-    'way["natural"="water"]["water"~"lagoon|lake|reservoir|river"](43.45,3.68,43.75,4.08);'
-    'relation["leisure"="park"](43.55,3.80,43.66,3.95);'
-    'way["leisure"="park"](43.55,3.80,43.66,3.95);'
-    'way["natural"="coastline"](43.45,3.68,43.75,4.08);'
-    ");out geom;"
-)
+
+
+def load_city(slug: str) -> dict:
+    return json.loads((ROOT / "cities" / f"{slug}.json").read_text(encoding="utf-8"))
+
+
+def bbox(values) -> str:
+    return ",".join(str(v) for v in values)
 
 
 def download(url: str, data: bytes | None = None) -> bytes:
     request = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=180) as response:
+    with urllib.request.urlopen(request, timeout=300) as response:
         return response.read()
 
 
@@ -53,15 +50,37 @@ def overpass(query: str) -> bytes:
 
 
 def main() -> None:
-    DATA_DIR.mkdir(exist_ok=True)
-    print("GTFS TaM…")
-    (DATA_DIR / "gtfs_tam.zip").write_bytes(download(GTFS_URL))
-    print("Communes de la Métropole…")
-    (DATA_DIR / "communes_3m.geojson").write_bytes(download(COMMUNES_URL))
-    print("Tracés tram (OSM)…")
-    (DATA_DIR / "tram_osm.json").write_bytes(overpass(TRAM_QUERY))
-    print("Étangs et parcs (OSM)…")
-    (DATA_DIR / "osm_water_parks.json").write_bytes(overpass(WATER_PARKS_QUERY))
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    city = load_city(sys.argv[1])
+    out = ROOT / "data" / city["slug"]
+    out.mkdir(parents=True, exist_ok=True)
+
+    print(f"GTFS {city['network']}…")
+    (out / "gtfs.zip").write_bytes(download(city["gtfsUrl"]))
+    if "--gtfs-only" in sys.argv:
+        return
+
+    print(f"Communes de {city['metropole']}…")
+    communes_url = f"https://geo.api.gouv.fr/epcis/{city['epci']}/communes?fields=nom,code&format=geojson&geometry=contour"
+    (out / "communes.geojson").write_bytes(download(communes_url))
+
+    if city.get("railGeometry") == "osm":
+        print("Tracés des lignes (OSM)…")
+        query = f'[out:json][timeout:110];relation["route"~"^(tram|subway|light_rail)$"]({bbox(city["osmRailBbox"])});out geom;'
+        (out / "osm_rail.json").write_bytes(overpass(query))
+
+    print("Eau et parcs (OSM)…")
+    area, parks = bbox(city["osmBbox"]), bbox(city["parksBbox"])
+    query = (
+        "[out:json][timeout:180];("
+        f'relation["natural"="water"]({area});'
+        f'way["natural"="water"]({area});'
+        f'relation["leisure"="park"]({parks});'
+        f'way["leisure"="park"]({parks});'
+        ");out geom;"
+    )
+    (out / "osm_water_parks.json").write_bytes(overpass(query))
 
 
 if __name__ == "__main__":

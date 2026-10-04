@@ -1129,6 +1129,49 @@ canvas.addEventListener(
 
 // --- Commandes ----------------------------------------------------------------
 
+// Changer de ville : le nom de la ville dans le titre ouvre un panneau avec recherche.
+const cityPanel = $("cityPanel");
+const cityTrigger = $("cityTrigger");
+const citySearch = $("citySearch");
+const cityItems = [...cityPanel.querySelectorAll(".city-item")];
+
+function setCityPanel(open) {
+  cityPanel.hidden = !open;
+  cityTrigger.setAttribute("aria-expanded", String(open));
+  if (open) {
+    citySearch.value = "";
+    filterCities();
+    citySearch.focus();
+  }
+}
+
+function filterCities() {
+  // Recherche sur le début des mots : « s » donne Saint-Étienne et Strasbourg, « et » Saint-Étienne.
+  const query = normalize(citySearch.value);
+  for (const item of cityItems) item.hidden = !normalize(item.dataset.name).split(" ").some((word) => word.startsWith(query));
+}
+
+cityTrigger.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setCityPanel(cityPanel.hidden);
+});
+$("cityClose").addEventListener("click", () => setCityPanel(false));
+citySearch.addEventListener("input", filterCities);
+citySearch.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  const first = cityItems.find((item) => !item.hidden);
+  if (first) location.href = first.href;
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !cityPanel.hidden) {
+    setCityPanel(false);
+    cityTrigger.focus();
+  }
+});
+document.addEventListener("click", (event) => {
+  if (!cityPanel.hidden && !cityPanel.contains(event.target)) setCityPanel(false);
+});
+
 $("zoomIn").addEventListener("click", () => zoomAt(1.4, app.size.width / 2, app.size.height / 2));
 $("zoomOut").addEventListener("click", () => zoomAt(1 / 1.4, app.size.width / 2, app.size.height / 2));
 $("recenter").addEventListener("click", () => {

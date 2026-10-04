@@ -14,13 +14,16 @@ ${header}
       </nav>
 
       <section class="hero">
-        <details class="city-menu">
-          <summary>📍 ${name} <span>· Changer de ville</span></summary>
-          <nav class="city-menu-list" aria-label="Choisir une ville">
-${city_links}
-          </nav>
-        </details>
         <h1>${headline}</h1>
+        <div id="cityPanel" class="city-panel" role="dialog" aria-label="Choisir une ville" hidden>
+          <div class="city-panel-head">
+            <input id="citySearch" type="search" placeholder="Rechercher une ville…" aria-label="Rechercher une ville" autocomplete="off" />
+            <button id="cityClose" type="button" class="icon-button" aria-label="Fermer">×</button>
+          </div>
+          <nav class="city-panel-list" aria-label="Villes">
+${city_items}
+          </nav>
+        </div>
         <p class="lede">
           La ville redessinée par le temps qu'il faut pour y aller en ${rail_noun}. Choisissez un départ&nbsp;: la carte se
           colore selon le temps de trajet vers chaque point ${area}.

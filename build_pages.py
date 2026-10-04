@@ -32,6 +32,7 @@ LICENCES = {
     "mobilites": ("Licence Mobilités", "https://wiki.lafabriquedesmobilites.fr/wiki/Licence_Mobilit%C3%A9s"),
 }
 ODBL_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
+MODE_LABEL_SHORT = {"tram": "Tram", "metro": "Métro", "metro+tram": "Métro et tram"}
 MODE_NAMES = {"metro": "Métro", "tram": "Tram", "funicular": "Funiculaire", "cable": "Téléphérique", "busway": "Busway"}
 MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
 WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -147,8 +148,9 @@ def footer(cities: list[dict], base: str, data_credit: str) -> str:
       <div class="footer-inner">
         <p class="footer-author">
           Un projet de <a href="{AUTHOR_URL}" rel="author">Camille Roux</a>, développeur et co-fondateur de Human Coders,
-          à Montpellier. Retrouvez ses autres projets et sa <a href="{AUTHOR_URL}veille/">veille tech hebdomadaire</a>
-          sur camilleroux.com.
+          à Montpellier, d'après l'idée d'Anthony Castrio et de Jules Grandin. Découvrez
+          <a href="{AUTHOR_URL}realisations/">ses autres réalisations</a> et sa
+          <a href="{AUTHOR_URL}veille/">veille tech hebdomadaire</a>.
         </p>
         <p class="footer-links">Villes&nbsp;: {links}</p>
         <p class="footer-links">
@@ -169,23 +171,58 @@ def footer(cities: list[dict], base: str, data_credit: str) -> str:
     </footer>"""
 
 
-def faq_block(entries: list[tuple[str, str]]) -> str:
+def faq_block(entries: list[tuple]) -> str:
+    """Entries are (question, answer) or (question, answer, answer_html) when the visible answer carries links."""
     return "\n".join(
-        f'        <details class="faq"><summary>{esc(question)}</summary><p>{esc(answer)}</p></details>' for question, answer in entries
+        f'        <details class="faq"><summary>{esc(entry[0])}</summary><p>{entry[2] if len(entry) > 2 else esc(entry[1])}</p></details>'
+        for entry in entries
     )
 
 
-def faq_schema(entries: list[tuple[str, str]]) -> dict:
+def faq_schema(entries: list[tuple]) -> dict:
     return {
         "@type": "FAQPage",
         "mainEntity": [
-            {"@type": "Question", "name": question, "acceptedAnswer": {"@type": "Answer", "text": answer}} for question, answer in entries
+            {"@type": "Question", "name": entry[0], "acceptedAnswer": {"@type": "Answer", "text": entry[1]}} for entry in entries
         ],
     }
 
 
+def credits_entry(question: str) -> tuple:
+    """« Who made this? »: the original authors first, then the author of these maps."""
+    text = (
+        "L'idée vient du NYC Transit Time Cartogram d'Anthony Castrio, adapté ensuite à Paris par Jules Grandin "
+        "(« C'est encore loin ? »). Ces cartes sont réalisées par Camille Roux, développeur et co-fondateur de Human "
+        "Coders à Montpellier, qui présente ses autres réalisations sur camilleroux.com. Le code est ouvert sur GitHub."
+    )
+    html_text = (
+        'L\'idée vient du <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d\'Anthony Castrio, adapté '
+        'ensuite à Paris par Jules Grandin (<a href="https://julesgrandin.github.io/paris-temps-transport/">C\'est encore '
+        f'loin&nbsp;?</a>). Ces cartes sont réalisées par <a href="{AUTHOR_URL}" rel="author">Camille Roux</a>, développeur '
+        f'et co-fondateur de Human Coders à Montpellier&nbsp;: découvrez <a href="{AUTHOR_URL}realisations/">ses autres '
+        f'réalisations</a>. Le code est ouvert sur <a href="{GITHUB_URL}">GitHub</a>.'
+    )
+    return (question, text, html_text)
+
+
 def author_schema() -> dict:
-    return {"@type": "Person", "@id": AUTHOR_URL + "#me", "name": "Camille Roux", "url": AUTHOR_URL, "sameAs": ["https://github.com/camilleroux"]}
+    return {
+        "@type": "Person",
+        "@id": AUTHOR_URL + "#me",
+        "name": "Camille Roux",
+        "url": AUTHOR_URL,
+        "image": AUTHOR_URL + "content/images/size/w256h256/format/jpeg/2025/05/camillecouleur---lowres-2.jpg",
+        "jobTitle": "Développeur, co-fondateur de Human Coders",
+        "worksFor": {"@type": "Organization", "name": "Human Coders", "url": "https://www.humancoders.com/"},
+        "address": {"@type": "PostalAddress", "addressLocality": "Montpellier", "addressCountry": "FR"},
+        "sameAs": [
+            "https://www.linkedin.com/in/camilleroux",
+            "https://x.com/CamilleRoux",
+            "https://bsky.app/profile/camilleroux.com",
+            "https://mastodon.social/@camilleroux",
+            "https://github.com/camilleroux",
+        ],
+    }
 
 
 def city_card(city: dict, base: str, heading: str = "h3") -> str:
@@ -199,7 +236,7 @@ def city_card(city: dict, base: str, heading: str = "h3") -> str:
           </a>"""
 
 
-def city_faq(city: dict) -> list[tuple[str, str]]:
+def city_faq(city: dict) -> list[tuple]:
     stats, sources = city["stats"], city["sources"]
     name, rail = city["name"], city["railNoun"]
     lines = stats["lines"]
@@ -238,6 +275,7 @@ def city_faq(city: dict) -> list[tuple[str, str]]:
             + (", et 2 minutes pour rejoindre le quai du métro" if any(line["mode"] == "metro" for line in lines) else "")
             + ". Pas de temps réel ni de perturbations : c'est la ville « sur le papier ».",
         ),
+        credits_entry(f"Qui a réalisé cette carte de {name} ?"),
     ]
 
 
@@ -291,13 +329,20 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
         f'{esc(MODE_NAMES.get(line["mode"], ""))}</td><td>{line["stations"]}</td><td>~{num(line["headway"])} min</td></tr>'
         for line in stats["lines"]
     )
-    links = []
-    for other in sorted(cities, key=lambda item: item["name"]):
-        label = esc(other["name"])
-        if other["slug"] == city["slug"]:
-            links.append(f'            <span class="chip active" aria-current="page">{label}</span>')
-        else:
-            links.append(f'            <a class="chip" href="{base}{other["path"]}">{label}</a>')
+    # City switcher: the city name in the title opens a panel of real links (site/app.js), crawlable as well.
+    items = "\n".join(
+        f'            <a class="city-item{" current" if other["slug"] == city["slug"] else ""}" href="{base}{other["path"]}"'
+        f'{" aria-current=\"page\"" if other["slug"] == city["slug"] else ""} data-name="{esc(other["name"].lower())}">'
+        f'<img src="{base}og/thumb-{other["slug"]}.jpg" width="120" height="63" alt="" loading="lazy" />'
+        f'<span><strong>{esc(other["name"])}</strong><small>{esc(MODE_LABEL_SHORT[other["kind"]])} · {esc(other["network"])}</small></span></a>'
+        for other in sorted(cities, key=lambda item: item["name"])
+    )
+    rest = esc(city["title"][len(city["name"]):])
+    headline = (
+        f'<button id="cityTrigger" type="button" class="city-trigger" aria-haspopup="dialog" aria-expanded="false" '
+        f'title="Changer de ville">{esc(city["name"])}<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg></button>'
+        + "&nbsp;".join(rest.rsplit(" ", 1))
+    )
     config = {
         "slug": city["slug"],
         "name": city["name"],
@@ -326,8 +371,8 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
         "analytics": ANALYTICS,
         "base": base,
         "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
-        "city_links": "\n".join(links),
-        "headline": "&nbsp;".join(esc(city["title"]).rsplit(" ", 1)),
+        "city_items": items,
+        "headline": headline,
         "name": esc(city["name"]),
         "area": esc(city.get("area", "de la Métropole")),
         "rail_noun": esc(rail_noun),
@@ -370,11 +415,7 @@ def render_home(template: Template, cities: list[dict]) -> str:
             "Il faut un réseau de tram ou de métro et des horaires publiés en open data. Les prochaines villes sont ajoutées "
             "au fur et à mesure : vous pouvez en proposer une sur GitHub.",
         ),
-        (
-            "Qui a réalisé ce site ?",
-            "Camille Roux, développeur à Montpellier, à partir de l'idée du NYC Transit Time Cartogram d'Anthony Castrio, "
-            "adapté à Paris par Jules Grandin. Le code est ouvert sur GitHub.",
-        ),
+        credits_entry("Qui a réalisé ce site ?"),
     ]
     graph = [
         {
@@ -445,7 +486,7 @@ def render_legal(cities: list[dict]) -> str:
         <h1 class="page-title">Mentions légales et licences</h1>
         <h2>Éditeur</h2>
         <p>Ce site est édité à titre personnel par <a href="{AUTHOR_URL}" rel="author">Camille Roux</a>. Contact&nbsp;: via
-        <a href="{AUTHOR_URL}">camilleroux.com</a> ou les <a href="{GITHUB_URL}/issues">issues GitHub</a> du projet.</p>
+        <a href="{AUTHOR_URL}contact/">la page contact de camilleroux.com</a> ou les <a href="{GITHUB_URL}/issues">issues GitHub</a> du projet.</p>
         <h2>Hébergement</h2>
         <p>GitHub, Inc. (GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.
         Nom de domaine géré par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis.</p>

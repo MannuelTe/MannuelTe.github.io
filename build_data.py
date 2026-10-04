@@ -7,6 +7,7 @@ Usage: python3 build_data.py <city>   (reads data/<city>/, writes site/data/<cit
 from __future__ import annotations
 
 import csv
+import heapq
 import io
 import json
 import math
@@ -30,7 +31,7 @@ WALK_METERS_PER_MINUTE = 75.0
 STATION_ACCESS_PENALTY = 0.0
 CELL_NEAREST_STATIONS = 5
 CELL_NEAREST_RAIL_STATIONS = 3
-ORIGIN_NEAREST_STATIONS = 6
+ORIGIN_NEAREST_STATIONS = 8  # same as SEED_STATIONS in site/app.js
 DEFAULT_BOARD_WAIT = 5.0
 TRANSFER_WALK = 1.5
 INTER_COMPLEX_WALK_RADIUS = 450.0
@@ -50,7 +51,7 @@ WATER_MASK_AREA = 1_000_000.0
 # GTFS route_type → mode (basic and extended types).
 RAIL_MODES = {"tram", "metro", "funicular", "cable"}
 # Minutes to walk from the street to the platform (and back): stairs and corridors of underground lines.
-MODE_ACCESS_MINUTES = {"metro": 2.0, "funicular": 1.0}
+MODE_ACCESS_MINUTES = {"metro": 2.0, "funicular": 1.0, "cable": 1.0}
 
 
 def route_mode(route_type: str) -> str:
@@ -252,11 +253,15 @@ class StationIndex:
 # --- Land, water, parks -----------------------------------------------------
 
 
-def extract_communes(data_dir: Path) -> Tuple[List[dict], MultiPolygon]:
+def extract_communes(data_dir: Path, city: dict) -> Tuple[List[dict], MultiPolygon]:
     payload = load_json(data_dir / "communes.geojson")
+    # Some metropolises are far larger than their urban network (Aix-Marseille-Provence): keep only the listed communes.
+    wanted = set(city.get("communes", []))
     communes = []
     all_polygons: MultiPolygon = []
     for feature in sorted(payload["features"], key=lambda f: f["properties"]["nom"]):
+        if wanted and feature["properties"]["nom"] not in wanted:
+            continue
         polygons = coords_to_polygons(feature["geometry"])
         if not polygons:
             continue
@@ -666,7 +671,69 @@ def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequenc
     return cells, mask
 
 
-def write_provenance(city: dict, data_dir: Path, reference_date: date, route_info: Dict[str, dict], stations: Sequence[dict]) -> Path:
+def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency) -> dict:
+    """Figures shown on the page (and its FAQ): lines, headways, share of rail stations within 30 min of the centre."""
+    rail_states = [i for i, state in enumerate(route_states) if route_info[state["routeId"]]["rail"]]
+    lines = []
+    mode_order = {"metro": 0, "tram": 1, "funicular": 2, "cable": 3}
+    for route_id, info in sorted(route_info.items(), key=lambda item: (mode_order.get(item[1]["mode"], 9), len(item[1]["name"]), item[1]["name"])):
+        if not info["rail"]:
+            continue
+        waits = sorted(route_states[i]["wait"] for i in rail_states if route_states[i]["routeId"] == route_id)
+        lines.append(
+            {
+                "name": info["name"],
+                "mode": info["mode"],
+                "color": info["color"],
+                "stations": len(waits),
+                "headway": round(statistics.median(waits) * 2, 1),
+            }
+        )
+
+    # Same model as the browser: walk to the nearest rail stations, then rail only.
+    origin = lonlat_to_xy(city["defaultFrom"]["lon"], city["defaultFrom"]["lat"])
+    rail_station_ids = [i for i, station in enumerate(stations) if station["rail"]]
+    seeds = sorted(rail_station_ids, key=lambda i: dist(origin, stations[i]["point"]))[:ORIGIN_NEAREST_STATIONS]
+    best = [math.inf] * len(route_states)
+    heap: List[Tuple[float, int]] = []
+    for station_index in seeds:
+        walk = dist(origin, stations[station_index]["point"]) / WALK_METERS_PER_MINUTE
+        for state in station_states[station_index]:
+            if route_info[route_states[state]["routeId"]]["rail"]:
+                time = walk + route_states[state]["access"] + route_states[state]["wait"]
+                if time < best[state]:
+                    best[state] = time
+                    heapq.heappush(heap, (time, state))
+    while heap:
+        time, state = heapq.heappop(heap)
+        if time > best[state]:
+            continue
+        for target, weight in adjacency[state]:
+            target = int(target)
+            if route_info[route_states[target]["routeId"]]["rail"] and time + weight < best[target]:
+                best[target] = time + weight
+                heapq.heappush(heap, (time + weight, target))
+    arrival = {}
+    for state, time in enumerate(best):
+        index = route_states[state]["stationIndex"]
+        out = time + route_states[state]["access"]
+        walk = dist(origin, stations[index]["point"]) / WALK_METERS_PER_MINUTE
+        arrival[index] = min(arrival.get(index, math.inf), out, walk)
+    rail_times = [arrival.get(i, math.inf) for i in rail_station_ids]
+    farthest = max((i for i in rail_station_ids if math.isfinite(arrival.get(i, math.inf))), key=lambda i: arrival[i])
+    return {
+        "lines": lines,
+        "railStations": len(rail_station_ids),
+        "busLines": sum(1 for info in route_info.values() if not info["rail"]),
+        "center": city["defaultFrom"]["label"],
+        "within15": round(100 * sum(t <= 15 for t in rail_times) / len(rail_times)),
+        "within30": round(100 * sum(t <= 30 for t in rail_times) / len(rail_times)),
+        "farthestStation": stations[farthest]["name"],
+        "farthestMinutes": round(arrival[farthest]),
+    }
+
+
+def write_provenance(city: dict, data_dir: Path, reference_date: date, route_info: Dict[str, dict], stations: Sequence[dict], stats: dict) -> Path:
     """Record in sources/<city>.json (versioned) which raw files were used, when they were fetched and what they cover."""
     manifest_path = data_dir / "manifest.json"
     manifest = load_json(manifest_path) if manifest_path.exists() else {}
@@ -699,6 +766,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
             "stops": len(stations),
             "railStations": sum(1 for station in stations if station["rail"]),
         },
+        "stats": stats,
     }
     path = ROOT / "sources" / f"{city['slug']}.json"
     path.parent.mkdir(exist_ok=True)
@@ -715,7 +783,7 @@ def main() -> None:
     data_dir = ROOT / "data" / city["slug"]
     output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
 
-    communes, land = extract_communes(data_dir)
+    communes, land = extract_communes(data_dir, city)
     bounds = multipolygon_bounds(land, LAND_PAD_METERS)
     cols = round((bounds[2] - bounds[0]) / GRID_CELL_METERS)
     rows = round((bounds[3] - bounds[1]) / GRID_CELL_METERS)
@@ -776,7 +844,8 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations)
+    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency)
+    provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])
     modes = Counter(info["mode"] for info in route_info.values())

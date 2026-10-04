@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lyon à portée de métro · Temps de trajet en métro et tram TCL</title>
-    <meta name="description" content="Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la Métropole se colore selon le temps qu&#x27;il faut pour y aller (réseau TCL)." />
+    <meta name="description" content="Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau TCL)." />
     <script>
       // Anciens liens github.io : on renvoie vers le domaine du site en gardant départ et arrivée.
       if (location.hostname.endsWith("github.io")) location.replace("https://tram.camilleroux.com/lyon/" + location.search);
@@ -14,73 +14,154 @@
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
-
     <meta name="author" content="Camille Roux" />
+    <link rel="author" href="https://www.camilleroux.com/" />
     <meta property="og:type" content="website" />
-    <meta property="article:author" content="https://www.camilleroux.com/" />
-    <meta property="article:published_time" content="2026-10-05T08:00:00+02:00" />
     <meta property="og:locale" content="fr_FR" />
-    <meta property="og:site_name" content="Lyon à portée de métro" />
+    <meta property="og:site_name" content="À portée de tram" />
     <meta property="og:title" content="Lyon à portée de métro" />
-    <meta property="og:description" content="Lyon redessiné par le temps de trajet en métro et tram : choisissez un départ, la carte se colore selon le temps qu&#x27;il faut pour aller partout ailleurs." />
+    <meta property="og:description" content="Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau TCL)." />
     <meta property="og:url" content="https://tram.camilleroux.com/lyon/" />
     <meta property="og:image" content="https://tram.camilleroux.com/og/lyon.jpg?v=1" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Carte de Lyon colorée selon le temps de trajet en métro et tram depuis la place Bellecour, avec les isochrones 15 et 30 minutes." />
+    <meta property="article:author" content="https://www.camilleroux.com/" />
+    <meta property="article:published_time" content="2026-10-05T08:00:00+02:00" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Lyon à portée de métro" />
-    <meta name="twitter:description" content="Lyon redessiné par le temps de trajet en métro et tram : choisissez un départ, la carte se colore selon le temps qu&#x27;il faut pour aller partout ailleurs." />
+    <meta name="twitter:description" content="Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau TCL)." />
     <meta name="twitter:image" content="https://tram.camilleroux.com/og/lyon.jpg?v=1" />
-
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Lyon à portée de métro",
-      "url": "https://tram.camilleroux.com/lyon/",
-      "description": "Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la Métropole se colore selon le temps qu'il faut pour y aller (réseau TCL).",
-      "inLanguage": "fr",
-      "applicationCategory": "TravelApplication",
-      "operatingSystem": "Web",
-      "isAccessibleForFree": true,
-      "image": "https://tram.camilleroux.com/og/lyon.jpg?v=1",
-      "author": {
-        "@type": "Person",
-        "name": "Camille Roux",
-        "url": "https://www.camilleroux.com/"
-      },
-      "spatialCoverage": {
-        "@type": "Place",
-        "name": "Métropole de Lyon"
-      },
-      "isBasedOn": [
-        "https://castrio.me/nyc/",
-        "https://julesgrandin.github.io/paris-temps-transport/"
-      ],
-      "datePublished": "2026-10-05"
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Lyon à portée de métro",
+          "url": "https://tram.camilleroux.com/lyon/",
+          "description": "Carte des temps de trajet en métro et tram à Lyon : choisissez un départ, toute la ville se colore selon le temps qu'il faut pour y aller (réseau TCL).",
+          "inLanguage": "fr",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Web",
+          "isAccessibleForFree": true,
+          "image": "https://tram.camilleroux.com/og/lyon.jpg?v=1",
+          "author": {
+            "@id": "https://www.camilleroux.com/#me"
+          },
+          "spatialCoverage": {
+            "@type": "Place",
+            "name": "Métropole de Lyon"
+          },
+          "isBasedOn": [
+            "https://castrio.me/nyc/",
+            "https://julesgrandin.github.io/paris-temps-transport/"
+          ],
+          "datePublished": "2026-10-05",
+          "dateModified": "2026-10-04"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "À portée de tram",
+              "item": "https://tram.camilleroux.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Lyon",
+              "item": "https://tram.camilleroux.com/lyon/"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Combien de temps faut-il pour traverser Lyon en métro et tram ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Depuis le centre (Place Bellecour), 16 % des stations de métro et de tram sont à moins de 15 minutes et 69 % à moins de 30 minutes, marche et attente comprises. La plus éloignée, Saint-Priest Bel Air, est à environ 51 minutes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Quelle est la fréquence des lignes de métro et tram à Lyon ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "En journée de semaine, l'intervalle moyen entre deux passages est de métro A : 3,4 min, métro B : 2,4 min, métro C : 6,4 min, métro D : 2,2 min, tram T1 : 5,9 min, tram T2 : 5,6 min, tram T3 : 6,2 min, tram T4 : 6,5 min, tram T5 : 14,2 min, tram T6 : 9,9 min, tram T7 : 16,1 min, funiculaire F1 : 8 min, funiculaire F2 : 5,2 min. La ligne la plus fréquente est la D, avec un passage toutes les 2,2 minutes environ."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "D'où viennent les horaires utilisés ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Des horaires théoriques publiés par le réseau TCL (format GTFS), téléchargés le 4 octobre 2026 et valables jusqu'au 31 août 2027. Les temps correspondent au mardi 6 octobre 2026, entre 7 h et 20 h."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Les bus sont-ils pris en compte à Lyon ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui, en option : cochez « Bus et navette fluviale » sous la carte. Par défaut, seuls les métro et tram sont affichés. L'attente aux arrêts de bus peu fréquentés est plafonnée à 15 minutes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Comment les temps de trajet sont-ils calculés ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Pour chaque trajet : marche jusqu'à l'arrêt à 4,5 km/h, attente égale à la moitié de l'intervalle entre deux passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche, et 2 minutes pour rejoindre le quai du métro. Pas de temps réel ni de perturbations : c'est la ville « sur le papier »."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "@id": "https://www.camilleroux.com/#me",
+          "name": "Camille Roux",
+          "url": "https://www.camilleroux.com/",
+          "sameAs": [
+            "https://github.com/camilleroux"
+          ]
+        }
+      ]
     }
     </script>
-
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="../styles.css?v=c7a8731d" />
+    <link rel="stylesheet" href="../styles.css?v=2501a693" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "lyon", "name": "Lyon", "dataVersion": "4bff410a", "defaultFrom": {"lat": 45.7578, "lon": 4.832, "label": "Place Bellecour"}, "railNoun": "métro et tram", "railStations": "stations de métro et de tram", "busNoun": "bus"}</script>
+    <script id="city-config" type="application/json">{"slug": "lyon", "name": "Lyon", "dataVersion": "7600d459", "defaultFrom": {"lat": 45.7578, "lon": 4.832, "label": "Place Bellecour"}, "railNoun": "métro et tram", "railStations": "stations de métro et de tram", "busNoun": "bus"}</script>
     <header class="topbar">
-      <nav class="topbar-inner">
-        <a class="brand" href="./">Lyon à portée de métro</a>
-        <a class="topbar-link" href="https://www.camilleroux.com/" rel="noopener">camilleroux.com</a>
+      <nav class="topbar-inner" aria-label="Navigation principale">
+        <a class="brand" href="../"><img src="../favicon.svg" width="22" height="22" alt="" /> À portée de tram</a>
+        <div class="topbar-links">
+          <a class="topbar-link icon-link" href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener" aria-label="Code source sur GitHub"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+          <a class="topbar-link" href="https://www.camilleroux.com/" rel="author">camilleroux.com</a>
+        </div>
       </nav>
     </header>
 
     <main class="page">
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <a href="../">À portée de tram</a> <span aria-hidden="true">›</span> <span aria-current="page">Lyon</span>
+      </nav>
+
       <section class="hero">
-        <nav class="city-switch" aria-label="Autres villes">
-          <a class="chip" href="../">Montpellier</a>
+        <nav class="city-switch" aria-label="Choisir une ville">
+          <a class="chip" href="../montpellier/">Montpellier</a>
           <a class="chip" href="../bordeaux/">Bordeaux</a>
           <span class="chip active" aria-current="page">📍 Lyon</span>
+          <a class="chip" href="../toulouse/">Toulouse</a>
+          <a class="chip" href="../marseille/">Marseille</a>
         </nav>
         <h1>Lyon à portée de&nbsp;métro</h1>
         <p class="lede">
@@ -93,6 +174,11 @@
           <button type="submit" class="button primary">Partir d'ici</button>
           <ul id="searchResults" class="search-results" hidden></ul>
         </form>
+        <ol class="steps" aria-label="Mode d'emploi">
+          <li><strong>1. Départ</strong> Cherchez une adresse ou glissez le point vert.</li>
+          <li><strong>2. Arrivée</strong> Cliquez n'importe où : durée et itinéraire détaillé.</li>
+          <li><strong>3. Lecture</strong> Vert = proche, rouge = loin. Lignes noires : 15 et 30 min.</li>
+        </ol>
       </section>
 
       <section class="map-card" aria-label="Carte des temps de trajet">
@@ -164,37 +250,104 @@
         <p id="reach" class="reach"></p>
       </section>
 
-      <section class="notes">
-        <h2>Comment c'est calculé</h2>
-        <p>
-          Les temps viennent des horaires théoriques du réseau TCL pour un jour de semaine ordinaire, entre 7&nbsp;h et
-          20&nbsp;h&nbsp;: durée prévue entre chaque arrêt, attente égale à la moitié de l'intervalle entre deux passages,
-          marche à pied jusqu'à l'arrêt et pénalité de correspondance. Bus et navette fluviale en option. Pas de temps réel ni de
-          perturbations&nbsp;: c'est une carte de la ville «&nbsp;sur le papier&nbsp;».
-        </p>
-        <p>
-          Glissez le marqueur vert pour changer de départ, cliquez n'importe où pour poser une arrivée (glissez-la pour
-          centrer la carte sur elle, double-cliquez pour la retirer), faites glisser la carte pour la déplacer et utilisez la
-          molette pour zoomer.
-        </p>
-        <h2>Crédits</h2>
-        <p>
-          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
-          adapté ensuite à Paris par Jules Grandin
-          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>). Cette version
-          pour Lyon est réalisée par <a href="https://www.camilleroux.com/">Camille Roux</a>.
-        </p>
-        <p>
-          Données&nbsp;: <a href="https://data.grandlyon.com/portail/fr/jeux-de-donnees/horaires-theoriques-du-reseau-transports-en-commun-lyonnais/info">GTFS TCL</a> (Métropole de Lyon), tracés des lignes, eau et parcs ©
-          <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
-          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
-          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
-        </p>
+      <section class="section" aria-labelledby="stats-title">
+        <h2 id="stats-title">Lyon en chiffres</h2>
+        <div class="stat-grid">
+          <div class="stat"><strong>69 %</strong><span>des stations de métro et de tram à moins de 30 min du centre (Place Bellecour)</span></div>
+          <div class="stat"><strong>147</strong><span>stations de métro et de tram</span></div>
+          <div class="stat"><strong>2,2 min</strong><span>entre deux passages sur la ligne D, la plus fréquente</span></div>
+          <div class="stat"><strong>51 min</strong><span>depuis le centre pour rejoindre Saint-Priest Bel Air, la station la plus éloignée</span></div>
+        </div>
+        <table class="lines-table">
+          <caption>Lignes de métro et tram du réseau TCL, en journée de semaine</caption>
+          <thead><tr><th scope="col">Ligne</th><th scope="col">Stations</th><th scope="col">Un passage toutes les</th></tr></thead>
+          <tbody>
+            <tr><td><span class="line-badge" style="background:#E8308A">A</span> Métro</td><td>14</td><td>~3,4 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#0075BF">B</span> Métro</td><td>12</td><td>~2,4 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#EC6608">C</span> Métro</td><td>5</td><td>~6,4 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#009E3D">D</span> Métro</td><td>15</td><td>~2,2 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#004F9F">T1</span> Tram</td><td>27</td><td>~5,9 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#6BA230">T2</span> Tram</td><td>32</td><td>~5,6 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#00A3A6">T3</span> Tram</td><td>13</td><td>~6,2 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#662483">T4</span> Tram</td><td>32</td><td>~6,5 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#EC6608">T5</span> Tram</td><td>12</td><td>~14,2 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#F191A3">T6</span> Tram</td><td>24</td><td>~9,9 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#992358">T7</span> Tram</td><td>5</td><td>~16,1 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#992358">F1</span> Funiculaire</td><td>3</td><td>~8 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#006F9E">F2</span> Funiculaire</td><td>2</td><td>~5,2 min</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions fréquentes</h2>
+        <details class="faq"><summary>Combien de temps faut-il pour traverser Lyon en métro et tram ?</summary><p>Depuis le centre (Place Bellecour), 16 % des stations de métro et de tram sont à moins de 15 minutes et 69 % à moins de 30 minutes, marche et attente comprises. La plus éloignée, Saint-Priest Bel Air, est à environ 51 minutes.</p></details>
+        <details class="faq"><summary>Quelle est la fréquence des lignes de métro et tram à Lyon ?</summary><p>En journée de semaine, l&#x27;intervalle moyen entre deux passages est de métro A : 3,4 min, métro B : 2,4 min, métro C : 6,4 min, métro D : 2,2 min, tram T1 : 5,9 min, tram T2 : 5,6 min, tram T3 : 6,2 min, tram T4 : 6,5 min, tram T5 : 14,2 min, tram T6 : 9,9 min, tram T7 : 16,1 min, funiculaire F1 : 8 min, funiculaire F2 : 5,2 min. La ligne la plus fréquente est la D, avec un passage toutes les 2,2 minutes environ.</p></details>
+        <details class="faq"><summary>D&#x27;où viennent les horaires utilisés ?</summary><p>Des horaires théoriques publiés par le réseau TCL (format GTFS), téléchargés le 4 octobre 2026 et valables jusqu&#x27;au 31 août 2027. Les temps correspondent au mardi 6 octobre 2026, entre 7 h et 20 h.</p></details>
+        <details class="faq"><summary>Les bus sont-ils pris en compte à Lyon ?</summary><p>Oui, en option : cochez « Bus et navette fluviale » sous la carte. Par défaut, seuls les métro et tram sont affichés. L&#x27;attente aux arrêts de bus peu fréquentés est plafonnée à 15 minutes.</p></details>
+        <details class="faq"><summary>Comment les temps de trajet sont-ils calculés ?</summary><p>Pour chaque trajet : marche jusqu&#x27;à l&#x27;arrêt à 4,5 km/h, attente égale à la moitié de l&#x27;intervalle entre deux passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche, et 2 minutes pour rejoindre le quai du métro. Pas de temps réel ni de perturbations : c&#x27;est la ville « sur le papier ».</p></details>
+      </section>
+
+      <section class="section" aria-labelledby="cities-title">
+        <h2 id="cities-title">Les autres villes</h2>
+        <div class="city-grid">
+          <a class="city-card" href="../montpellier/">
+            <img src="../og/thumb-montpellier.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Montpellier à portée de tram</h3>
+              <span>88&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de la Comédie) · réseau TaM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../bordeaux/">
+            <img src="../og/thumb-bordeaux.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Bordeaux à portée de tram</h3>
+              <span>71&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place des Quinconces) · réseau TBM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../toulouse/">
+            <img src="../og/thumb-toulouse.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Toulouse à portée de métro</h3>
+              <span>77&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Place du Capitole) · réseau Tisséo</span>
+            </span>
+          </a>
+          <a class="city-card" href="../marseille/">
+            <img src="../og/thumb-marseille.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Marseille à portée de métro</h3>
+              <span>98&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Vieux-Port) · réseau RTM</span>
+            </span>
+          </a>
+        </div>
       </section>
     </main>
 
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-author">
+          Un projet de <a href="https://www.camilleroux.com/" rel="author">Camille Roux</a>, développeur et co-fondateur de Human Coders,
+          à Montpellier. Retrouvez ses autres projets et sa <a href="https://www.camilleroux.com/veille/">veille tech hebdomadaire</a>
+          sur camilleroux.com.
+        </p>
+        <p class="footer-links">Villes&nbsp;: <a href="../montpellier/">Montpellier</a> · <a href="../bordeaux/">Bordeaux</a> · <a href="../lyon/">Lyon</a> · <a href="../toulouse/">Toulouse</a> · <a href="../marseille/">Marseille</a></p>
+        <p class="footer-links">
+          <a href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener">Code source sur GitHub</a> ·
+          <a href="https://github.com/camilleroux/montpellier-temps-transport/issues" rel="noopener">Proposer une ville ou signaler une erreur</a>
+        </p>
+        <p class="footer-credits">
+          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
+          adapté ensuite à Paris par Jules Grandin
+          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>).
+          Horaires&nbsp;: <a href="https://data.grandlyon.com/portail/fr/jeux-de-donnees/horaires-theoriques-du-reseau-transports-en-commun-lyonnais/info">GTFS TCL</a> (Métropole de Lyon). Fond de carte © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
+          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
+          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
+        </p>
+      </div>
+    </footer>
+
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="../app.js?v=288c889a"></script>
+    <script type="module" src="../app.js?v=97602f72"></script>
     <!-- Cloudflare Web Analytics (sans cookie). "spa": false : les mises à jour de l'URL ne comptent pas comme des pages vues. -->
     <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "1904c17ed0624c0cab4d69ea1bacc5e7", "spa": false}'></script>
   </body>

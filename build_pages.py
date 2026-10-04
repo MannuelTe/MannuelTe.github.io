@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Render one HTML page per city (cities/*.json) from templates/city.html, plus sitemap.xml and robots.txt.
+"""Render the home page, one page per city (cities/*.json), the 404 page, sitemap.xml and robots.txt.
 
-Usage: python3 build_pages.py
+Usage: python3 build_pages.py   (run build_data.py <city> first: figures come from sources/<city>.json)
 """
 
 from __future__ import annotations
@@ -9,65 +9,281 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+from datetime import date
 from pathlib import Path
 from string import Template
 
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 SITE_URL = "https://tram.camilleroux.com/"
+GITHUB_URL = "https://github.com/camilleroux/montpellier-temps-transport"
+AUTHOR_URL = "https://www.camilleroux.com/"
+SITE_NAME = "À portée de tram"
+ANALYTICS = (
+    '    <!-- Cloudflare Web Analytics (sans cookie). "spa": false : les mises à jour de l\'URL ne comptent pas comme des pages vues. -->\n'
+    '    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" '
+    "data-cf-beacon='{\"token\": \"1904c17ed0624c0cab4d69ea1bacc5e7\", \"spa\": false}'></script>"
+)
+MODE_NAMES = {"metro": "Métro", "tram": "Tram", "funicular": "Funiculaire", "cable": "Téléphérique"}
+MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+esc = html.escape
+
+
+def num(value: float) -> str:
+    """French decimal comma: 4.4 → « 4,4 »."""
+    return f"{value:g}".replace(".", ",")
 
 
 def short_hash(path: Path) -> str:
     return hashlib.sha1(path.read_bytes()).hexdigest()[:8] if path.exists() else "0"
 
 
+def french_date(value: str, weekday: bool = False) -> str:
+    day = date.fromisoformat(value[:10])
+    text = f"{day.day} {MONTHS[day.month - 1]} {day.year}"
+    return f"{WEEKDAYS[day.weekday()]} {text}" if weekday else text
+
+
 def load_cities() -> list[dict]:
-    cities = [json.loads(path.read_text(encoding="utf-8")) for path in (ROOT / "cities").glob("*.json")]
+    cities = []
+    for path in (ROOT / "cities").glob("*.json"):
+        city = json.loads(path.read_text(encoding="utf-8"))
+        city["sources"] = json.loads((ROOT / "sources" / f"{city['slug']}.json").read_text(encoding="utf-8"))
+        city["stats"] = city["sources"]["stats"]
+        cities.append(city)
     return sorted(cities, key=lambda city: city["order"])
 
 
-def city_links(cities: list[dict], current: dict) -> str:
-    """Chips linking every city page; links are relative so they work locally and online."""
-    depth = "../" if current["path"] else "./"
-    links = []
-    for city in cities:
-        label = html.escape(city["name"])
-        if city["slug"] == current["slug"]:
-            links.append(f'          <span class="chip active" aria-current="page">📍 {label}</span>')
-        else:
-            links.append(f'          <a class="chip" href="{depth}{city["path"]}">{label}</a>')
-    return "\n".join(links)
+def json_ld(data: dict) -> str:
+    body = json.dumps(data, ensure_ascii=False, indent=2).replace("</", "<\\/")
+    return '    <script type="application/ld+json">\n    ' + body.replace("\n", "\n    ") + "\n    </script>"
 
 
-def render(template: Template, cities: list[dict], city: dict) -> str:
+def head(*, title: str, description: str, url: str, base: str, image: str, image_alt: str, published: str, graph: list) -> str:
+    """<head> content shared by every page: SEO, social previews, structured data."""
+    redirect = (
+        "    <script>\n"
+        "      // Anciens liens github.io : on renvoie vers le domaine du site en gardant départ et arrivée.\n"
+        f'      if (location.hostname.endsWith("github.io")) location.replace("{url}" + location.search);\n'
+        "    </script>"
+    )
+    title_text = esc(title.split(" · ")[0])
+    return "\n".join(
+        [
+            '    <meta charset="utf-8" />',
+            '    <meta name="viewport" content="width=device-width, initial-scale=1" />',
+            f"    <title>{esc(title)}</title>",
+            f'    <meta name="description" content="{esc(description)}" />',
+            redirect,
+            f'    <link rel="canonical" href="{url}" />',
+            '    <meta name="theme-color" content="#3aa70b" />',
+            f'    <link rel="icon" href="{base}favicon.svg" type="image/svg+xml" />',
+            f'    <link rel="icon" href="{base}favicon-32.png" type="image/png" sizes="32x32" />',
+            f'    <link rel="apple-touch-icon" href="{base}apple-touch-icon.png" />',
+            '    <meta name="author" content="Camille Roux" />',
+            f'    <link rel="author" href="{AUTHOR_URL}" />',
+            '    <meta property="og:type" content="website" />',
+            '    <meta property="og:locale" content="fr_FR" />',
+            f'    <meta property="og:site_name" content="{SITE_NAME}" />',
+            f'    <meta property="og:title" content="{title_text}" />',
+            f'    <meta property="og:description" content="{esc(description)}" />',
+            f'    <meta property="og:url" content="{url}" />',
+            f'    <meta property="og:image" content="{image}" />',
+            '    <meta property="og:image:width" content="1200" />',
+            '    <meta property="og:image:height" content="630" />',
+            f'    <meta property="og:image:alt" content="{esc(image_alt)}" />',
+            f'    <meta property="article:author" content="{AUTHOR_URL}" />',
+            f'    <meta property="article:published_time" content="{published}T08:00:00+02:00" />',
+            '    <meta name="twitter:card" content="summary_large_image" />',
+            f'    <meta name="twitter:title" content="{title_text}" />',
+            f'    <meta name="twitter:description" content="{esc(description)}" />',
+            f'    <meta name="twitter:image" content="{image}" />',
+            json_ld({"@context": "https://schema.org", "@graph": graph}),
+            '    <link rel="preconnect" href="https://fonts.bunny.net" />',
+            '    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />',
+        ]
+    )
+
+
+GITHUB_ICON = (
+    '<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 '
+    "3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15"
+    "-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59"
+    ".82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1"
+    ".16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55"
+    '.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>'
+)
+
+
+def header(base: str) -> str:
+    return f"""    <header class="topbar">
+      <nav class="topbar-inner" aria-label="Navigation principale">
+        <a class="brand" href="{base}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {SITE_NAME}</a>
+        <div class="topbar-links">
+          <a class="topbar-link icon-link" href="{GITHUB_URL}" rel="noopener" aria-label="Code source sur GitHub">{GITHUB_ICON}<span>GitHub</span></a>
+          <a class="topbar-link" href="{AUTHOR_URL}" rel="author">camilleroux.com</a>
+        </div>
+      </nav>
+    </header>"""
+
+
+def footer(cities: list[dict], base: str, data_credit: str) -> str:
+    links = " · ".join(f'<a href="{base}{city["path"]}">{esc(city["name"])}</a>' for city in cities)
+    return f"""    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-author">
+          Un projet de <a href="{AUTHOR_URL}" rel="author">Camille Roux</a>, développeur et co-fondateur de Human Coders,
+          à Montpellier. Retrouvez ses autres projets et sa <a href="{AUTHOR_URL}veille/">veille tech hebdomadaire</a>
+          sur camilleroux.com.
+        </p>
+        <p class="footer-links">Villes&nbsp;: {links}</p>
+        <p class="footer-links">
+          <a href="{GITHUB_URL}" rel="noopener">Code source sur GitHub</a> ·
+          <a href="{GITHUB_URL}/issues" rel="noopener">Proposer une ville ou signaler une erreur</a>
+        </p>
+        <p class="footer-credits">
+          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
+          adapté ensuite à Paris par Jules Grandin
+          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>).
+          {data_credit} Fond de carte © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
+          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
+          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
+        </p>
+      </div>
+    </footer>"""
+
+
+def faq_block(entries: list[tuple[str, str]]) -> str:
+    return "\n".join(
+        f'        <details class="faq"><summary>{esc(question)}</summary><p>{esc(answer)}</p></details>' for question, answer in entries
+    )
+
+
+def faq_schema(entries: list[tuple[str, str]]) -> dict:
+    return {
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": question, "acceptedAnswer": {"@type": "Answer", "text": answer}} for question, answer in entries
+        ],
+    }
+
+
+def author_schema() -> dict:
+    return {"@type": "Person", "@id": AUTHOR_URL + "#me", "name": "Camille Roux", "url": AUTHOR_URL, "sameAs": ["https://github.com/camilleroux"]}
+
+
+def city_card(city: dict, base: str, heading: str = "h3") -> str:
+    stats = city["stats"]
+    return f"""          <a class="city-card" href="{base}{city['path']}">
+            <img src="{base}og/thumb-{city['slug']}.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <{heading}>{esc(city['title'])}</{heading}>
+              <span>{stats['within30']}&nbsp;% des {esc(city['railStations'])} à moins de 30&nbsp;min du centre ({esc(stats['center'])}) · réseau {esc(city['network'])}</span>
+            </span>
+          </a>"""
+
+
+def city_faq(city: dict) -> list[tuple[str, str]]:
+    stats, sources = city["stats"], city["sources"]
+    name, rail = city["name"], city["railNoun"]
+    lines = stats["lines"]
+    headways = ", ".join(f"{MODE_NAMES.get(line['mode'], 'ligne').lower()} {line['name']} : {num(line['headway'])} min" for line in lines)
+    fastest = min(lines, key=lambda line: line["headway"])
+    period = sources["gtfs"].get("servicePeriod") or [None, None]
+    fetched = sources["gtfs"].get("fetchedAt")
+    return [
+        (
+            f"Combien de temps faut-il pour traverser {name} en {rail} ?",
+            f"Depuis le centre ({stats['center']}), {stats['within15']} % des {city['railStations']} sont à moins de 15 minutes et "
+            f"{stats['within30']} % à moins de 30 minutes, marche et attente comprises. La plus éloignée, {stats['farthestStation']}, "
+            f"est à environ {stats['farthestMinutes']} minutes.",
+        ),
+        (
+            f"Quelle est la fréquence des lignes de {rail} à {name} ?",
+            f"En journée de semaine, l'intervalle moyen entre deux passages est de {headways}. La ligne la plus fréquente "
+            f"est la {fastest['name']}, avec un passage toutes les {num(fastest['headway'])} minutes environ.",
+        ),
+        (
+            "D'où viennent les horaires utilisés ?",
+            f"Des horaires théoriques publiés par le réseau {city['network']} (format GTFS)"
+            + (f", téléchargés le {french_date(fetched)}" if fetched else "")
+            + (f" et valables jusqu'au {french_date(period[1])}" if period[1] else "")
+            + f". Les temps correspondent au {french_date(sources['referenceDate'], weekday=True)}, entre 7 h et 20 h.",
+        ),
+        (
+            f"Les bus sont-ils pris en compte à {name} ?",
+            f"Oui, en option : cochez « {city['busLabel']} » sous la carte. Par défaut, seuls les {rail} sont affichés. "
+            "L'attente aux arrêts de bus peu fréquentés est plafonnée à 15 minutes.",
+        ),
+        (
+            "Comment les temps de trajet sont-ils calculés ?",
+            "Pour chaque trajet : marche jusqu'à l'arrêt à 4,5 km/h, attente égale à la moitié de l'intervalle entre deux "
+            "passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche"
+            + (", et 2 minutes pour rejoindre le quai du métro" if any(line["mode"] == "metro" for line in lines) else "")
+            + ". Pas de temps réel ni de perturbations : c'est la ville « sur le papier ».",
+        ),
+    ]
+
+
+def render_city(template: Template, cities: list[dict], city: dict) -> str:
     url = SITE_URL + city["path"]
-    base = "../" if city["path"] else "./"
+    base = "../"
+    stats = city["stats"]
     rail_noun = city["railNoun"]
     description = (
-        f"Carte des temps de trajet en {rail_noun} à {city['name']} : choisissez un départ, toute la Métropole se colore "
+        f"Carte des temps de trajet en {rail_noun} à {city['name']} : choisissez un départ, toute la ville se colore "
         f"selon le temps qu'il faut pour y aller (réseau {city['network']})."
     )
-    og_description = (
-        f"{city['name']} redessiné par le temps de trajet en {rail_noun} : choisissez un départ, la carte se colore "
-        "selon le temps qu'il faut pour aller partout ailleurs."
+    faq = city_faq(city)
+    graph = [
+        {
+            "@type": "WebApplication",
+            "name": city["title"],
+            "url": url,
+            "description": description,
+            "inLanguage": "fr",
+            "applicationCategory": "TravelApplication",
+            "operatingSystem": "Web",
+            "isAccessibleForFree": True,
+            "image": SITE_URL + city["ogImage"],
+            "author": {"@id": AUTHOR_URL + "#me"},
+            "spatialCoverage": {"@type": "Place", "name": city["metropole"]},
+            "isBasedOn": ["https://castrio.me/nyc/", "https://julesgrandin.github.io/paris-temps-transport/"],
+            "datePublished": city["published"],
+            "dateModified": city["sources"]["builtAt"][:10],
+        },
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": SITE_NAME, "item": SITE_URL},
+                {"@type": "ListItem", "position": 2, "name": city["name"], "item": url},
+            ],
+        },
+        faq_schema(faq),
+        author_schema(),
+    ]
+    fastest = min(stats["lines"], key=lambda line: line["headway"])
+    tiles = [
+        (f"{stats['within30']} %", f"des {city['railStations']} à moins de 30 min du centre ({stats['center']})"),
+        (str(stats["railStations"]), city["railStations"]),
+        (f"{num(fastest['headway'])} min", f"entre deux passages sur la ligne {fastest['name']}, la plus fréquente"),
+        (f"{stats['farthestMinutes']} min", f"depuis le centre pour rejoindre {stats['farthestStation']}, la station la plus éloignée"),
+    ]
+    stat_tiles = "\n".join(f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles)
+    line_rows = "\n".join(
+        f'            <tr><td><span class="line-badge" style="background:{line["color"]}">{esc(line["name"])}</span> '
+        f'{esc(MODE_NAMES.get(line["mode"], ""))}</td><td>{line["stations"]}</td><td>~{num(line["headway"])} min</td></tr>'
+        for line in stats["lines"]
     )
-    og_image = SITE_URL + city["ogImage"]
-    json_ld = {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": city["title"],
-        "url": url,
-        "description": description,
-        "inLanguage": "fr",
-        "applicationCategory": "TravelApplication",
-        "operatingSystem": "Web",
-        "isAccessibleForFree": True,
-        "image": og_image,
-        "author": {"@type": "Person", "name": "Camille Roux", "url": "https://www.camilleroux.com/"},
-        "spatialCoverage": {"@type": "Place", "name": city["metropole"]},
-        "isBasedOn": ["https://castrio.me/nyc/", "https://julesgrandin.github.io/paris-temps-transport/"],
-        "datePublished": city["published"],
-    }
+    links = []
+    for other in cities:
+        label = esc(other["name"])
+        if other["slug"] == city["slug"]:
+            links.append(f'          <span class="chip active" aria-current="page">📍 {label}</span>')
+        else:
+            links.append(f'          <a class="chip" href="{base}{other["path"]}">{label}</a>')
     config = {
         "slug": city["slug"],
         "name": city["name"],
@@ -77,50 +293,170 @@ def render(template: Template, cities: list[dict], city: dict) -> str:
         "railStations": city["railStations"],
         "busNoun": city["busNoun"],
     }
-    osm_credit = "tracés des lignes, eau et parcs" if city.get("railGeometry") == "osm" else "eau et parcs"
+    data_credit = (
+        f'Horaires&nbsp;: <a href="{esc(city["gtfsDataset"])}">GTFS {esc(city["network"])}</a> ({esc(city["metropole"])}).'
+    )
     values = {
-        "title": city["title"],
-        "title_suffix": city["titleSuffix"],
-        "description": description,
-        "og_description": og_description,
-        "og_image": og_image,
-        "og_alt": city["ogAlt"],
-        "url": url,
+        "head": head(
+            title=f"{city['title']} · {city['titleSuffix']}",
+            description=description,
+            url=url,
+            base=base,
+            image=SITE_URL + city["ogImage"],
+            image_alt=city["ogAlt"],
+            published=city["published"],
+            graph=graph,
+        ),
+        "header": header(base),
+        "footer": footer(cities, base, data_credit),
+        "analytics": ANALYTICS,
         "base": base,
-        "published": city["published"],
-        "json_ld": "    " + json.dumps(json_ld, ensure_ascii=False, indent=2).replace("\n", "\n    "),
-        "city_config": json.dumps(config, ensure_ascii=False),
-        "city_links": city_links(cities, city),
-        "name": city["name"],
-        # Pas de mot seul en fin de ligne : espace insécable avant le dernier mot du titre.
-        "headline": "&nbsp;".join(html.escape(city["title"]).rsplit(" ", 1)),
-        "rail_noun": rail_noun,
-        "rail_label": city["railLabel"],
-        "bus_label": city["busLabel"],
-        "search_example": city["searchExample"],
-        "network": city["network"],
-        "metropole": city["metropole"],
-        "gtfs_dataset": city["gtfsDataset"],
-        "osm_credit": osm_credit,
+        "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
+        "city_links": "\n".join(links),
+        "headline": "&nbsp;".join(esc(city["title"]).rsplit(" ", 1)),
+        "name": esc(city["name"]),
+        "area": esc(city.get("area", "de la Métropole")),
+        "rail_noun": esc(rail_noun),
+        "rail_label": esc(city["railLabel"]),
+        "bus_label": esc(city["busLabel"]),
+        "search_example": esc(city["searchExample"]),
+        "network": esc(city["network"]),
+        "stat_tiles": stat_tiles,
+        "line_rows": line_rows,
+        "faq_html": faq_block(faq),
+        "other_cities": "\n".join(city_card(other, base) for other in cities if other["slug"] != city["slug"]),
         "styles_version": short_hash(SITE / "styles.css"),
         "app_version": short_hash(SITE / "app.js"),
     }
-    escaped = {key: value if key in ("json_ld", "city_config", "city_links", "headline") else html.escape(value, quote=True) for key, value in values.items()}
-    return template.substitute(escaped)
+    return template.substitute(values)
+
+
+def render_home(template: Template, cities: list[dict]) -> str:
+    names = ", ".join(city["name"] for city in cities[:-1]) + f" et {cities[-1]['name']}"
+    networks = ", ".join(f"{city['network']} ({city['name']})" for city in cities)
+    description = f"Cartes des temps de trajet en tram et métro à {names} : la ville se colore selon le temps pour y aller."
+    faq = [
+        (
+            "D'où viennent les temps de trajet ?",
+            f"Des horaires théoriques officiels de chaque réseau ({networks}), publiés en open data au format GTFS. "
+            "Ils correspondent à un jour de semaine ordinaire, entre 7 h et 20 h.",
+        ),
+        (
+            "Les temps affichés sont-ils fiables ?",
+            "Ce sont des moyennes « sur le papier » : marche jusqu'à l'arrêt, attente égale à la moitié de l'intervalle entre "
+            "deux passages, durée prévue entre les arrêts et correspondances. Pas de temps réel ni de perturbations.",
+        ),
+        (
+            "Le bus est-il pris en compte ?",
+            "Oui, en option sur chaque carte. Par défaut, seuls le tram, le métro et les transports guidés sont affichés, "
+            "pour montrer l'ossature du réseau.",
+        ),
+        (
+            "Ma ville n'y est pas, pourquoi ?",
+            "Il faut un réseau de tram ou de métro et des horaires publiés en open data. Les prochaines villes sont ajoutées "
+            "au fur et à mesure : vous pouvez en proposer une sur GitHub.",
+        ),
+        (
+            "Qui a réalisé ce site ?",
+            "Camille Roux, développeur à Montpellier, à partir de l'idée du NYC Transit Time Cartogram d'Anthony Castrio, "
+            "adapté à Paris par Jules Grandin. Le code est ouvert sur GitHub.",
+        ),
+    ]
+    graph = [
+        {
+            "@type": "WebSite",
+            "@id": SITE_URL + "#site",
+            "name": SITE_NAME,
+            "url": SITE_URL,
+            "description": description,
+            "inLanguage": "fr",
+            "author": {"@id": AUTHOR_URL + "#me"},
+        },
+        {
+            "@type": "ItemList",
+            "name": "Cartes des temps de trajet par ville",
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1, "name": city["title"], "url": SITE_URL + city["path"]}
+                for i, city in enumerate(cities)
+            ],
+        },
+        faq_schema(faq),
+        author_schema(),
+    ]
+    published = min(city["published"] for city in cities)
+    values = {
+        "head": head(
+            title=f"{SITE_NAME} · Temps de trajet en tram et métro par ville",
+            description=description,
+            url=SITE_URL,
+            base="./",
+            image=SITE_URL + "og/home.jpg?v=" + short_hash(SITE / "og" / "home.jpg"),
+            image_alt=f"Cartes des temps de trajet en tram et métro à {names}.",
+            published=published,
+            graph=graph,
+        ),
+        "header": header("./"),
+        "footer": footer(cities, "./", "Horaires&nbsp;: GTFS des réseaux " + esc(networks) + "."),
+        "analytics": ANALYTICS,
+        "city_count": str(len(cities)),
+        "city_cards": "\n".join(city_card(city, "./", "h2") for city in cities),
+        "faq_html": faq_block(faq),
+        "styles_version": short_hash(SITE / "styles.css"),
+    }
+    return template.substitute(values)
+
+
+def render_404(cities: list[dict]) -> str:
+    links = "\n".join(f'          <a class="chip" href="/{city["path"]}">{esc(city["name"])}</a>' for city in cities)
+    return f"""<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page introuvable · {SITE_NAME}</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
+    <link rel="stylesheet" href="/styles.css?v={short_hash(SITE / 'styles.css')}" />
+  </head>
+  <body>
+{header('/')}
+    <main class="page">
+      <section class="hero">
+        <h1>Terminus&nbsp;!</h1>
+        <p class="lede">Cette page n'existe pas. Choisissez une ville pour reprendre votre trajet.</p>
+        <nav class="city-switch" aria-label="Villes">
+{links}
+        </nav>
+      </section>
+    </main>
+  </body>
+</html>
+"""
 
 
 def main() -> None:
-    template = Template((ROOT / "templates" / "city.html").read_text(encoding="utf-8"))
     cities = load_cities()
+    city_template = Template((ROOT / "templates" / "city.html").read_text(encoding="utf-8"))
     for city in cities:
         page = SITE / city["path"] / "index.html"
         page.parent.mkdir(parents=True, exist_ok=True)
-        page.write_text(render(template, cities, city), encoding="utf-8")
+        page.write_text(render_city(city_template, cities, city), encoding="utf-8")
         print(f"Wrote {page.relative_to(ROOT)}")
 
-    urls = "\n".join(f"  <url><loc>{SITE_URL}{city['path']}</loc></url>" for city in cities)
+    home_template = Template((ROOT / "templates" / "home.html").read_text(encoding="utf-8"))
+    (SITE / "index.html").write_text(render_home(home_template, cities), encoding="utf-8")
+    (SITE / "404.html").write_text(render_404(cities), encoding="utf-8")
+    print("Wrote site/index.html, site/404.html")
+
+    today = date.today().isoformat()
+    urls = [f"  <url><loc>{SITE_URL}</loc><lastmod>{today}</lastmod></url>"] + [
+        f"  <url><loc>{SITE_URL}{city['path']}</loc><lastmod>{city['sources']['builtAt'][:10]}</lastmod></url>" for city in cities
+    ]
     (SITE / "sitemap.xml").write_text(
-        f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}\n</urlset>\n',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(urls)
+        + "\n</urlset>\n",
         encoding="utf-8",
     )
     (SITE / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8")

@@ -63,10 +63,29 @@ a {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   letter-spacing: -0.02em;
+}
+
+.brand img {
+  border-radius: 6px;
+}
+
+.topbar-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .topbar-link {
@@ -558,24 +577,233 @@ output {
   font-size: 0.92rem;
 }
 
-/* --- Notes -------------------------------------------------------------- */
+/* --- Sections sous la carte ------------------------------------------ */
 
-.notes {
-  max-width: 720px;
-  margin: 44px auto 0;
-  color: var(--ink-soft);
-  line-height: 1.65;
+.breadcrumb {
+  padding-top: 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
-.notes h2 {
-  margin: 28px 0 6px;
+.breadcrumb a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(760px, 100%);
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.steps li {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-alt);
+}
+
+.steps strong {
+  display: block;
+  margin-bottom: 2px;
   color: var(--ink);
-  font-size: 1.25rem;
+}
+
+.steps.large {
+  width: 100%;
+  font-size: 0.98rem;
+}
+
+.steps.large li {
+  padding: 16px 18px;
+}
+
+.section {
+  max-width: 880px;
+  margin: 52px auto 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.section h2 {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.stat strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.stat span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.lines-table {
+  width: 100%;
+  margin-top: 18px;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.lines-table caption {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.lines-table th,
+.lines-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.lines-table th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.line-badge {
+  display: inline-block;
+  min-width: 28px;
+  margin-right: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.faq {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq summary {
+  padding: 14px 0;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.faq p {
+  margin: 0 0 16px;
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.city-grid.large {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.city-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.city-card:hover {
+  border-color: var(--green);
+  box-shadow: var(--shadow);
+}
+
+.city-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+  background: var(--surface-alt);
+}
+
+.city-card-body {
+  display: block;
+  padding: 12px 14px 14px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.city-card h2,
+.city-card h3 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 1.08rem;
   letter-spacing: -0.02em;
 }
 
-.notes p {
-  margin: 0 0 12px;
+.site-footer {
+  margin-top: 64px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-alt);
+}
+
+.footer-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 16px 40px;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.footer-inner p {
+  margin: 0 0 10px;
+}
+
+.footer-author {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.footer-credits {
+  color: var(--muted);
 }
 
 .toast {
@@ -596,6 +824,19 @@ output {
   /* Sur mobile, la barre défile avec la page pour ne pas masquer le haut de la carte. */
   .topbar {
     position: static;
+  }
+
+  .icon-link span {
+    display: none;
+  }
+
+  .steps,
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .steps li:last-child {
+    grid-column: 1 / -1;
   }
 
   .topbar-inner {

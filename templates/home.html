@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+${head}
+    <script>
+      // Les liens partagés avant l'arrivée des autres villes (?from=…&to=…) ouvraient la carte de Montpellier.
+      if (/[?&](from|to)=/.test(location.search)) location.replace("./montpellier/" + location.search);
+    </script>
+    <link rel="stylesheet" href="./styles.css?v=${styles_version}" />
+  </head>
+  <body>
+${header}
+
+    <main class="page">
+      <section class="hero">
+        <span class="chip">🚋 ${city_count} villes françaises</span>
+        <h1>À portée de&nbsp;tram</h1>
+        <p class="lede">
+          Combien de temps faut-il vraiment pour traverser sa ville en tram ou en métro&nbsp;? Choisissez une ville, posez un
+          départ&nbsp;: toute la métropole se colore selon le temps de trajet, calculé à partir des horaires officiels.
+        </p>
+      </section>
+
+      <section aria-labelledby="cities-title">
+        <h2 id="cities-title" class="visually-hidden">Choisir une ville</h2>
+        <div class="city-grid large">
+${city_cards}
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="how-title">
+        <h2 id="how-title">Comment ça marche</h2>
+        <ol class="steps large">
+          <li><strong>1. Choisissez un départ</strong> Une adresse, une station ou votre position : la carte se colore autour.</li>
+          <li><strong>2. Cliquez une arrivée</strong> Vous obtenez la durée et l'itinéraire : ligne à prendre, correspondances, marche.</li>
+          <li><strong>3. Comparez</strong> Les courbes 15 et 30 minutes montrent ce qui est vraiment proche, en tram, en métro ou en bus.</li>
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions fréquentes</h2>
+${faq_html}
+      </section>
+    </main>
+
+${footer}
+${analytics}
+  </body>
+</html>

@@ -548,8 +548,10 @@ function buildPaths(data) {
   }
   return {
     land: polygonsPath(data.boroughs.flatMap((commune) => commune.polygons)),
-    water: polygonsPath(data.water),
-    parks: polygonsPath(data.parks),
+    // Un chemin par polygone, rempli en « evenodd » : les îles (trous) restent de la terre ferme,
+    // sans que deux plans d'eau qui se chevauchent s'annulent.
+    water: data.water.map((polygon) => polygonsPath([polygon])),
+    parks: data.parks.map((polygon) => polygonsPath([polygon])),
     communeLines,
     routes: [...routes.values()].reverse(),
   };
@@ -763,9 +765,9 @@ function render() {
   }
 
   ctx.fillStyle = COLORS.park;
-  ctx.fill(app.paths.parks);
+  for (const park of app.paths.parks) ctx.fill(park, "evenodd");
   ctx.fillStyle = COLORS.water;
-  ctx.fill(app.paths.water);
+  for (const water of app.paths.water) ctx.fill(water, "evenodd");
   ctx.strokeStyle = COLORS.communeLine;
   ctx.lineWidth = 1.1 * px;
   ctx.stroke(app.paths.communeLines);

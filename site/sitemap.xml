@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://tram.camilleroux.com/</loc></url>
-  <url><loc>https://tram.camilleroux.com/bordeaux/</loc></url>
-  <url><loc>https://tram.camilleroux.com/lyon/</loc></url>
+  <url><loc>https://tram.camilleroux.com/</loc><lastmod>2026-10-05</lastmod></url>
+  <url><loc>https://tram.camilleroux.com/montpellier/</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://tram.camilleroux.com/bordeaux/</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://tram.camilleroux.com/lyon/</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://tram.camilleroux.com/toulouse/</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://tram.camilleroux.com/marseille/</loc><lastmod>2026-10-04</lastmod></url>
 </urlset>

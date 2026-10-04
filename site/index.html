@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Montpellier à portée de tram · Temps de trajet en tram TaM</title>
-    <meta name="description" content="Carte des temps de trajet en tram à Montpellier : choisissez un départ, toute la Métropole se colore selon le temps qu&#x27;il faut pour y aller (réseau TaM)." />
+    <title>À portée de tram · Temps de trajet en tram et métro par ville</title>
+    <meta name="description" content="Cartes des temps de trajet en tram et métro à Montpellier, Bordeaux, Lyon, Toulouse et Marseille : la ville se colore selon le temps pour y aller." />
     <script>
       // Anciens liens github.io : on renvoie vers le domaine du site en gardant départ et arrivée.
       if (location.hostname.endsWith("github.io")) location.replace("https://tram.camilleroux.com/" + location.search);
@@ -14,187 +14,243 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-
     <meta name="author" content="Camille Roux" />
+    <link rel="author" href="https://www.camilleroux.com/" />
     <meta property="og:type" content="website" />
-    <meta property="article:author" content="https://www.camilleroux.com/" />
-    <meta property="article:published_time" content="2026-10-04T08:00:00+02:00" />
     <meta property="og:locale" content="fr_FR" />
-    <meta property="og:site_name" content="Montpellier à portée de tram" />
-    <meta property="og:title" content="Montpellier à portée de tram" />
-    <meta property="og:description" content="Montpellier redessiné par le temps de trajet en tram : choisissez un départ, la carte se colore selon le temps qu&#x27;il faut pour aller partout ailleurs." />
+    <meta property="og:site_name" content="À portée de tram" />
+    <meta property="og:title" content="À portée de tram" />
+    <meta property="og:description" content="Cartes des temps de trajet en tram et métro à Montpellier, Bordeaux, Lyon, Toulouse et Marseille : la ville se colore selon le temps pour y aller." />
     <meta property="og:url" content="https://tram.camilleroux.com/" />
-    <meta property="og:image" content="https://tram.camilleroux.com/og/montpellier.jpg?v=3" />
+    <meta property="og:image" content="https://tram.camilleroux.com/og/home.jpg?v=178df861" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Carte de Montpellier colorée selon le temps de trajet en tram depuis la place de la Comédie, avec les isochrones 15 et 30 minutes." />
+    <meta property="og:image:alt" content="Cartes des temps de trajet en tram et métro à Montpellier, Bordeaux, Lyon, Toulouse et Marseille." />
+    <meta property="article:author" content="https://www.camilleroux.com/" />
+    <meta property="article:published_time" content="2026-10-04T08:00:00+02:00" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Montpellier à portée de tram" />
-    <meta name="twitter:description" content="Montpellier redessiné par le temps de trajet en tram : choisissez un départ, la carte se colore selon le temps qu&#x27;il faut pour aller partout ailleurs." />
-    <meta name="twitter:image" content="https://tram.camilleroux.com/og/montpellier.jpg?v=3" />
-
+    <meta name="twitter:title" content="À portée de tram" />
+    <meta name="twitter:description" content="Cartes des temps de trajet en tram et métro à Montpellier, Bordeaux, Lyon, Toulouse et Marseille : la ville se colore selon le temps pour y aller." />
+    <meta name="twitter:image" content="https://tram.camilleroux.com/og/home.jpg?v=178df861" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Montpellier à portée de tram",
-      "url": "https://tram.camilleroux.com/",
-      "description": "Carte des temps de trajet en tram à Montpellier : choisissez un départ, toute la Métropole se colore selon le temps qu'il faut pour y aller (réseau TaM).",
-      "inLanguage": "fr",
-      "applicationCategory": "TravelApplication",
-      "operatingSystem": "Web",
-      "isAccessibleForFree": true,
-      "image": "https://tram.camilleroux.com/og/montpellier.jpg?v=3",
-      "author": {
-        "@type": "Person",
-        "name": "Camille Roux",
-        "url": "https://www.camilleroux.com/"
-      },
-      "spatialCoverage": {
-        "@type": "Place",
-        "name": "Montpellier Méditerranée Métropole"
-      },
-      "isBasedOn": [
-        "https://castrio.me/nyc/",
-        "https://julesgrandin.github.io/paris-temps-transport/"
-      ],
-      "datePublished": "2026-10-04"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://tram.camilleroux.com/#site",
+          "name": "À portée de tram",
+          "url": "https://tram.camilleroux.com/",
+          "description": "Cartes des temps de trajet en tram et métro à Montpellier, Bordeaux, Lyon, Toulouse et Marseille : la ville se colore selon le temps pour y aller.",
+          "inLanguage": "fr",
+          "author": {
+            "@id": "https://www.camilleroux.com/#me"
+          }
+        },
+        {
+          "@type": "ItemList",
+          "name": "Cartes des temps de trajet par ville",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Montpellier à portée de tram",
+              "url": "https://tram.camilleroux.com/montpellier/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Bordeaux à portée de tram",
+              "url": "https://tram.camilleroux.com/bordeaux/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Lyon à portée de métro",
+              "url": "https://tram.camilleroux.com/lyon/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Toulouse à portée de métro",
+              "url": "https://tram.camilleroux.com/toulouse/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "name": "Marseille à portée de métro",
+              "url": "https://tram.camilleroux.com/marseille/"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "D'où viennent les temps de trajet ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Des horaires théoriques officiels de chaque réseau (TaM (Montpellier), TBM (Bordeaux), TCL (Lyon), Tisséo (Toulouse), RTM (Marseille)), publiés en open data au format GTFS. Ils correspondent à un jour de semaine ordinaire, entre 7 h et 20 h."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Les temps affichés sont-ils fiables ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Ce sont des moyennes « sur le papier » : marche jusqu'à l'arrêt, attente égale à la moitié de l'intervalle entre deux passages, durée prévue entre les arrêts et correspondances. Pas de temps réel ni de perturbations."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Le bus est-il pris en compte ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui, en option sur chaque carte. Par défaut, seuls le tram, le métro et les transports guidés sont affichés, pour montrer l'ossature du réseau."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Ma ville n'y est pas, pourquoi ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Il faut un réseau de tram ou de métro et des horaires publiés en open data. Les prochaines villes sont ajoutées au fur et à mesure : vous pouvez en proposer une sur GitHub."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Qui a réalisé ce site ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Camille Roux, développeur à Montpellier, à partir de l'idée du NYC Transit Time Cartogram d'Anthony Castrio, adapté à Paris par Jules Grandin. Le code est ouvert sur GitHub."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "@id": "https://www.camilleroux.com/#me",
+          "name": "Camille Roux",
+          "url": "https://www.camilleroux.com/",
+          "sameAs": [
+            "https://github.com/camilleroux"
+          ]
+        }
+      ]
     }
     </script>
-
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=c7a8731d" />
+    <script>
+      // Les liens partagés avant l'arrivée des autres villes (?from=…&to=…) ouvraient la carte de Montpellier.
+      if (/[?&](from|to)=/.test(location.search)) location.replace("./montpellier/" + location.search);
+    </script>
+    <link rel="stylesheet" href="./styles.css?v=2501a693" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "montpellier", "name": "Montpellier", "dataVersion": "e56913f0", "defaultFrom": {"lat": 43.60853, "lon": 3.8799, "label": "Place de la Comédie"}, "railNoun": "tram", "railStations": "stations de tram", "busNoun": "bus"}</script>
     <header class="topbar">
-      <nav class="topbar-inner">
-        <a class="brand" href="./">Montpellier à portée de tram</a>
-        <a class="topbar-link" href="https://www.camilleroux.com/" rel="noopener">camilleroux.com</a>
+      <nav class="topbar-inner" aria-label="Navigation principale">
+        <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> À portée de tram</a>
+        <div class="topbar-links">
+          <a class="topbar-link icon-link" href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener" aria-label="Code source sur GitHub"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+          <a class="topbar-link" href="https://www.camilleroux.com/" rel="author">camilleroux.com</a>
+        </div>
       </nav>
     </header>
 
     <main class="page">
       <section class="hero">
-        <nav class="city-switch" aria-label="Autres villes">
-          <span class="chip active" aria-current="page">📍 Montpellier</span>
-          <a class="chip" href="./bordeaux/">Bordeaux</a>
-          <a class="chip" href="./lyon/">Lyon</a>
-        </nav>
-        <h1>Montpellier à portée de&nbsp;tram</h1>
+        <span class="chip">🚋 5 villes françaises</span>
+        <h1>À portée de&nbsp;tram</h1>
         <p class="lede">
-          La ville redessinée par le temps qu'il faut pour y aller en tram. Choisissez un départ&nbsp;: la carte se
-          colore selon le temps de trajet vers chaque point de la Métropole.
+          Combien de temps faut-il vraiment pour traverser sa ville en tram ou en métro&nbsp;? Choisissez une ville, posez un
+          départ&nbsp;: toute la métropole se colore selon le temps de trajet, calculé à partir des horaires officiels.
         </p>
-        <form id="searchForm" class="search" role="search" autocomplete="off">
-          <label class="visually-hidden" for="searchInput">Adresse de départ</label>
-          <input id="searchInput" type="search" placeholder="Partir d'une adresse… (ex. Gare Saint-Roch)" />
-          <button type="submit" class="button primary">Partir d'ici</button>
-          <ul id="searchResults" class="search-results" hidden></ul>
-        </form>
       </section>
 
-      <section class="map-card" aria-label="Carte des temps de trajet">
-        <noscript>
-          <p class="noscript">
-            Cette carte interactive a besoin de JavaScript pour calculer les temps de trajet. Activez-le pour l'utiliser.
-          </p>
-        </noscript>
-        <div id="mapStage" class="map-stage">
-          <canvas id="mapCanvas"></canvas>
-
-          <aside id="tripPanel" class="trip-panel" aria-live="polite">
-            <p class="trip-eyebrow">Départ</p>
-            <p id="tripFrom" class="trip-from">Chargement du réseau…</p>
-            <div id="tripResult" class="trip-result" hidden>
-              <div class="trip-row">
-                <p class="trip-eyebrow">Arrivée</p>
-                <button id="removeTo" type="button" class="link-button">Retirer</button>
-              </div>
-              <p id="tripTo" class="trip-to"></p>
-              <p id="tripDuration" class="trip-duration"></p>
-              <ol id="tripSteps" class="trip-steps"></ol>
-              <div id="heatFrom" class="segmented" role="group" aria-label="Point d'où part la carte">
-                <span>Carte depuis</span>
-                <button type="button" data-source="from" aria-pressed="true">le départ</button>
-                <button type="button" data-source="to" aria-pressed="false">l'arrivée</button>
-              </div>
-            </div>
-            <p id="tripHint" class="trip-hint">Cliquez sur la carte pour poser une arrivée.</p>
-          </aside>
-
-          <div class="map-buttons">
-            <button id="zoomIn" type="button" class="icon-button" aria-label="Zoomer">+</button>
-            <button id="zoomOut" type="button" class="icon-button" aria-label="Dézoomer">−</button>
-            <button id="recenter" type="button" class="icon-button" aria-label="Recentrer la carte">⌖</button>
-            <button id="fullscreen" type="button" class="icon-button" aria-label="Plein écran">⤢</button>
-          </div>
-
-          <div class="legend" aria-hidden="true">
-            <div id="legendBar" class="legend-bar"></div>
-            <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
-          </div>
+      <section aria-labelledby="cities-title">
+        <h2 id="cities-title" class="visually-hidden">Choisir une ville</h2>
+        <div class="city-grid large">
+          <a class="city-card" href="./montpellier/">
+            <img src="./og/thumb-montpellier.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h2>Montpellier à portée de tram</h2>
+              <span>88&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de la Comédie) · réseau TaM</span>
+            </span>
+          </a>
+          <a class="city-card" href="./bordeaux/">
+            <img src="./og/thumb-bordeaux.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h2>Bordeaux à portée de tram</h2>
+              <span>71&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place des Quinconces) · réseau TBM</span>
+            </span>
+          </a>
+          <a class="city-card" href="./lyon/">
+            <img src="./og/thumb-lyon.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h2>Lyon à portée de métro</h2>
+              <span>69&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Place Bellecour) · réseau TCL</span>
+            </span>
+          </a>
+          <a class="city-card" href="./toulouse/">
+            <img src="./og/thumb-toulouse.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h2>Toulouse à portée de métro</h2>
+              <span>77&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Place du Capitole) · réseau Tisséo</span>
+            </span>
+          </a>
+          <a class="city-card" href="./marseille/">
+            <img src="./og/thumb-marseille.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h2>Marseille à portée de métro</h2>
+              <span>98&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Vieux-Port) · réseau RTM</span>
+            </span>
+          </a>
         </div>
-
-        <div class="controls">
-          <div class="control-group">
-            <span class="control-label">Réseau</span>
-            <label class="pill-toggle"><input type="checkbox" checked disabled /> Tram</label>
-            <label class="pill-toggle"><input id="busToggle" type="checkbox" /> Bus</label>
-          </div>
-          <div id="isoToggles" class="control-group">
-            <span class="control-label">Isochrones</span>
-            <label class="pill-toggle"><input type="checkbox" value="15" checked /> 15 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="30" checked /> 30 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="45" /> 45 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="60" /> 60 min</label>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="maxRange">Échelle</label>
-            <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
-            <output id="maxValue" for="maxRange">45 min</output>
-          </div>
-          <div class="control-group actions">
-            <button id="locate" type="button" class="button">Ma position</button>
-            <button id="swap" type="button" class="button">Inverser</button>
-            <button id="share" type="button" class="button primary">Partager</button>
-          </div>
-        </div>
-        <p id="reach" class="reach"></p>
       </section>
 
-      <section class="notes">
-        <h2>Comment c'est calculé</h2>
-        <p>
-          Les temps viennent des horaires théoriques du réseau TaM pour un jour de semaine ordinaire, entre 7&nbsp;h et
-          20&nbsp;h&nbsp;: durée prévue entre chaque arrêt, attente égale à la moitié de l'intervalle entre deux passages,
-          marche à pied jusqu'à l'arrêt et pénalité de correspondance. Bus en option. Pas de temps réel ni de
-          perturbations&nbsp;: c'est une carte de la ville «&nbsp;sur le papier&nbsp;».
-        </p>
-        <p>
-          Glissez le marqueur vert pour changer de départ, cliquez n'importe où pour poser une arrivée (glissez-la pour
-          centrer la carte sur elle, double-cliquez pour la retirer), faites glisser la carte pour la déplacer et utilisez la
-          molette pour zoomer.
-        </p>
-        <h2>Crédits</h2>
-        <p>
-          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
-          adapté ensuite à Paris par Jules Grandin
-          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>). Cette version
-          pour Montpellier est réalisée par <a href="https://www.camilleroux.com/">Camille Roux</a>.
-        </p>
-        <p>
-          Données&nbsp;: <a href="https://transport.data.gouv.fr/datasets/reseau-urbain-tam">GTFS TaM</a> (Montpellier Méditerranée Métropole), tracés des lignes, eau et parcs ©
-          <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
-          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
-          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
-        </p>
+      <section class="section" aria-labelledby="how-title">
+        <h2 id="how-title">Comment ça marche</h2>
+        <ol class="steps large">
+          <li><strong>1. Choisissez un départ</strong> Une adresse, une station ou votre position : la carte se colore autour.</li>
+          <li><strong>2. Cliquez une arrivée</strong> Vous obtenez la durée et l'itinéraire : ligne à prendre, correspondances, marche.</li>
+          <li><strong>3. Comparez</strong> Les courbes 15 et 30 minutes montrent ce qui est vraiment proche, en tram, en métro ou en bus.</li>
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions fréquentes</h2>
+        <details class="faq"><summary>D&#x27;où viennent les temps de trajet ?</summary><p>Des horaires théoriques officiels de chaque réseau (TaM (Montpellier), TBM (Bordeaux), TCL (Lyon), Tisséo (Toulouse), RTM (Marseille)), publiés en open data au format GTFS. Ils correspondent à un jour de semaine ordinaire, entre 7 h et 20 h.</p></details>
+        <details class="faq"><summary>Les temps affichés sont-ils fiables ?</summary><p>Ce sont des moyennes « sur le papier » : marche jusqu&#x27;à l&#x27;arrêt, attente égale à la moitié de l&#x27;intervalle entre deux passages, durée prévue entre les arrêts et correspondances. Pas de temps réel ni de perturbations.</p></details>
+        <details class="faq"><summary>Le bus est-il pris en compte ?</summary><p>Oui, en option sur chaque carte. Par défaut, seuls le tram, le métro et les transports guidés sont affichés, pour montrer l&#x27;ossature du réseau.</p></details>
+        <details class="faq"><summary>Ma ville n&#x27;y est pas, pourquoi ?</summary><p>Il faut un réseau de tram ou de métro et des horaires publiés en open data. Les prochaines villes sont ajoutées au fur et à mesure : vous pouvez en proposer une sur GitHub.</p></details>
+        <details class="faq"><summary>Qui a réalisé ce site ?</summary><p>Camille Roux, développeur à Montpellier, à partir de l&#x27;idée du NYC Transit Time Cartogram d&#x27;Anthony Castrio, adapté à Paris par Jules Grandin. Le code est ouvert sur GitHub.</p></details>
       </section>
     </main>
 
-    <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=288c889a"></script>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-author">
+          Un projet de <a href="https://www.camilleroux.com/" rel="author">Camille Roux</a>, développeur et co-fondateur de Human Coders,
+          à Montpellier. Retrouvez ses autres projets et sa <a href="https://www.camilleroux.com/veille/">veille tech hebdomadaire</a>
+          sur camilleroux.com.
+        </p>
+        <p class="footer-links">Villes&nbsp;: <a href="./montpellier/">Montpellier</a> · <a href="./bordeaux/">Bordeaux</a> · <a href="./lyon/">Lyon</a> · <a href="./toulouse/">Toulouse</a> · <a href="./marseille/">Marseille</a></p>
+        <p class="footer-links">
+          <a href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener">Code source sur GitHub</a> ·
+          <a href="https://github.com/camilleroux/montpellier-temps-transport/issues" rel="noopener">Proposer une ville ou signaler une erreur</a>
+        </p>
+        <p class="footer-credits">
+          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
+          adapté ensuite à Paris par Jules Grandin
+          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>).
+          Horaires&nbsp;: GTFS des réseaux TaM (Montpellier), TBM (Bordeaux), TCL (Lyon), Tisséo (Toulouse), RTM (Marseille). Fond de carte © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
+          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
+          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
+        </p>
+      </div>
+    </footer>
     <!-- Cloudflare Web Analytics (sans cookie). "spa": false : les mises à jour de l'URL ne comptent pas comme des pages vues. -->
     <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "1904c17ed0624c0cab4d69ea1bacc5e7", "spa": false}'></script>
   </body>

@@ -1,6 +1,6 @@
 {
   "city": "Montpellier",
-  "builtAt": "2026-10-04T21:53:17+00:00",
+  "builtAt": "2026-10-04T21:59:51+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -52,5 +52,51 @@
     },
     "stops": 616,
     "railStations": 112
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "1",
+        "mode": "tram",
+        "color": "#005CA9",
+        "stations": 31,
+        "headway": 4.5
+      },
+      {
+        "name": "2",
+        "mode": "tram",
+        "color": "#EF7D00",
+        "stations": 28,
+        "headway": 6.5
+      },
+      {
+        "name": "3",
+        "mode": "tram",
+        "color": "#C8D400",
+        "stations": 29,
+        "headway": 6.9
+      },
+      {
+        "name": "4",
+        "mode": "tram",
+        "color": "#4B2A0E",
+        "stations": 18,
+        "headway": 9.6
+      },
+      {
+        "name": "5",
+        "mode": "tram",
+        "color": "#287431",
+        "stations": 27,
+        "headway": 9.0
+      }
+    ],
+    "railStations": 112,
+    "busLines": 34,
+    "center": "Place de la Comédie",
+    "within15": 32,
+    "within30": 88,
+    "farthestStation": "Clapiers",
+    "farthestMinutes": 37
   }
 }

@@ -1,6 +1,6 @@
 {
   "city": "Lyon",
-  "builtAt": "2026-10-04T21:53:29+00:00",
+  "builtAt": "2026-10-04T22:00:03+00:00",
   "referenceDate": "2026-10-06",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -60,11 +60,113 @@
     "lines": {
       "bus": 179,
       "tram": 7,
-      "funicular": 2,
       "metro": 4,
-      "ferry": 1
+      "ferry": 1,
+      "funicular": 2
     },
     "stops": 2684,
     "railStations": 147
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "metro",
+        "color": "#E8308A",
+        "stations": 14,
+        "headway": 3.4
+      },
+      {
+        "name": "B",
+        "mode": "metro",
+        "color": "#0075BF",
+        "stations": 12,
+        "headway": 2.4
+      },
+      {
+        "name": "C",
+        "mode": "metro",
+        "color": "#EC6608",
+        "stations": 5,
+        "headway": 6.4
+      },
+      {
+        "name": "D",
+        "mode": "metro",
+        "color": "#009E3D",
+        "stations": 15,
+        "headway": 2.2
+      },
+      {
+        "name": "T1",
+        "mode": "tram",
+        "color": "#004F9F",
+        "stations": 27,
+        "headway": 5.9
+      },
+      {
+        "name": "T2",
+        "mode": "tram",
+        "color": "#6BA230",
+        "stations": 32,
+        "headway": 5.6
+      },
+      {
+        "name": "T3",
+        "mode": "tram",
+        "color": "#00A3A6",
+        "stations": 13,
+        "headway": 6.2
+      },
+      {
+        "name": "T4",
+        "mode": "tram",
+        "color": "#662483",
+        "stations": 32,
+        "headway": 6.5
+      },
+      {
+        "name": "T5",
+        "mode": "tram",
+        "color": "#EC6608",
+        "stations": 12,
+        "headway": 14.2
+      },
+      {
+        "name": "T6",
+        "mode": "tram",
+        "color": "#F191A3",
+        "stations": 24,
+        "headway": 9.9
+      },
+      {
+        "name": "T7",
+        "mode": "tram",
+        "color": "#992358",
+        "stations": 5,
+        "headway": 16.1
+      },
+      {
+        "name": "F1",
+        "mode": "funicular",
+        "color": "#992358",
+        "stations": 3,
+        "headway": 8.0
+      },
+      {
+        "name": "F2",
+        "mode": "funicular",
+        "color": "#006F9E",
+        "stations": 2,
+        "headway": 5.2
+      }
+    ],
+    "railStations": 147,
+    "busLines": 180,
+    "center": "Place Bellecour",
+    "within15": 16,
+    "within30": 69,
+    "farthestStation": "Saint-Priest Bel Air",
+    "farthestMinutes": 51
   }
 }

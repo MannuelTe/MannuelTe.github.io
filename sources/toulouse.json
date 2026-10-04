@@ -1,0 +1,90 @@
+{
+  "city": "Toulouse",
+  "builtAt": "2026-10-04T22:00:07+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "Tisséo",
+    "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tisseo",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/64318177-f5b5-4144-a6be-2d0f22d26c77",
+    "how": "download",
+    "fetchedAt": "2026-10-04T21:55:10+00:00",
+    "bytes": 13515953,
+    "sha256": "b33f6f9c8c3392d1a99a49fdbccec98d0df13a29e25caa78e2b0917f08edbaee",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-10-02",
+      "2026-11-05"
+    ]
+  },
+  "communes": {
+    "metropole": "Toulouse Métropole",
+    "epci": "243100518",
+    "source": "https://geo.api.gouv.fr/epcis/243100518/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T21:55:10+00:00",
+    "bytes": 241363,
+    "sha256": "8dd1526541969566524dd09786bdadf552738f2edeb784330f8b33374b6df1e1"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](43.47,1.18,43.77,1.6);way[\"natural\"=\"water\"](43.47,1.18,43.77,1.6);relation[\"leisure\"=\"park\"](43.55,1.38,43.66,1.5);way[\"leisure\"=\"park\"](43.55,1.38,43.66,1.5););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T21:55:17+00:00",
+      "bytes": 4706987,
+      "sha256": "a268fe65241062ea8180089e99dac6762e5a8911dbca679adf85327fccc5f02a"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 119,
+      "metro": 2,
+      "cable": 1,
+      "tram": 1
+    },
+    "stops": 1834,
+    "railStations": 62
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "metro",
+        "color": "#db001b",
+        "stations": 18,
+        "headway": 2.6
+      },
+      {
+        "name": "B",
+        "mode": "metro",
+        "color": "#ffdd00",
+        "stations": 20,
+        "headway": 2.0
+      },
+      {
+        "name": "T1",
+        "mode": "tram",
+        "color": "#004687",
+        "stations": 25,
+        "headway": 5.1
+      },
+      {
+        "name": "TELEO",
+        "mode": "cable",
+        "color": "#dc006b",
+        "stations": 3,
+        "headway": 2.0
+      }
+    ],
+    "railStations": 62,
+    "busLines": 119,
+    "center": "Place du Capitole",
+    "within15": 27,
+    "within30": 77,
+    "farthestStation": "MEETT",
+    "farthestMinutes": 51
+  }
+}

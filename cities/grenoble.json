@@ -1,44 +1,19 @@
 {
   "slug": "grenoble",
-  "path": "grenoble/",
   "order": 10,
   "name": "Grenoble",
-  "title": "Grenoble à portée de tram",
-  "titleSuffix": "Temps de trajet en tram M réso",
-  "railLabel": "Tram",
-  "railNoun": "tram",
-  "railStations": "stations de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus",
   "network": "M réso",
   "metropole": "Grenoble-Alpes-Métropole",
-  "area": "de la Métropole",
   "epci": "200040715",
   "communes": "served",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/b6ec7ba4-09bc-46df-b9a1-79a2c2668cf2",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tag",
-  "lat0": 45.19,
-  "osmBbox": [
-    44.97,
-    5.4,
-    45.41,
-    6.04
-  ],
-  "parksBbox": [
-    45.13,
-    5.64,
-    45.25,
-    5.8
-  ],
-  "railGeometry": "gtfs",
+  "gtfsLicence": "odbl",
   "defaultFrom": {
     "lat": 45.18881,
     "lon": 5.72457,
     "label": "Place Victor-Hugo"
   },
   "searchExample": "Gare de Grenoble",
-  "ogImage": "og/grenoble.jpg?v=1",
-  "ogAlt": "Carte de Grenoble colorée selon le temps de trajet en tram depuis place Victor-Hugo, avec les isochrones 15 et 30 minutes.",
-  "published": "2026-10-05",
-  "gtfsLicence": "odbl"
+  "published": "2026-10-05"
 }

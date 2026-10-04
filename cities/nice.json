@@ -1,50 +1,25 @@
 {
   "slug": "nice",
-  "path": "nice/",
   "order": 11,
   "name": "Nice",
-  "title": "Nice à portée de tram",
-  "titleSuffix": "Temps de trajet en tram Lignes d'Azur",
-  "railLabel": "Tram",
-  "railNoun": "tram",
-  "railStations": "stations de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus",
   "network": "Lignes d'Azur",
   "metropole": "Métropole Nice Côte d'Azur",
-  "area": "de la Métropole",
   "epci": "200030195",
   "communes": "served",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/f5678ab2-c863-4b48-ba1f-9021c7d97634",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/donnees-statiques-et-dynamiques-du-reseau-de-transport-lignes-dazur",
-  "lat0": 43.7,
-  "osmBbox": [
-    43.48,
-    6.95,
-    43.92,
-    7.59
-  ],
-  "parksBbox": [
-    43.64,
-    7.19,
-    43.76,
-    7.35
-  ],
-  "railGeometry": "gtfs",
+  "gtfsLicence": "lo",
   "defaultFrom": {
     "lat": 43.6971,
     "lon": 7.27024,
     "label": "Place Masséna"
   },
   "searchExample": "Gare Nice-Ville",
-  "ogImage": "og/nice.jpg?v=1",
-  "ogAlt": "Carte de Nice colorée selon le temps de trajet en tram depuis place Masséna, avec les isochrones 15 et 30 minutes.",
   "published": "2026-10-05",
   "seaDepartments": [
     "06"
   ],
   "contextOsmRelations": [
     1124039
-  ],
-  "gtfsLicence": "lo"
+  ]
 }

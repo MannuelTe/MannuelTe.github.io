@@ -1,21 +1,22 @@
 {
   "slug": "toulouse",
-  "path": "toulouse/",
   "order": 4,
   "name": "Toulouse",
-  "title": "Toulouse à portée de métro",
-  "titleSuffix": "Temps de trajet en métro et tram Tisséo",
-  "railLabel": "Métro, tram et Téléo",
-  "railNoun": "métro et tram",
-  "railStations": "stations de métro et de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus",
+  "kind": "metro+tram",
   "network": "Tisséo",
   "metropole": "Toulouse Métropole",
   "epci": "243100518",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/64318177-f5b5-4144-a6be-2d0f22d26c77",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tisseo",
-  "lat0": 43.6,
+  "gtfsLicence": "odbl",
+  "defaultFrom": {
+    "lat": 43.6045,
+    "lon": 1.444,
+    "label": "Place du Capitole"
+  },
+  "searchExample": "Gare Matabiau",
+  "published": "2026-10-05",
+  "railLabel": "Métro, tram et Téléo",
   "osmBbox": [
     43.47,
     1.18,
@@ -28,19 +29,9 @@
     43.66,
     1.5
   ],
-  "railGeometry": "gtfs",
-  "defaultFrom": {
-    "lat": 43.6045,
-    "lon": 1.444,
-    "label": "Place du Capitole"
-  },
-  "searchExample": "Gare Matabiau",
-  "ogImage": "og/toulouse.jpg?v=1",
   "ogAlt": "Carte de Toulouse colorée selon le temps de trajet en métro et tram depuis la place du Capitole, avec les isochrones 15 et 30 minutes.",
   "ogTrip": {
     "lat": 43.5615,
     "lon": 1.4637
-  },
-  "published": "2026-10-05",
-  "gtfsLicence": "odbl"
+  }
 }

@@ -1,26 +1,28 @@
 {
   "slug": "lyon",
-  "path": "lyon/",
   "order": 3,
   "name": "Lyon",
-  "title": "Lyon à portée de métro",
-  "titleSuffix": "Temps de trajet en métro et tram TCL",
-  "railLabel": "Métro, tram et funiculaire",
-  "railNoun": "métro et tram",
-  "railStations": "stations de métro et de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus et navette fluviale",
+  "kind": "metro+tram",
   "network": "TCL",
   "metropole": "Métropole de Lyon",
   "epci": "200046977",
   "gtfsUrl": "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP",
   "gtfsManual": "data.grandlyon.com, compte requis",
   "gtfsDataset": "https://data.grandlyon.com/portail/fr/jeux-de-donnees/horaires-theoriques-du-reseau-transports-en-commun-lyonnais/info",
+  "gtfsLicence": "mobilites",
   "excludeRoutes": [
     "RX",
     "TS"
   ],
-  "lat0": 45.76,
+  "defaultFrom": {
+    "lat": 45.7578,
+    "lon": 4.832,
+    "label": "Place Bellecour"
+  },
+  "searchExample": "Gare Part-Dieu",
+  "published": "2026-10-05",
+  "railLabel": "Métro, tram et funiculaire",
+  "busLabel": "Bus et navette fluviale",
   "osmBbox": [
     45.55,
     4.66,
@@ -40,18 +42,9 @@
     45.86,
     5.06
   ],
-  "defaultFrom": {
-    "lat": 45.7578,
-    "lon": 4.832,
-    "label": "Place Bellecour"
-  },
-  "searchExample": "Gare Part-Dieu",
-  "ogImage": "og/lyon.jpg?v=1",
   "ogAlt": "Carte de Lyon colorée selon le temps de trajet en métro et tram depuis la place Bellecour, avec les isochrones 15 et 30 minutes.",
   "ogTrip": {
     "lat": 45.784,
     "lon": 4.881
-  },
-  "published": "2026-10-05",
-  "gtfsLicence": "mobilites"
+  }
 }

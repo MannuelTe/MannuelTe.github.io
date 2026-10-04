@@ -20,7 +20,6 @@ const DEFAULT_MAX = 45;
 const ISOCHRONE_OPTIONS = [15, 30, 45, 60];
 const DEFAULT_ISOCHRONES = [15, 30];
 const REACH_MINUTES = 30;
-const SEED_STATIONS = 8;
 // Au doigt, on vise moins précisément et un tap bouge souvent de quelques pixels.
 const MARKER_HIT_RADIUS = { mouse: 18, touch: 30 };
 const CLICK_SLOP = { mouse: 5, touch: 12 };
@@ -222,7 +221,7 @@ function prepareGraph(data) {
     station: Int32Array.from(data.routeStates, (state) => state.stationIndex),
     wait: Float32Array.from(data.routeStates, (state) => state.wait),
     // Accès au quai (escaliers, couloirs du métro), compté à l'entrée comme à la sortie.
-    access: Float32Array.from(data.routeStates, (state) => state.access ?? data.meta.stationAccessPenalty ?? 0),
+    access: Float32Array.from(data.routeStates, (state) => state.access),
     route: data.routeStates.map((state) => state.routeId),
     isBus: Uint8Array.from(data.routeStates, (state) => (data.routeInfo[state.routeId]?.rail ? 0 : 1)),
   };
@@ -248,7 +247,7 @@ function solveFrom(point) {
     .map((station, index) => ({ index, walk: walkMinutes(hypot(point, station.point)) }))
     .filter((seed) => stationUsable(seed.index))
     .sort((a, b) => a.walk - b.walk)
-    .slice(0, SEED_STATIONS);
+    .slice(0, data.meta.originStationCount);
 
   for (const seed of seeds) {
     for (const state of data.stationStates[seed.index]) {

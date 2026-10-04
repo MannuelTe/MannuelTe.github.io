@@ -19,6 +19,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
+from cities import load_city
+
 ROOT = Path(__file__).resolve().parent
 
 LAND_PAD_METERS = 1200.0
@@ -27,11 +29,9 @@ VIEW_PAD_METERS = 900.0
 GRID_CELL_METERS = 200.0
 # Walking speed (4.5 km/h), applied to straight-line distances: tram lines run along straight avenues.
 WALK_METERS_PER_MINUTE = 75.0
-# Tram and bus stops are at street level: no corridors or escalators.
-STATION_ACCESS_PENALTY = 0.0
 CELL_NEAREST_STATIONS = 5
 CELL_NEAREST_RAIL_STATIONS = 3
-ORIGIN_NEAREST_STATIONS = 8  # same as SEED_STATIONS in site/app.js
+ORIGIN_NEAREST_STATIONS = 8  # stations reachable on foot from a departure point (also read by site/app.js)
 DEFAULT_BOARD_WAIT = 5.0
 TRANSFER_WALK = 1.5
 INTER_COMPLEX_WALK_RADIUS = 450.0
@@ -865,7 +865,7 @@ def main() -> None:
     global LAT0
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    city = load_json(ROOT / "cities" / f"{sys.argv[1]}.json")
+    city = load_city(sys.argv[1])
     LAT0 = city["lat0"]
     data_dir = ROOT / "data" / city["slug"]
     output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
@@ -915,10 +915,7 @@ def main() -> None:
             "gridCols": cols,
             "gridRows": rows,
             "walkMetersPerMinute": WALK_METERS_PER_MINUTE,
-            "stationAccessPenalty": STATION_ACCESS_PENALTY,
             "originStationCount": ORIGIN_NEAREST_STATIONS,
-            "cellNearestStations": CELL_NEAREST_STATIONS,
-            "defaultBoardWait": DEFAULT_BOARD_WAIT,
             "sea": bool(context),
         },
         "context": [serialize_polygon(polygon) for polygon in context],

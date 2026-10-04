@@ -1,44 +1,20 @@
 {
   "slug": "rennes",
-  "path": "rennes/",
   "order": 9,
   "name": "Rennes",
-  "title": "Rennes à portée de métro",
-  "titleSuffix": "Temps de trajet en métro STAR",
-  "railLabel": "Métro",
-  "railNoun": "métro",
-  "railStations": "stations de métro",
-  "busNoun": "bus",
-  "busLabel": "Bus",
+  "kind": "metro",
   "network": "STAR",
   "metropole": "Rennes Métropole",
-  "area": "de la Métropole",
   "epci": "243500139",
   "communes": "served",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/0644f537-575e-4cce-9570-06165d6f3b27",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-star",
-  "lat0": 48.11,
-  "osmBbox": [
-    47.89,
-    -2.0,
-    48.33,
-    -1.36
-  ],
-  "parksBbox": [
-    48.05,
-    -1.76,
-    48.17,
-    -1.6
-  ],
-  "railGeometry": "gtfs",
+  "gtfsLicence": "odbl",
   "defaultFrom": {
     "lat": 48.10965,
     "lon": -1.67999,
     "label": "Place de la République"
   },
   "searchExample": "Gare de Rennes",
-  "ogImage": "og/rennes.jpg?v=1",
-  "ogAlt": "Carte de Rennes colorée selon le temps de trajet en métro depuis place de la République, avec les isochrones 15 et 30 minutes.",
-  "published": "2026-10-05",
-  "gtfsLicence": "odbl"
+  "published": "2026-10-05"
 }

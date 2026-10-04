@@ -1,18 +1,10 @@
 {
   "slug": "marseille",
-  "path": "marseille/",
   "order": 5,
   "name": "Marseille",
-  "title": "Marseille à portée de métro",
-  "titleSuffix": "Temps de trajet en métro et tram RTM",
-  "railLabel": "Métro et tram",
-  "railNoun": "métro et tram",
-  "railStations": "stations de métro et de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus et navette maritime",
+  "kind": "metro+tram",
   "network": "RTM",
   "metropole": "Métropole Aix-Marseille-Provence",
-  "area": "de la ville",
   "epci": "200054807",
   "communes": [
     "Marseille",
@@ -22,7 +14,16 @@
   ],
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/7eef6ec9-9ebb-44f2-becb-2efc522522d6",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseaux-urbains-de-la-metropole-aix-marseille-provence",
-  "lat0": 43.3,
+  "gtfsLicence": "lo",
+  "defaultFrom": {
+    "lat": 43.2951,
+    "lon": 5.374,
+    "label": "Vieux-Port"
+  },
+  "searchExample": "Gare Saint-Charles",
+  "published": "2026-10-05",
+  "busLabel": "Bus et navette maritime",
+  "area": "de la ville",
   "osmBbox": [
     43.15,
     5.22,
@@ -35,23 +36,13 @@
     43.35,
     5.47
   ],
-  "railGeometry": "gtfs",
-  "defaultFrom": {
-    "lat": 43.2951,
-    "lon": 5.374,
-    "label": "Vieux-Port"
-  },
-  "searchExample": "Gare Saint-Charles",
-  "ogImage": "og/marseille.jpg?v=1",
   "ogAlt": "Carte de Marseille colorée selon le temps de trajet en métro et tram depuis le Vieux-Port, avec les isochrones 15 et 30 minutes.",
   "ogTrip": {
     "lat": 43.2698,
     "lon": 5.3958
   },
-  "published": "2026-10-05",
   "seaDepartments": [
     "13",
     "83"
-  ],
-  "gtfsLicence": "lo"
+  ]
 }

@@ -16,15 +16,17 @@ tram + bus, déplacement et zoom de la carte, lien de partage.
 ## Lancer
 
 ```bash
-python3 fetch_data.py montpellier   # télécharge les sources dans data/montpellier/ (GTFS, communes, OSM)
-python3 build_data.py montpellier   # calcule site/data/montpellier.json
-python3 build_pages.py              # génère l'accueil, la page de chaque ville, 404, sitemap.xml et robots.txt
-python3 tools/render_og.py all      # images d'aperçu et miniatures (Chrome et ImageMagick requis)
-python3 build_pages.py              # une seconde fois : les pages référencent l'empreinte des images
+python3 build.py --fetch            # télécharge les sources, calcule chaque ville, génère pages et images d'aperçu
+python3 build.py lyon nice --no-og  # seulement ces villes, sans régénérer les images
 python3 -m http.server 8000 --directory site
 ```
 
-Puis ouvrir [http://localhost:8000](http://localhost:8000).
+Puis ouvrir [http://localhost:8000](http://localhost:8000). `build.py` affiche à la fin un tableau de contrôle par ville
+(jour de référence, poids, part du réseau à moins de 30 min, station la plus éloignée, fréquences).
+
+Étapes séparées si besoin : `fetch_data.py <ville>`, `build_data.py <ville>`, `build_pages.py`,
+`tools/render_og.py <ville>|home|all` (Chrome et ImageMagick requis). `node tools/check_trips.mjs <ville>` sonde les
+trajets depuis le centre jusqu'aux terminus et aux gares, et signale les vitesses anormales.
 
 Les sources brutes (`data/<ville>/` : GTFS, communes, OSM) ne sont pas versionnées : elles restent en local et
 `fetch_data.py <ville>` les retélécharge. Seules les données calculées pour le site (`site/data/<ville>.json`) le sont.
@@ -51,12 +53,14 @@ les nouvelles villes (`"communes": "served"`), la carte se limite aux communes r
 
 ## Ajouter une ville
 
-1. Créer `cities/<ville>.json` en partant d'une ville existante : URL du GTFS (sur
-   [transport.data.gouv.fr](https://transport.data.gouv.fr/)), code SIREN de l'intercommunalité (`epci`), zones OSM,
-   départ par défaut, libellés. `railGeometry` vaut `gtfs` si le GTFS contient `shapes.txt`, sinon `osm`.
-2. `python3 fetch_data.py <ville>` puis `python3 build_data.py <ville>` et `python3 build_pages.py`.
-3. Vérifier des trajets connus et le jour de référence affiché par `build_data.py`.
-4. `python3 tools/render_og.py <ville>` génère l'image d'aperçu (Chrome et ImageMagick requis).
+1. Créer `cities/<ville>.json` avec l'essentiel : `slug`, `order`, `name`, `kind` (`tram` par défaut, `metro` ou
+   `metro+tram`), `network`, `metropole`, `epci` (SIREN de l'intercommunalité), `gtfsUrl`, `gtfsDataset`, `gtfsLicence`
+   (`lo`, `odbl` ou `mobilites`), `defaultFrom` (centre de la carte), `searchExample`, `published`.
+   `cities.py` déduit le reste (titres, libellés, zones OSM…) ; chaque valeur peut être surchargée dans le JSON.
+2. Options utiles : `"communes": "served"` (seulement les communes desservies), `routeModes` (corriger le mode d'une
+   ligne), `modeAccess` (temps d'accès au quai), `agencies` (filtrer un GTFS régional), `railGeometry: "osm"` et
+   `osmRefAliases` (GTFS sans tracés), `seaDepartments` / `contextOsmRelations` (villes côtières : la mer en bleu).
+3. `python3 build.py <ville> --fetch`, puis vérifier le tableau de contrôle et `node tools/check_trips.mjs <ville>`.
 
 ## Données
 

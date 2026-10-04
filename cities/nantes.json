@@ -1,47 +1,26 @@
 {
   "slug": "nantes",
-  "path": "nantes/",
   "order": 7,
   "name": "Nantes",
-  "title": "Nantes à portée de tram",
-  "titleSuffix": "Temps de trajet en tram Naolib",
-  "railLabel": "Tram et Busway",
-  "railNoun": "tram",
-  "railStations": "stations de tram et de Busway",
-  "busNoun": "bus et Navibus",
-  "busLabel": "Bus et Navibus",
   "network": "Naolib",
   "metropole": "Nantes Métropole",
-  "area": "de la Métropole",
   "epci": "244400404",
   "communes": "served",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/65bdd7e4-a8e7-4a54-893a-808e71c34d68",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib",
-  "lat0": 47.21,
-  "osmBbox": [
-    46.99,
-    -1.88,
-    47.43,
-    -1.24
-  ],
-  "parksBbox": [
-    47.15,
-    -1.64,
-    47.27,
-    -1.48
-  ],
-  "railGeometry": "gtfs",
+  "gtfsLicence": "lo",
+  "routeModes": {
+    "4": "busway"
+  },
   "defaultFrom": {
     "lat": 47.21348,
     "lon": -1.55796,
     "label": "Place du Commerce"
   },
   "searchExample": "Gare de Nantes",
-  "ogImage": "og/nantes.jpg?v=1",
-  "ogAlt": "Carte de Nantes colorée selon le temps de trajet en tram depuis place du Commerce, avec les isochrones 15 et 30 minutes.",
   "published": "2026-10-05",
-  "routeModes": {
-    "4": "busway"
-  },
-  "gtfsLicence": "lo"
+  "railLabel": "Tram et Busway",
+  "railStations": "stations de tram et de Busway",
+  "busNoun": "bus et Navibus",
+  "busLabel": "Bus et Navibus"
 }

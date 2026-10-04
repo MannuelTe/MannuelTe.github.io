@@ -1,21 +1,22 @@
 {
   "slug": "bordeaux",
-  "path": "bordeaux/",
   "order": 2,
   "name": "Bordeaux",
-  "title": "Bordeaux à portée de tram",
-  "titleSuffix": "Temps de trajet en tram TBM",
-  "railLabel": "Tram",
-  "railNoun": "tram",
-  "railStations": "stations de tram",
-  "busNoun": "bus et BAT³",
-  "busLabel": "Bus et BAT³",
   "network": "TBM",
   "metropole": "Bordeaux Métropole",
   "epci": "243300316",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/10b87ffe-e6bb-494d-93df-bb6019e223d9",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-et-scolaire-tbm",
-  "lat0": 44.84,
+  "gtfsLicence": "lo",
+  "defaultFrom": {
+    "lat": 44.8447,
+    "lon": -0.5735,
+    "label": "Place des Quinconces"
+  },
+  "searchExample": "Gare Saint-Jean",
+  "published": "2026-10-05",
+  "busNoun": "bus et BAT³",
+  "busLabel": "Bus et BAT³",
   "osmBbox": [
     44.68,
     -0.88,
@@ -28,19 +29,9 @@
     44.9,
     -0.5
   ],
-  "railGeometry": "gtfs",
-  "defaultFrom": {
-    "lat": 44.8447,
-    "lon": -0.5735,
-    "label": "Place des Quinconces"
-  },
-  "searchExample": "Gare Saint-Jean",
-  "ogImage": "og/bordeaux.jpg?v=1",
   "ogAlt": "Carte de Bordeaux colorée selon le temps de trajet en tram depuis la place des Quinconces, avec les isochrones 15 et 30 minutes.",
   "ogTrip": {
     "lat": 44.8256,
     "lon": -0.5562
-  },
-  "published": "2026-10-05",
-  "gtfsLicence": "lo"
+  }
 }

@@ -1,50 +1,20 @@
 {
   "slug": "strasbourg",
-  "path": "strasbourg/",
   "order": 8,
   "name": "Strasbourg",
-  "title": "Strasbourg à portée de tram",
-  "titleSuffix": "Temps de trajet en tram CTS",
-  "railLabel": "Tram",
-  "railNoun": "tram",
-  "railStations": "stations de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus",
   "network": "CTS",
   "metropole": "Eurométropole de Strasbourg",
-  "area": "de la Métropole",
   "epci": "246700488",
   "communes": "served",
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/eeea9e52-4f8a-459e-aef5-a093a3b05356",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/donnees-theoriques-gtfs-et-temps-reel-siri-lite-du-reseau-cts",
-  "lat0": 48.58,
-  "osmBbox": [
-    48.36,
-    7.43,
-    48.8,
-    8.07
-  ],
-  "parksBbox": [
-    48.52,
-    7.67,
-    48.64,
-    7.83
-  ],
-  "railGeometry": "osm",
+  "gtfsLicence": "lo",
   "defaultFrom": {
     "lat": 48.58329,
     "lon": 7.74551,
     "label": "Place Kléber"
   },
   "searchExample": "Gare de Strasbourg",
-  "ogImage": "og/strasbourg.jpg?v=1",
-  "ogAlt": "Carte de Strasbourg colorée selon le temps de trajet en tram depuis place Kléber, avec les isochrones 15 et 30 minutes.",
   "published": "2026-10-05",
-  "osmRailBbox": [
-    48.36,
-    7.43,
-    48.8,
-    8.07
-  ],
-  "gtfsLicence": "lo"
+  "railGeometry": "osm"
 }

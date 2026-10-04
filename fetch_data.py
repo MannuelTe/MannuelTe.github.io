@@ -15,16 +15,14 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from cities import load_city
+
 ROOT = Path(__file__).resolve().parent
 USER_AGENT = "tram.camilleroux.com/0.2 (build script)"
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
 ]
-
-
-def load_city(slug: str) -> dict:
-    return json.loads((ROOT / "cities" / f"{slug}.json").read_text(encoding="utf-8"))
 
 
 def bbox(values) -> str:

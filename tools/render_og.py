@@ -18,6 +18,8 @@ import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from cities import load_cities  # noqa: E402
 SITE = ROOT / "site"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
@@ -97,9 +99,7 @@ def render_home(cities: list[dict]) -> None:
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    cities = sorted(
-        (json.loads(path.read_text(encoding="utf-8")) for path in (ROOT / "cities").glob("*.json")), key=lambda city: city["order"]
-    )
+    cities = load_cities()
     targets = [c["slug"] for c in cities] + ["home"] if sys.argv[1] == "all" else [sys.argv[1]]
     for target in targets:
         if target == "home":

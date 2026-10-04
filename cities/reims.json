@@ -1,47 +1,22 @@
 {
   "slug": "reims",
-  "path": "reims/",
   "order": 15,
   "name": "Reims",
-  "title": "Reims à portée de tram",
-  "titleSuffix": "Temps de trajet en tram Citura",
-  "railLabel": "Tram",
-  "railNoun": "tram",
-  "railStations": "stations de tram",
-  "busNoun": "bus",
-  "busLabel": "Bus",
   "network": "Citura",
   "metropole": "Grand Reims",
-  "area": "de l'agglomération",
   "epci": "200067213",
   "communes": "served",
   "gtfsUrl": "https://transport.data.gouv.fr/resources/80594/download",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/offre-de-transport-du-reseau-grand-reims-mobilites-communaute-urbaine-du-grand-reims",
-  "lat0": 49.26,
-  "osmBbox": [
-    49.04,
-    3.71,
-    49.48,
-    4.35
-  ],
-  "parksBbox": [
-    49.2,
-    3.95,
-    49.32,
-    4.11
-  ],
-  "railGeometry": "gtfs",
+  "gtfsLicence": "lo",
+  "routeModes": {
+    "TRAM": "tram"
+  },
   "defaultFrom": {
     "lat": 49.25554,
     "lon": 4.02694,
     "label": "Place d'Erlon"
   },
   "searchExample": "Gare de Reims",
-  "ogImage": "og/reims.jpg?v=1",
-  "ogAlt": "Carte de Reims colorée selon le temps de trajet en tram depuis place d'Erlon, avec les isochrones 15 et 30 minutes.",
-  "published": "2026-10-05",
-  "routeModes": {
-    "TRAM": "tram"
-  },
-  "gtfsLicence": "lo"
+  "published": "2026-10-05"
 }

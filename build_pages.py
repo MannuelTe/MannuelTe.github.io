@@ -13,6 +13,8 @@ from datetime import date
 from pathlib import Path
 from string import Template
 
+from cities import load_cities
+
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 SITE_URL = "https://tram.camilleroux.com/"
@@ -52,10 +54,10 @@ def french_date(value: str, weekday: bool = False) -> str:
     return f"{WEEKDAYS[day.weekday()]} {text}" if weekday else text
 
 
-def load_cities() -> list[dict]:
+def load_built_cities() -> list[dict]:
+    """Cities whose data has been built, with their figures (sources/<city>.json)."""
     cities = []
-    for path in (ROOT / "cities").glob("*.json"):
-        city = json.loads(path.read_text(encoding="utf-8"))
+    for city in load_cities():
         sources = ROOT / "sources" / f"{city['slug']}.json"
         if not sources.exists() or not (SITE / "data" / f"{city['slug']}.json").exists():
             print(f"  {city['slug']} ignorée : lancer d'abord build_data.py {city['slug']}")
@@ -63,7 +65,7 @@ def load_cities() -> list[dict]:
         city["sources"] = json.loads(sources.read_text(encoding="utf-8"))
         city["stats"] = city["sources"]["stats"]
         cities.append(city)
-    return sorted(cities, key=lambda city: city["order"])
+    return cities
 
 
 def json_ld(data: dict) -> str:
@@ -522,7 +524,7 @@ def render_404(cities: list[dict]) -> str:
 
 
 def main() -> None:
-    cities = load_cities()
+    cities = load_built_cities()
     city_template = Template((ROOT / "templates" / "city.html").read_text(encoding="utf-8"))
     for city in cities:
         page = SITE / city["path"] / "index.html"

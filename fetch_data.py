@@ -6,9 +6,11 @@ Usage: python3 fetch_data.py <city> [--gtfs-only]
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import time
+from datetime import datetime, timezone
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -49,6 +51,22 @@ def overpass(query: str) -> bytes:
     raise RuntimeError("Overpass unavailable")
 
 
+def record(out: Path, name: str, source: str, how: str = "download") -> None:
+    """Note in data/<city>/manifest.json where each raw file comes from and when it was fetched."""
+    manifest_path = out / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    path = out / name
+    fetched = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc) if how == "manual" else datetime.now(timezone.utc)
+    manifest[name] = {
+        "source": source,
+        "how": how,
+        "fetchedAt": fetched.isoformat(timespec="seconds"),
+        "bytes": path.stat().st_size,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -57,18 +75,28 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"GTFS {city['network']}…")
-    (out / "gtfs.zip").write_bytes(download(city["gtfsUrl"]))
+    if city.get("gtfsManual"):
+        # Some operators (TCL on data.grandlyon.com) require an account: the file is downloaded by hand.
+        if not (out / "gtfs.zip").exists():
+            sys.exit(f"Téléchargez le GTFS à la main ({city['gtfsManual']}) et posez-le dans {out / 'gtfs.zip'}")
+        print(f"  fichier manuel conservé ({city['gtfsManual']})")
+        record(out, "gtfs.zip", city["gtfsUrl"], how="manual")
+    else:
+        (out / "gtfs.zip").write_bytes(download(city["gtfsUrl"]))
+        record(out, "gtfs.zip", city["gtfsUrl"])
     if "--gtfs-only" in sys.argv:
         return
 
     print(f"Communes de {city['metropole']}…")
     communes_url = f"https://geo.api.gouv.fr/epcis/{city['epci']}/communes?fields=nom,code&format=geojson&geometry=contour"
     (out / "communes.geojson").write_bytes(download(communes_url))
+    record(out, "communes.geojson", communes_url)
 
     if city.get("railGeometry") == "osm":
         print("Tracés des lignes (OSM)…")
-        query = f'[out:json][timeout:110];relation["route"~"^(tram|subway|light_rail)$"]({bbox(city["osmRailBbox"])});out geom;'
+        query = f'[out:json][timeout:110];relation["route"~"^(tram|subway|light_rail|funicular)$"]({bbox(city["osmRailBbox"])});out geom;'
         (out / "osm_rail.json").write_bytes(overpass(query))
+        record(out, "osm_rail.json", f"Overpass API: {query}")
 
     print("Eau et parcs (OSM)…")
     area, parks = bbox(city["osmBbox"]), bbox(city["parksBbox"])
@@ -81,6 +109,7 @@ def main() -> None:
         ");out geom;"
     )
     (out / "osm_water_parks.json").write_bytes(overpass(query))
+    record(out, "osm_water_parks.json", f"Overpass API: {query}")
 
 
 if __name__ == "__main__":

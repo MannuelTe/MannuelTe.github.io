@@ -2,7 +2,7 @@
 
 Cartes interactives des temps de trajet en **tram** (et, en option, en **bus**) dans les grandes villes françaises.
 
-👉 **https://tram.camilleroux.com/** — [Montpellier](https://tram.camilleroux.com/) · [Bordeaux](https://tram.camilleroux.com/bordeaux/)
+👉 **https://tram.camilleroux.com/** — [Montpellier](https://tram.camilleroux.com/) · [Bordeaux](https://tram.camilleroux.com/bordeaux/) · [Lyon](https://tram.camilleroux.com/lyon/)
 
 Idée originale : le [NYC Transit Time Cartogram](https://castrio.me/nyc/) d'Anthony Castrio, puis sa
 [déclinaison parisienne](https://github.com/JulesGrandin/paris-temps-transport) par Jules Grandin.
@@ -22,9 +22,23 @@ python3 -m http.server 8000 --directory site
 
 Puis ouvrir [http://localhost:8000](http://localhost:8000).
 
-Le GTFS brut n'est pas versionné (`data/*/gtfs.zip`, jusqu'à plusieurs dizaines de Mo) : `fetch_data.py <ville> --gtfs-only`
-le retélécharge. Les autres sources (communes, OSM) sont versionnées pour que le calcul reste reproductible malgré les
-caprices d'Overpass.
+Les sources brutes (`data/<ville>/` : GTFS, communes, OSM) ne sont pas versionnées : elles restent en local et
+`fetch_data.py <ville>` les retélécharge. Seules les données calculées pour le site (`site/data/<ville>.json`) le sont.
+
+## Provenance des données
+
+Chaque calcul écrit `sources/<ville>.json` (versionné) : URL de chaque fichier source, date de téléchargement, taille et
+empreinte SHA-256, période couverte par le GTFS, jour de référence retenu, lignes exclues. `fetch_data.py` tient à jour
+le détail des téléchargements dans `data/<ville>/manifest.json`.
+
+| Ville | Réseau | GTFS téléchargé le | Validité du GTFS | Jour de référence | Fiche |
+|---|---|---|---|---|---|
+| Montpellier | TaM | 2026-10-03 | 2026-09-21 → 2026-12-31 | mardi 2026-11-03 | [sources/montpellier.json](sources/montpellier.json) |
+| Bordeaux | TBM | 2026-10-04 | 2026-10-03 → 2027-01-01 | jeudi 2026-11-05 | [sources/bordeaux.json](sources/bordeaux.json) |
+| Lyon | TCL | 2026-10-04 (à la main, compte data.grandlyon.com) | 2026-10-04 → 2027-02-01 | mardi 2026-10-06 | [sources/lyon.json](sources/lyon.json) |
+
+Le GTFS TCL n'est pas téléchargeable sans compte : le récupérer sur data.grandlyon.com, le poser dans
+`data/lyon/gtfs.zip`, puis lancer `fetch_data.py lyon`, qui l'enregistre comme source manuelle.
 
 ## Ajouter une ville
 
@@ -37,7 +51,7 @@ caprices d'Overpass.
 
 ## Données
 
-- GTFS théoriques des réseaux ([transport.data.gouv.fr](https://transport.data.gouv.fr/)) : TaM (Montpellier), TBM (Bordeaux)
+- GTFS théoriques des réseaux : TaM (Montpellier) et TBM (Bordeaux) via [transport.data.gouv.fr](https://transport.data.gouv.fr/), TCL (Lyon) via [data.grandlyon.com](https://data.grandlyon.com/)
 - Tracés des lignes (quand le GTFS n'en fournit pas), eau et parcs : © contributeurs OpenStreetMap (ODbL), via Overpass
 - Contours des communes de chaque métropole ([geo.api.gouv.fr](https://geo.api.gouv.fr/))
 - Recherche d'adresse côté navigateur : [api-adresse.data.gouv.fr](https://adresse.data.gouv.fr/)

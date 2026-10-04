@@ -1,0 +1,56 @@
+{
+  "city": "Montpellier",
+  "builtAt": "2026-10-04T21:53:17+00:00",
+  "referenceDate": "2026-11-03",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "TaM",
+    "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tam",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/93a29ce2-cfc8-44ff-b712-bcfd814b7f00",
+    "how": "download",
+    "fetchedAt": "2026-10-03T21:18:33+00:00",
+    "bytes": 3966463,
+    "sha256": "7fdd4aecb0b4ead3771fb31c0892b7d365a3d1a0e45d88d0604e0c109c38dd0f",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-09-21",
+      "2026-12-31"
+    ]
+  },
+  "communes": {
+    "metropole": "Montpellier Méditerranée Métropole",
+    "epci": "243400017",
+    "source": "https://geo.api.gouv.fr/epcis/243400017/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-03T21:18:33+00:00",
+    "bytes": 244214,
+    "sha256": "d2546aa29ef9bcc43b249b9f1d8315e4e9c1c9e889dd62db20fd5d7b991b6307"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_rail": {
+      "source": "Overpass API: [out:json][timeout:90];relation[\"route\"=\"tram\"](43.50,3.70,43.72,4.05);out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-03T21:18:33+00:00",
+      "bytes": 592412,
+      "sha256": "27235c2c68c9ac4152c3c1d0d5323bee59a6346b6fa8fa16e56a6bbfc32b3495"
+    },
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:110];(relation[\"natural\"=\"water\"](43.45,3.68,43.75,4.08);way[\"natural\"=\"water\"][\"water\"~\"lagoon|lake|reservoir|river\"](43.45,3.68,43.75,4.08);relation[\"leisure\"=\"park\"](43.55,3.80,43.66,3.95);way[\"leisure\"=\"park\"](43.55,3.80,43.66,3.95);way[\"natural\"=\"coastline\"](43.45,3.68,43.75,4.08););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-03T21:18:44+00:00",
+      "bytes": 2566513,
+      "sha256": "4f408742be6ffbdaf172b8e8d722f05fa6d271f6996a79c23cd722b1623b9ff6"
+    }
+  },
+  "railGeometry": "OpenStreetMap",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 34,
+      "tram": 5
+    },
+    "stops": 616,
+    "railStations": 112
+  }
+}

@@ -42,6 +42,7 @@ const HEAT_ALPHA = 0.78;
 const HEAT_UPSAMPLE = 3;
 const LUT_SIZE = 512;
 const NEIGHBOURS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const RIVER_BRIDGE_CELLS = 4; // cases de 200 m : de quoi traverser le Rhône ou la Garonne
 
 const COLORS = {
   background: "#f1efe9",
@@ -219,6 +220,8 @@ function prepareGraph(data) {
     weights,
     station: Int32Array.from(data.routeStates, (state) => state.stationIndex),
     wait: Float32Array.from(data.routeStates, (state) => state.wait),
+    // Accès au quai (escaliers, couloirs du métro), compté à l'entrée comme à la sortie.
+    access: Float32Array.from(data.routeStates, (state) => state.access ?? data.meta.stationAccessPenalty ?? 0),
     route: data.routeStates.map((state) => state.routeId),
     isBus: Uint8Array.from(data.routeStates, (state) => (data.routeInfo[state.routeId]?.rail ? 0 : 1)),
   };
@@ -235,14 +238,13 @@ function stationUsable(index) {
 /** Plus courts chemins depuis un point : temps d'arrivée à chaque arrêt + prédécesseurs. */
 function solveFrom(point) {
   const { graph, data } = app;
-  const access = data.meta.stationAccessPenalty;
   const dist = new Float64Array(graph.count).fill(Infinity);
   const prev = new Int32Array(graph.count).fill(-1);
   const seedWalk = new Float64Array(graph.count);
   const heap = new MinHeap();
 
   const seeds = data.stations
-    .map((station, index) => ({ index, walk: walkMinutes(hypot(point, station.point)) + access }))
+    .map((station, index) => ({ index, walk: walkMinutes(hypot(point, station.point)) }))
     .filter((seed) => stationUsable(seed.index))
     .sort((a, b) => a.walk - b.walk)
     .slice(0, SEED_STATIONS);
@@ -250,10 +252,11 @@ function solveFrom(point) {
   for (const seed of seeds) {
     for (const state of data.stationStates[seed.index]) {
       if (!app.includeBus && graph.isBus[state]) continue;
-      const time = seed.walk + graph.wait[state];
+      const walk = seed.walk + graph.access[state];
+      const time = walk + graph.wait[state];
       if (time < dist[state]) {
         dist[state] = time;
-        seedWalk[state] = seed.walk;
+        seedWalk[state] = walk;
         heap.push(time, state);
       }
     }
@@ -276,10 +279,12 @@ function solveFrom(point) {
 
   const stationTime = new Float64Array(data.stations.length).fill(Infinity);
   const stationBest = new Int32Array(data.stations.length).fill(-1);
+  // Temps pour ressortir dans la rue à chaque arrêt (le métro demande de remonter du quai).
   for (let state = 0; state < graph.count; state += 1) {
     const station = graph.station[state];
-    if (dist[state] < stationTime[station]) {
-      stationTime[station] = dist[state];
+    const out = dist[state] + graph.access[state];
+    if (out < stationTime[station]) {
+      stationTime[station] = out;
       stationBest[station] = state;
     }
   }
@@ -288,13 +293,12 @@ function solveFrom(point) {
 
 /** Meilleur temps vers un point quelconque : à pied direct, ou via l'arrêt le plus favorable. */
 function travelTo(solution, point) {
-  const access = app.data.meta.stationAccessPenalty;
   let best = { minutes: walkMinutes(hypot(solution.point, point)), station: -1, walk: 0 };
   best.walk = best.minutes;
   app.data.stations.forEach((station, index) => {
     const arrival = solution.stationTime[index];
     if (!Number.isFinite(arrival)) return;
-    const walk = walkMinutes(hypot(station.point, point)) + access;
+    const walk = walkMinutes(hypot(station.point, point));
     if (arrival + walk < best.minutes) best = { minutes: arrival + walk, station: index, walk };
   });
   return best;
@@ -341,25 +345,57 @@ function buildItinerary(solution, point) {
     legStart = to;
   }
   closeLeg(chain[chain.length - 1]);
-  steps.push({ kind: "walk", text: "À pied jusqu'à l'arrivée", minutes: result.walk });
+  // La sortie du quai (métro) est comptée avec la marche finale.
+  const exit = graph.access[chain[chain.length - 1]];
+  steps.push({ kind: "walk", text: "À pied jusqu'à l'arrivée", minutes: result.walk + exit });
   return { minutes: result.minutes, steps };
 }
 
 // --- Grille des temps ---------------------------------------------------------
 
+/** Comble les cases sans valeur (eau, hors carte) avec la moyenne de leurs voisines, `passes` fois. */
+function fillGaps(values, cols, rows, passes) {
+  const filled = Float32Array.from(values);
+  for (let pass = 0; pass < passes; pass += 1) {
+    const source = Float32Array.from(filled);
+    for (let index = 0; index < source.length; index += 1) {
+      if (!Number.isNaN(source[index])) continue;
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+      let sum = 0;
+      let count = 0;
+      for (const [dr, dc] of NEIGHBOURS) {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+        const value = source[r * cols + c];
+        if (!Number.isNaN(value)) {
+          sum += value;
+          count += 1;
+        }
+      }
+      if (count) filled[index] = sum / count;
+    }
+  }
+  return filled;
+}
+
 function computeGrid(solution) {
   const { cells, meta } = app.data;
-  const { gridCols: cols, gridRows: rows, stationAccessPenalty: access } = meta;
+  const { gridCols: cols, gridRows: rows } = meta;
   const times = new Float32Array(cols * rows).fill(NaN);
   for (const cell of cells) {
     let best = walkMinutes(hypot(solution.point, cell.point));
     for (const [station, meters] of cell.access) {
-      const time = solution.stationTime[station] + walkMinutes(meters) + access;
+      const time = solution.stationTime[station] + walkMinutes(meters);
       if (time < best) best = time;
     }
     times[cell.row * cols + cell.col] = best;
   }
-  return { times, smooth: smoothGrid(times, cols, rows), cols, rows, contours: {} };
+  // Les isochrones enjambent les fleuves (comblés avec les valeurs des rives) au lieu d'en faire le tour ;
+  // elles sont ensuite découpées sur la terre ferme au dessin.
+  const bridged = fillGaps(times, cols, rows, RIVER_BRIDGE_CELLS);
+  return { times, smooth: smoothGrid(bridged, cols, rows), cols, rows, contours: {} };
 }
 
 /** Moyenne 3×3 limitée à la terre ferme, pour des isochrones moins crénelées. */
@@ -400,28 +436,7 @@ function paintHeat(grid, { fast = false } = {}) {
   const image = heatCtx.createImageData(heat.width, heat.height);
 
   // Étend les valeurs d'un cran hors de la terre pour que le lissage ne fonce pas les côtes.
-  const filled = Float32Array.from(times);
-  for (let pass = 0; pass < 2; pass += 1) {
-    const source = Float32Array.from(filled);
-    for (let index = 0; index < source.length; index += 1) {
-      if (!Number.isNaN(source[index])) continue;
-      const row = Math.floor(index / cols);
-      const col = index % cols;
-      let sum = 0;
-      let count = 0;
-      for (const [dr, dc] of NEIGHBOURS) {
-        const r = row + dr;
-        const c = col + dc;
-        if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
-        const value = source[r * cols + c];
-        if (!Number.isNaN(value)) {
-          sum += value;
-          count += 1;
-        }
-      }
-      if (count) filled[index] = sum / count;
-    }
-  }
+  const filled = fillGaps(times, cols, rows, 2);
 
   // Table de couleurs précalculée : t ∈ [0, 1 + BEYOND_FADE] découpé en LUT_SIZE pas.
   const lutMax = 1 + BEYOND_FADE;
@@ -613,6 +628,8 @@ function drawIsochrones() {
       path.moveTo(a[0] - ox, a[1] - oy);
       path.lineTo(b[0] - ox, b[1] - oy);
     }
+    ctx.save();
+    ctx.clip(app.paths.land, "evenodd");
     ctx.lineCap = "round";
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
     ctx.lineWidth = 4.5 * px;
@@ -620,19 +637,23 @@ function drawIsochrones() {
     ctx.strokeStyle = COLORS.contour;
     ctx.lineWidth = (threshold >= 30 ? 2 : 1.4) * px;
     ctx.stroke(path);
+    ctx.restore();
 
     // Étiquette sur le point le plus au nord de la courbe encore visible, à l'écart des marqueurs
     // et des étiquettes déjà posées.
     const avoid = [app.from, app.to].filter(Boolean).map((place) => project(place.point));
     avoid.push(...labels.map((label) => label.at));
-    let best = null;
+    const candidates = [];
     for (const [a, b] of segments) {
-      const [x, y] = project([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+      const world = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const [x, y] = project(world);
       if (x < 60 || x > app.size.width - 60 || y < 24 || y > app.size.height - 24) continue;
       if (avoid.some(([ax, ay]) => Math.abs(x - ax) < 70 && y - ay > -60 && y - ay < 40)) continue;
-      if (!best || y < best[1]) best = [x, y];
+      candidates.push({ world, at: [x, y] });
     }
-    if (best) labels.push({ text: `${threshold} min`, at: best });
+    candidates.sort((p, q) => p.at[1] - q.at[1]);
+    const best = candidates.find((candidate) => isOnLand(candidate.world));
+    if (best) labels.push({ text: `${threshold} min`, at: best.at });
   }
   useScreenTransform();
   ctx.textAlign = "center";

@@ -14,7 +14,7 @@ import statistics
 import sys
 import zipfile
 from collections import Counter, defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
@@ -49,6 +49,8 @@ WATER_MASK_AREA = 1_000_000.0
 
 # GTFS route_type → mode (basic and extended types).
 RAIL_MODES = {"tram", "metro", "funicular", "cable"}
+# Minutes to walk from the street to the platform (and back): stairs and corridors of underground lines.
+MODE_ACCESS_MINUTES = {"metro": 2.0, "funicular": 1.0}
 
 
 def route_mode(route_type: str) -> str:
@@ -460,13 +462,23 @@ def read_stop_times(archive: zipfile.ZipFile, trips: Dict[str, dict]) -> Dict[st
     return stop_times
 
 
-def extract_network(data_dir: Path):
+def route_excluded(row: dict, city: dict) -> bool:
+    """School buses (extended types 712/713) are not open to the public; some cities exclude special lines."""
+    return row.get("route_type") in ("712", "713") or row["route_id"] in city.get("excludeRoutes", [])
+
+
+def extract_network(data_dir: Path, city: dict):
     with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
         routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
+        excluded = {route_id for route_id, row in routes.items() if route_excluded(row, city)}
         stops = {row["stop_id"]: row for row in read_gtfs_table(archive, "stops.txt")}
         services = services_by_date(list(read_gtfs_table(archive, "calendar.txt")), list(read_gtfs_table(archive, "calendar_dates.txt")))
         # Demand-responsive trips (TaM flags them in a "TAD" column) cannot be modelled with fixed times.
-        all_trips = [row for row in read_gtfs_table(archive, "trips.txt") if not (row.get("TAD") or "").strip()]
+        all_trips = [
+            row
+            for row in read_gtfs_table(archive, "trips.txt")
+            if not (row.get("TAD") or "").strip() and row["route_id"] not in excluded
+        ]
         reference_date = pick_reference_date(services, Counter(row["service_id"] for row in all_trips))
         active_services = services[reference_date]
         trips = {row["trip_id"]: row for row in all_trips if row["service_id"] in active_services}
@@ -517,7 +529,7 @@ def extract_network(data_dir: Path):
     return reference_date, complexes, edges, waits, route_info, shape_routes
 
 
-def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], float], waits: Dict[Tuple[int, str], float]):
+def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict]):
     route_states: List[dict] = []
     station_states: List[List[int]] = [[] for _ in complexes]
     lookup: Dict[Tuple[int, str], int] = {}
@@ -529,6 +541,7 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
                     "stationIndex": station_index,
                     "routeId": route_id,
                     "wait": waits.get((station_index, route_id), DEFAULT_BOARD_WAIT),
+                    "access": MODE_ACCESS_MINUTES.get(route_info[route_id]["mode"], 0.0),
                 }
             )
             station_states[station_index].append(state_index)
@@ -543,12 +556,17 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
     for (a, b, route_id), minutes in edges.items():
         add_edge(lookup[(a, route_id)], lookup[(b, route_id)], minutes)
 
+    def transfer(src: int, dst: int, walk: float) -> float:
+        # Leaving one platform and reaching the other: half of each access time, plus the wait.
+        access = (route_states[src]["access"] + route_states[dst]["access"]) / 2.0
+        return walk + access + route_states[dst]["wait"]
+
     # Changing line inside a stop: short walk plus waiting for the next vehicle.
     for states in station_states:
         for src in states:
             for dst in states:
                 if src != dst:
-                    add_edge(src, dst, TRANSFER_WALK + route_states[dst]["wait"])
+                    add_edge(src, dst, transfer(src, dst, TRANSFER_WALK))
 
     # Walking to a nearby stop with another name.
     points = [station["point"] for station in complexes]
@@ -561,7 +579,7 @@ def build_graph(complexes: Sequence[dict], edges: Dict[Tuple[int, int, str], flo
             for src in station_states[i]:
                 for dst in station_states[j]:
                     if route_states[src]["routeId"] != route_states[dst]["routeId"]:
-                        add_edge(src, dst, walk + route_states[dst]["wait"])
+                        add_edge(src, dst, transfer(src, dst, walk))
     return route_states, station_states, adjacency
 
 
@@ -648,6 +666,46 @@ def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequenc
     return cells, mask
 
 
+def write_provenance(city: dict, data_dir: Path, reference_date: date, route_info: Dict[str, dict], stations: Sequence[dict]) -> Path:
+    """Record in sources/<city>.json (versioned) which raw files were used, when they were fetched and what they cover."""
+    manifest_path = data_dir / "manifest.json"
+    manifest = load_json(manifest_path) if manifest_path.exists() else {}
+    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
+        feed_info = next(iter(read_gtfs_table(archive, "feed_info.txt")), None)
+        services = services_by_date(list(read_gtfs_table(archive, "calendar.txt")), list(read_gtfs_table(archive, "calendar_dates.txt")))
+    days = sorted(day for day, active in services.items() if active)
+    window_start, window_end = SERVICE_WINDOW
+    provenance = {
+        "city": city["name"],
+        "builtAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "referenceDate": reference_date.isoformat(),
+        "serviceWindow": f"{window_start // 3600}h–{window_end // 3600}h",
+        "gtfs": {
+            "network": city["network"],
+            "dataset": city["gtfsDataset"],
+            **manifest.get("gtfs.zip", {}),
+            "feedInfo": feed_info,
+            "servicePeriod": [days[0].isoformat(), days[-1].isoformat()] if days else None,
+        },
+        "communes": {"metropole": city["metropole"], "epci": city["epci"], **manifest.get("communes.geojson", {})},
+        "openStreetMap": {
+            "licence": "ODbL, © contributeurs OpenStreetMap",
+            **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json") if name in manifest},
+        },
+        "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
+        "excludedRoutes": city.get("excludeRoutes", []),
+        "network": {
+            "lines": dict(Counter(info["mode"] for info in route_info.values())),
+            "stops": len(stations),
+            "railStations": sum(1 for station in stations if station["rail"]),
+        },
+    }
+    path = ROOT / "sources" / f"{city['slug']}.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def main() -> None:
     global LAT0
     if len(sys.argv) < 2:
@@ -663,8 +721,8 @@ def main() -> None:
     rows = round((bounds[3] - bounds[1]) / GRID_CELL_METERS)
     masked_water, water, parks = extract_water_and_parks(data_dir, bounds)
 
-    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir)
-    route_states, station_states, adjacency = build_graph(complexes, edges, waits)
+    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir, city)
+    route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info)
     if city.get("railGeometry") == "osm":
         routes = rail_routes_from_osm(data_dir, city, route_info)
     else:
@@ -718,6 +776,8 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations)
+    print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])
     modes = Counter(info["mode"] for info in route_info.values())
     print(

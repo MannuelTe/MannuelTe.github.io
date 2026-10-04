@@ -92,6 +92,8 @@ def render(template: Template, cities: list[dict], city: dict) -> str:
         "city_config": json.dumps(config, ensure_ascii=False),
         "city_links": city_links(cities, city),
         "name": city["name"],
+        # Pas de mot seul en fin de ligne : espace insécable avant le dernier mot du titre.
+        "headline": "&nbsp;".join(html.escape(city["title"]).rsplit(" ", 1)),
         "rail_noun": rail_noun,
         "rail_label": city["railLabel"],
         "bus_label": city["busLabel"],
@@ -103,7 +105,7 @@ def render(template: Template, cities: list[dict], city: dict) -> str:
         "styles_version": short_hash(SITE / "styles.css"),
         "app_version": short_hash(SITE / "app.js"),
     }
-    escaped = {key: value if key in ("json_ld", "city_config", "city_links") else html.escape(value, quote=True) for key, value in values.items()}
+    escaped = {key: value if key in ("json_ld", "city_config", "city_links", "headline") else html.escape(value, quote=True) for key, value in values.items()}
     return template.substitute(escaped)
 
 

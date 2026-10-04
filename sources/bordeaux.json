@@ -1,0 +1,59 @@
+{
+  "city": "Bordeaux",
+  "builtAt": "2026-10-04T21:53:23+00:00",
+  "referenceDate": "2026-11-05",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "TBM",
+    "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-et-scolaire-tbm",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/10b87ffe-e6bb-494d-93df-bb6019e223d9",
+    "how": "download",
+    "fetchedAt": "2026-10-04T21:26:20+00:00",
+    "bytes": 20171120,
+    "sha256": "353db1e2ba5b667da8d5d8dd93599cfd1699e25eaaf2ff5154427ea0d5d98602",
+    "feedInfo": {
+      "feed_publisher_name": "Mecatran",
+      "feed_publisher_url": "https://www.mecatran.com/",
+      "feed_lang": "fr",
+      "feed_start_date": "20261003",
+      "feed_end_date": "20270101",
+      "feed_version": "04/10/2026-04:51",
+      "feed_contact_email": "support@mecatran.com",
+      "feed_contact_url": "https://www.mecatran.com/"
+    },
+    "servicePeriod": [
+      "2026-10-02",
+      "2027-07-02"
+    ]
+  },
+  "communes": {
+    "metropole": "Bordeaux Métropole",
+    "epci": "243300316",
+    "source": "https://geo.api.gouv.fr/epcis/243300316/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T21:26:20+00:00",
+    "bytes": 166331,
+    "sha256": "0bc59873e75186e331798b80ef2dd8e8fbfc35aea42dda4a51e1599442cc1217"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](44.68,-0.88,45.08,-0.36);way[\"natural\"=\"water\"](44.68,-0.88,45.08,-0.36);relation[\"leisure\"=\"park\"](44.78,-0.66,44.9,-0.5);way[\"leisure\"=\"park\"](44.78,-0.66,44.9,-0.5););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T21:26:33+00:00",
+      "bytes": 4734259,
+      "sha256": "efddf02b2e2e24f275405ac032222e160de15dd8d7c37ce368c86a750812ebb4"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "ferry": 3,
+      "bus": 117,
+      "tram": 6
+    },
+    "stops": 1891,
+    "railStations": 136
+  }
+}

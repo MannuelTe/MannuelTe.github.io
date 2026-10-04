@@ -1,6 +1,6 @@
 {
   "city": "Bordeaux",
-  "builtAt": "2026-10-04T21:59:56+00:00",
+  "builtAt": "2026-10-04T22:33:21+00:00",
   "referenceDate": "2026-11-05",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -107,6 +107,11 @@
     "within15": 26,
     "within30": 71,
     "farthestStation": "Aéroport",
-    "farthestMinutes": 54
+    "farthestMinutes": 54,
+    "ogTrip": {
+      "name": "Berges de la Garonne",
+      "lat": 44.88558,
+      "lon": -0.54153
+    }
   }
 }

@@ -1,0 +1,105 @@
+{
+  "city": "Grenoble",
+  "builtAt": "2026-10-04T22:34:02+00:00",
+  "referenceDate": "2026-11-03",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "M réso",
+    "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tag",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/b6ec7ba4-09bc-46df-b9a1-79a2c2668cf2",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:22:39+00:00",
+    "bytes": 4697609,
+    "sha256": "678540e139b2bc8404848849ba3233a983017e4ab2045b769b00324216ae2b8f",
+    "feedInfo": {
+      "feed_publisher_name": "Mobilités M - Métropole Grenobloise",
+      "feed_publisher_url": "https://www.mobilites-m.fr/",
+      "feed_lang": "FR",
+      "feed_id": "SEM"
+    },
+    "servicePeriod": [
+      "2026-09-30",
+      "2026-12-31"
+    ]
+  },
+  "communes": {
+    "metropole": "Grenoble-Alpes-Métropole",
+    "epci": "200040715",
+    "source": "https://geo.api.gouv.fr/epcis/200040715/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:22:39+00:00",
+    "bytes": 262101,
+    "sha256": "e3bb96a5513884c6564ee4e7c7d23451c7e20f50198d69ec3a72922218444e3d"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](44.97,5.4,45.41,6.04);way[\"natural\"=\"water\"](44.97,5.4,45.41,6.04);relation[\"leisure\"=\"park\"](45.13,5.64,45.25,5.8);way[\"leisure\"=\"park\"](45.13,5.64,45.25,5.8););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:24:40+00:00",
+      "bytes": 4400264,
+      "sha256": "34b66169b3e93eacc4762117ad53f17f4f17993015e203c840d0a2fccaac676d"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 47,
+      "tram": 5
+    },
+    "stops": 791,
+    "railStations": 82
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "tram",
+        "color": "#3376B8",
+        "stations": 31,
+        "headway": 4.4
+      },
+      {
+        "name": "B",
+        "mode": "tram",
+        "color": "#479A45",
+        "stations": 23,
+        "headway": 6.0
+      },
+      {
+        "name": "C",
+        "mode": "tram",
+        "color": "#C20078",
+        "stations": 23,
+        "headway": 5.4
+      },
+      {
+        "name": "D",
+        "mode": "tram",
+        "color": "#DE9917",
+        "stations": 23,
+        "headway": 14.7
+      },
+      {
+        "name": "E",
+        "mode": "tram",
+        "color": "#533786",
+        "stations": 32,
+        "headway": 7.2
+      }
+    ],
+    "railStations": 82,
+    "busLines": 47,
+    "center": "Place Victor-Hugo",
+    "within15": 34,
+    "within30": 90,
+    "farthestStation": "Le Pont-de-Claix, L'Étoile",
+    "farthestMinutes": 38,
+    "ogTrip": {
+      "name": "Saint-Martin-le-Vinoux, Néron",
+      "lat": 45.21766,
+      "lon": 5.6936
+    }
+  }
+}

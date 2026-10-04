@@ -1,0 +1,86 @@
+{
+  "city": "Saint-Étienne",
+  "builtAt": "2026-10-04T22:34:27+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "STAS",
+    "dataset": "https://transport.data.gouv.fr/datasets/horaires-du-reseau-stas",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/fc66b270-658c-4678-9794-229a1a8a4938",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:27:56+00:00",
+    "bytes": 9142731,
+    "sha256": "26eb21e238e6c4a4a1682a193c3b00c37ba4f540e0dcaa74a0a4d8e6f39fb580",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-10-04",
+      "2026-12-20"
+    ]
+  },
+  "communes": {
+    "metropole": "Saint-Étienne Métropole",
+    "epci": "244200770",
+    "source": "https://geo.api.gouv.fr/epcis/244200770/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:27:57+00:00",
+    "bytes": 487683,
+    "sha256": "6b92d7ab0cdc42518a5c82e75b0f58009128206c761757553e059dac60681b18"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](45.22,4.07,45.66,4.71);way[\"natural\"=\"water\"](45.22,4.07,45.66,4.71);relation[\"leisure\"=\"park\"](45.38,4.31,45.5,4.47);way[\"leisure\"=\"park\"](45.38,4.31,45.5,4.47););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:28:15+00:00",
+      "bytes": 5768652,
+      "sha256": "a5bbf41596d289f237f69570a5a3b753c796baa374afac155dd185706ecb6414"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 77,
+      "tram": 3
+    },
+    "stops": 1172,
+    "railStations": 40
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "T1",
+        "mode": "tram",
+        "color": "#E30613",
+        "stations": 27,
+        "headway": 4.8
+      },
+      {
+        "name": "T2",
+        "mode": "tram",
+        "color": "#02509E",
+        "stations": 12,
+        "headway": 12.1
+      },
+      {
+        "name": "T3",
+        "mode": "tram",
+        "color": "#009640",
+        "stations": 29,
+        "headway": 9.9
+      }
+    ],
+    "railStations": 40,
+    "busLines": 77,
+    "center": "Place de l'Hôtel-de-Ville",
+    "within15": 60,
+    "within30": 100,
+    "farthestStation": "Technopole",
+    "farthestMinutes": 23,
+    "ogTrip": {
+      "name": "Lycee S. Weil",
+      "lat": 45.47446,
+      "lon": 4.36732
+    }
+  }
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download the raw sources of a city into data/<city>/.
 
-Usage: python3 fetch_data.py <city> [--gtfs-only]
+Usage: python3 fetch_data.py <city> [--gtfs-only | --context-only]
 """
 
 from __future__ import annotations
@@ -67,12 +67,36 @@ def record(out: Path, name: str, source: str, how: str = "download") -> None:
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def fetch_context(city: dict, out: Path) -> None:
+    """Land around the metropolis, for coastal cities: whatever is left uncovered on the map is drawn as sea."""
+    departments = city.get("seaDepartments", [])
+    if departments:
+        print(f"Communes voisines (départements {', '.join(departments)})…")
+        features = []
+        urls = []
+        for code in departments:
+            url = f"https://geo.api.gouv.fr/departements/{code}/communes?fields=nom,code&format=geojson&geometry=contour"
+            features += json.loads(download(url))["features"]
+            urls.append(url)
+        (out / "context.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": features}), encoding="utf-8")
+        record(out, "context.geojson", " + ".join(urls))
+    relations = city.get("contextOsmRelations", [])
+    if relations:
+        print("Territoires voisins hors de France (OSM)…")
+        query = "[out:json][timeout:110];(" + "".join(f"relation({rel});" for rel in relations) + ");out geom;"
+        (out / "context_osm.json").write_bytes(overpass(query))
+        record(out, "context_osm.json", f"Overpass API: {query}")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     city = load_city(sys.argv[1])
     out = ROOT / "data" / city["slug"]
     out.mkdir(parents=True, exist_ok=True)
+    if "--context-only" in sys.argv:
+        fetch_context(city, out)
+        return
 
     print(f"GTFS {city['network']}…")
     if city.get("gtfsManual"):
@@ -110,6 +134,7 @@ def main() -> None:
     )
     (out / "osm_water_parks.json").write_bytes(overpass(query))
     record(out, "osm_water_parks.json", f"Overpass API: {query}")
+    fetch_context(city, out)
 
 
 if __name__ == "__main__":

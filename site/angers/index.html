@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Angers à portée de tram · Temps de trajet en tram Irigo</title>
+    <meta name="description" content="Carte des temps de trajet en tram à Angers : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau Irigo)." />
+    <script>
+      // Anciens liens github.io : on renvoie vers le domaine du site en gardant départ et arrivée.
+      if (location.hostname.endsWith("github.io")) location.replace("https://tram.camilleroux.com/angers/" + location.search);
+    </script>
+    <link rel="canonical" href="https://tram.camilleroux.com/angers/" />
+    <meta name="theme-color" content="#3aa70b" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <meta name="author" content="Camille Roux" />
+    <link rel="author" href="https://www.camilleroux.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="À portée de tram" />
+    <meta property="og:title" content="Angers à portée de tram" />
+    <meta property="og:description" content="Carte des temps de trajet en tram à Angers : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau Irigo)." />
+    <meta property="og:url" content="https://tram.camilleroux.com/angers/" />
+    <meta property="og:image" content="https://tram.camilleroux.com/og/angers.jpg?v=3317ba59" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Carte de Angers colorée selon le temps de trajet en tram depuis place du Ralliement, avec les isochrones 15 et 30 minutes." />
+    <meta property="article:author" content="https://www.camilleroux.com/" />
+    <meta property="article:published_time" content="2026-10-05T08:00:00+02:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Angers à portée de tram" />
+    <meta name="twitter:description" content="Carte des temps de trajet en tram à Angers : choisissez un départ, toute la ville se colore selon le temps qu&#x27;il faut pour y aller (réseau Irigo)." />
+    <meta name="twitter:image" content="https://tram.camilleroux.com/og/angers.jpg?v=3317ba59" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Angers à portée de tram",
+          "url": "https://tram.camilleroux.com/angers/",
+          "description": "Carte des temps de trajet en tram à Angers : choisissez un départ, toute la ville se colore selon le temps qu'il faut pour y aller (réseau Irigo).",
+          "inLanguage": "fr",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Web",
+          "isAccessibleForFree": true,
+          "image": "https://tram.camilleroux.com/og/angers.jpg",
+          "author": {
+            "@id": "https://www.camilleroux.com/#me"
+          },
+          "spatialCoverage": {
+            "@type": "Place",
+            "name": "Angers Loire Métropole"
+          },
+          "isBasedOn": [
+            "https://castrio.me/nyc/",
+            "https://julesgrandin.github.io/paris-temps-transport/"
+          ],
+          "datePublished": "2026-10-05",
+          "dateModified": "2026-10-04"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "À portée de tram",
+              "item": "https://tram.camilleroux.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Angers",
+              "item": "https://tram.camilleroux.com/angers/"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Combien de temps faut-il pour traverser Angers en tram ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Depuis le centre (Place du Ralliement), 33 % des stations de tram sont à moins de 15 minutes et 90 % à moins de 30 minutes, marche et attente comprises. La plus éloignée, Avrillé-Ardenne, est à environ 35 minutes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Quelle est la fréquence des lignes de tram à Angers ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "En journée de semaine, l'intervalle moyen entre deux passages est de tram A : 10,1 min, tram B : 10,8 min, tram C : 11,1 min. La ligne la plus fréquente est la A, avec un passage toutes les 10,1 minutes environ."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "D'où viennent les horaires utilisés ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Des horaires théoriques publiés par le réseau Irigo (format GTFS, ODbL), téléchargés le 4 octobre 2026 et valables jusqu'au 2 juillet 2027. Les temps correspondent au mardi 3 novembre 2026, entre 7 h et 20 h."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Les bus sont-ils pris en compte à Angers ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui, en option : cochez « Bus » sous la carte. Par défaut, seuls les tram sont affichés. L'attente aux arrêts de bus peu fréquentés est plafonnée à 15 minutes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Comment les temps de trajet sont-ils calculés ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Pour chaque trajet : marche jusqu'à l'arrêt à 4,5 km/h, attente égale à la moitié de l'intervalle entre deux passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche. Pas de temps réel ni de perturbations : c'est la ville « sur le papier »."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "@id": "https://www.camilleroux.com/#me",
+          "name": "Camille Roux",
+          "url": "https://www.camilleroux.com/",
+          "sameAs": [
+            "https://github.com/camilleroux"
+          ]
+        }
+      ]
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.bunny.net" />
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
+    <link rel="stylesheet" href="../styles.css?v=2c9c4b73" />
+  </head>
+  <body>
+    <script id="city-config" type="application/json">{"slug": "angers", "name": "Angers", "dataVersion": "bee51d34", "defaultFrom": {"lat": 47.47115, "lon": -0.55172, "label": "Place du Ralliement"}, "railNoun": "tram", "railStations": "stations de tram", "busNoun": "bus"}</script>
+    <header class="topbar">
+      <nav class="topbar-inner" aria-label="Navigation principale">
+        <a class="brand" href="../"><img src="../favicon.svg" width="22" height="22" alt="" /> À portée de tram</a>
+        <div class="topbar-links">
+          <a class="topbar-link icon-link" href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener" aria-label="Code source sur GitHub"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+          <a class="topbar-link" href="https://www.camilleroux.com/" rel="author">camilleroux.com</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="page">
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <a href="../">À portée de tram</a> <span aria-hidden="true">›</span> <span aria-current="page">Angers</span>
+      </nav>
+
+      <section class="hero">
+        <details class="city-menu">
+          <summary>📍 Angers <span>· Changer de ville</span></summary>
+          <nav class="city-menu-list" aria-label="Choisir une ville">
+            <span class="chip active" aria-current="page">Angers</span>
+            <a class="chip" href="../bordeaux/">Bordeaux</a>
+            <a class="chip" href="../brest/">Brest</a>
+            <a class="chip" href="../clermont-ferrand/">Clermont-Ferrand</a>
+            <a class="chip" href="../dijon/">Dijon</a>
+            <a class="chip" href="../grenoble/">Grenoble</a>
+            <a class="chip" href="../le-mans/">Le Mans</a>
+            <a class="chip" href="../lille/">Lille</a>
+            <a class="chip" href="../lyon/">Lyon</a>
+            <a class="chip" href="../marseille/">Marseille</a>
+            <a class="chip" href="../montpellier/">Montpellier</a>
+            <a class="chip" href="../nantes/">Nantes</a>
+            <a class="chip" href="../nice/">Nice</a>
+            <a class="chip" href="../reims/">Reims</a>
+            <a class="chip" href="../rennes/">Rennes</a>
+            <a class="chip" href="../rouen/">Rouen</a>
+            <a class="chip" href="../saint-etienne/">Saint-Étienne</a>
+            <a class="chip" href="../strasbourg/">Strasbourg</a>
+            <a class="chip" href="../toulouse/">Toulouse</a>
+            <a class="chip" href="../tours/">Tours</a>
+          </nav>
+        </details>
+        <h1>Angers à portée de&nbsp;tram</h1>
+        <p class="lede">
+          La ville redessinée par le temps qu'il faut pour y aller en tram. Choisissez un départ&nbsp;: la carte se
+          colore selon le temps de trajet vers chaque point de l&#x27;agglomération.
+        </p>
+        <form id="searchForm" class="search" role="search" autocomplete="off">
+          <label class="visually-hidden" for="searchInput">Adresse de départ</label>
+          <input id="searchInput" type="search" placeholder="Partir d'une adresse… (ex. Gare Saint-Laud)" />
+          <button type="submit" class="button primary">Partir d'ici</button>
+          <ul id="searchResults" class="search-results" hidden></ul>
+        </form>
+        <ol class="steps" aria-label="Mode d'emploi">
+          <li><strong>1. Départ</strong> Cherchez une adresse ou glissez le point vert.</li>
+          <li><strong>2. Arrivée</strong> Cliquez n'importe où : durée et itinéraire détaillé.</li>
+          <li><strong>3. Lecture</strong> Vert = proche, rouge = loin. Lignes noires : 15 et 30 min.</li>
+        </ol>
+      </section>
+
+      <section class="map-card" aria-label="Carte des temps de trajet">
+        <noscript>
+          <p class="noscript">
+            Cette carte interactive a besoin de JavaScript pour calculer les temps de trajet. Activez-le pour l'utiliser.
+          </p>
+        </noscript>
+        <div id="mapStage" class="map-stage">
+          <canvas id="mapCanvas"></canvas>
+
+          <aside id="tripPanel" class="trip-panel" aria-live="polite">
+            <p class="trip-eyebrow">Départ</p>
+            <p id="tripFrom" class="trip-from">Chargement du réseau…</p>
+            <div id="tripResult" class="trip-result" hidden>
+              <div class="trip-row">
+                <p class="trip-eyebrow">Arrivée</p>
+                <button id="removeTo" type="button" class="link-button">Retirer</button>
+              </div>
+              <p id="tripTo" class="trip-to"></p>
+              <p id="tripDuration" class="trip-duration"></p>
+              <ol id="tripSteps" class="trip-steps"></ol>
+              <div id="heatFrom" class="segmented" role="group" aria-label="Point d'où part la carte">
+                <span>Carte depuis</span>
+                <button type="button" data-source="from" aria-pressed="true">le départ</button>
+                <button type="button" data-source="to" aria-pressed="false">l'arrivée</button>
+              </div>
+            </div>
+            <p id="tripHint" class="trip-hint">Cliquez sur la carte pour poser une arrivée.</p>
+          </aside>
+
+          <div class="map-buttons">
+            <button id="zoomIn" type="button" class="icon-button" aria-label="Zoomer">+</button>
+            <button id="zoomOut" type="button" class="icon-button" aria-label="Dézoomer">−</button>
+            <button id="recenter" type="button" class="icon-button" aria-label="Recentrer la carte">⌖</button>
+            <button id="fullscreen" type="button" class="icon-button" aria-label="Plein écran">⤢</button>
+          </div>
+
+          <div class="legend" aria-hidden="true">
+            <div id="legendBar" class="legend-bar"></div>
+            <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <span class="control-label">Réseau</span>
+            <label class="pill-toggle"><input type="checkbox" checked disabled /> Tram</label>
+            <label class="pill-toggle"><input id="busToggle" type="checkbox" /> Bus</label>
+          </div>
+          <div id="isoToggles" class="control-group">
+            <span class="control-label">Isochrones</span>
+            <label class="pill-toggle"><input type="checkbox" value="15" checked /> 15 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="30" checked /> 30 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="45" /> 45 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="60" /> 60 min</label>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="maxRange">Échelle</label>
+            <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
+            <output id="maxValue" for="maxRange">45 min</output>
+          </div>
+          <div class="control-group actions">
+            <button id="locate" type="button" class="button">Ma position</button>
+            <button id="swap" type="button" class="button">Inverser</button>
+            <button id="share" type="button" class="button primary">Partager</button>
+          </div>
+        </div>
+        <p id="reach" class="reach"></p>
+      </section>
+
+      <section class="section" aria-labelledby="stats-title">
+        <h2 id="stats-title">Angers en chiffres</h2>
+        <div class="stat-grid">
+          <div class="stat"><strong>90 %</strong><span>des stations de tram à moins de 30 min du centre (Place du Ralliement)</span></div>
+          <div class="stat"><strong>42</strong><span>stations de tram</span></div>
+          <div class="stat"><strong>10,1 min</strong><span>entre deux passages sur la ligne A, la plus fréquente</span></div>
+          <div class="stat"><strong>35 min</strong><span>depuis le centre pour rejoindre Avrillé-Ardenne, la station la plus éloignée</span></div>
+        </div>
+        <table class="lines-table">
+          <caption>Lignes de tram du réseau Irigo, en journée de semaine</caption>
+          <thead><tr><th scope="col">Ligne</th><th scope="col">Stations</th><th scope="col">Un passage toutes les</th></tr></thead>
+          <tbody>
+            <tr><td><span class="line-badge" style="background:#E30613">A</span> Tram</td><td>25</td><td>~10,1 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#00569D">B</span> Tram</td><td>18</td><td>~10,8 min</td></tr>
+            <tr><td><span class="line-badge" style="background:#379E32">C</span> Tram</td><td>19</td><td>~11,1 min</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions fréquentes</h2>
+        <details class="faq"><summary>Combien de temps faut-il pour traverser Angers en tram ?</summary><p>Depuis le centre (Place du Ralliement), 33 % des stations de tram sont à moins de 15 minutes et 90 % à moins de 30 minutes, marche et attente comprises. La plus éloignée, Avrillé-Ardenne, est à environ 35 minutes.</p></details>
+        <details class="faq"><summary>Quelle est la fréquence des lignes de tram à Angers ?</summary><p>En journée de semaine, l&#x27;intervalle moyen entre deux passages est de tram A : 10,1 min, tram B : 10,8 min, tram C : 11,1 min. La ligne la plus fréquente est la A, avec un passage toutes les 10,1 minutes environ.</p></details>
+        <details class="faq"><summary>D&#x27;où viennent les horaires utilisés ?</summary><p>Des horaires théoriques publiés par le réseau Irigo (format GTFS, ODbL), téléchargés le 4 octobre 2026 et valables jusqu&#x27;au 2 juillet 2027. Les temps correspondent au mardi 3 novembre 2026, entre 7 h et 20 h.</p></details>
+        <details class="faq"><summary>Les bus sont-ils pris en compte à Angers ?</summary><p>Oui, en option : cochez « Bus » sous la carte. Par défaut, seuls les tram sont affichés. L&#x27;attente aux arrêts de bus peu fréquentés est plafonnée à 15 minutes.</p></details>
+        <details class="faq"><summary>Comment les temps de trajet sont-ils calculés ?</summary><p>Pour chaque trajet : marche jusqu&#x27;à l&#x27;arrêt à 4,5 km/h, attente égale à la moitié de l&#x27;intervalle entre deux passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche. Pas de temps réel ni de perturbations : c&#x27;est la ville « sur le papier ».</p></details>
+      </section>
+
+      <section class="section" aria-labelledby="cities-title">
+        <h2 id="cities-title">Les autres villes</h2>
+        <div class="city-grid">
+          <a class="city-card" href="../montpellier/">
+            <img src="../og/thumb-montpellier.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Montpellier à portée de tram</h3>
+              <span>88&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de la Comédie) · réseau TaM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../bordeaux/">
+            <img src="../og/thumb-bordeaux.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Bordeaux à portée de tram</h3>
+              <span>71&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place des Quinconces) · réseau TBM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../lyon/">
+            <img src="../og/thumb-lyon.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Lyon à portée de métro</h3>
+              <span>69&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Place Bellecour) · réseau TCL</span>
+            </span>
+          </a>
+          <a class="city-card" href="../toulouse/">
+            <img src="../og/thumb-toulouse.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Toulouse à portée de métro</h3>
+              <span>77&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Place du Capitole) · réseau Tisséo</span>
+            </span>
+          </a>
+          <a class="city-card" href="../marseille/">
+            <img src="../og/thumb-marseille.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Marseille à portée de métro</h3>
+              <span>98&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Vieux-Port) · réseau RTM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../lille/">
+            <img src="../og/thumb-lille.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Lille à portée de métro</h3>
+              <span>73&nbsp;% des stations de métro et de tram à moins de 30&nbsp;min du centre (Grand&#x27;Place) · réseau Ilévia</span>
+            </span>
+          </a>
+          <a class="city-card" href="../nantes/">
+            <img src="../og/thumb-nantes.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Nantes à portée de tram</h3>
+              <span>96&nbsp;% des stations de tram et de Busway à moins de 30&nbsp;min du centre (Place du Commerce) · réseau Naolib</span>
+            </span>
+          </a>
+          <a class="city-card" href="../strasbourg/">
+            <img src="../og/thumb-strasbourg.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Strasbourg à portée de tram</h3>
+              <span>94&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place Kléber) · réseau CTS</span>
+            </span>
+          </a>
+          <a class="city-card" href="../rennes/">
+            <img src="../og/thumb-rennes.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Rennes à portée de métro</h3>
+              <span>100&nbsp;% des stations de métro à moins de 30&nbsp;min du centre (Place de la République) · réseau STAR</span>
+            </span>
+          </a>
+          <a class="city-card" href="../grenoble/">
+            <img src="../og/thumb-grenoble.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Grenoble à portée de tram</h3>
+              <span>90&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place Victor-Hugo) · réseau M réso</span>
+            </span>
+          </a>
+          <a class="city-card" href="../nice/">
+            <img src="../og/thumb-nice.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Nice à portée de tram</h3>
+              <span>72&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place Masséna) · réseau Lignes d&#x27;Azur</span>
+            </span>
+          </a>
+          <a class="city-card" href="../tours/">
+            <img src="../og/thumb-tours.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Tours à portée de tram</h3>
+              <span>97&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place Jean-Jaurès) · réseau Fil Bleu</span>
+            </span>
+          </a>
+          <a class="city-card" href="../dijon/">
+            <img src="../og/thumb-dijon.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Dijon à portée de tram</h3>
+              <span>100&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place Darcy) · réseau Divia</span>
+            </span>
+          </a>
+          <a class="city-card" href="../reims/">
+            <img src="../og/thumb-reims.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Reims à portée de tram</h3>
+              <span>100&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place d&#x27;Erlon) · réseau Citura</span>
+            </span>
+          </a>
+          <a class="city-card" href="../le-mans/">
+            <img src="../og/thumb-le-mans.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Le Mans à portée de tram</h3>
+              <span>100&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de la République) · réseau SETRAM</span>
+            </span>
+          </a>
+          <a class="city-card" href="../brest/">
+            <img src="../og/thumb-brest.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Brest à portée de tram</h3>
+              <span>100&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de la Liberté) · réseau Bibus</span>
+            </span>
+          </a>
+          <a class="city-card" href="../clermont-ferrand/">
+            <img src="../og/thumb-clermont-ferrand.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Clermont-Ferrand à portée de tram</h3>
+              <span>94&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de Jaude) · réseau T2C</span>
+            </span>
+          </a>
+          <a class="city-card" href="../saint-etienne/">
+            <img src="../og/thumb-saint-etienne.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Saint-Étienne à portée de tram</h3>
+              <span>100&nbsp;% des stations de tram à moins de 30&nbsp;min du centre (Place de l&#x27;Hôtel-de-Ville) · réseau STAS</span>
+            </span>
+          </a>
+          <a class="city-card" href="../rouen/">
+            <img src="../og/thumb-rouen.jpg" width="600" height="315" alt="" loading="lazy" />
+            <span class="city-card-body">
+              <h3>Rouen à portée de métro</h3>
+              <span>74&nbsp;% des stations de métro à moins de 30&nbsp;min du centre (Hôtel de Ville) · réseau Astuce</span>
+            </span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-author">
+          Un projet de <a href="https://www.camilleroux.com/" rel="author">Camille Roux</a>, développeur et co-fondateur de Human Coders,
+          à Montpellier. Retrouvez ses autres projets et sa <a href="https://www.camilleroux.com/veille/">veille tech hebdomadaire</a>
+          sur camilleroux.com.
+        </p>
+        <p class="footer-links">Villes&nbsp;: <a href="../angers/">Angers</a> · <a href="../bordeaux/">Bordeaux</a> · <a href="../brest/">Brest</a> · <a href="../clermont-ferrand/">Clermont-Ferrand</a> · <a href="../dijon/">Dijon</a> · <a href="../grenoble/">Grenoble</a> · <a href="../le-mans/">Le Mans</a> · <a href="../lille/">Lille</a> · <a href="../lyon/">Lyon</a> · <a href="../marseille/">Marseille</a> · <a href="../montpellier/">Montpellier</a> · <a href="../nantes/">Nantes</a> · <a href="../nice/">Nice</a> · <a href="../reims/">Reims</a> · <a href="../rennes/">Rennes</a> · <a href="../rouen/">Rouen</a> · <a href="../saint-etienne/">Saint-Étienne</a> · <a href="../strasbourg/">Strasbourg</a> · <a href="../toulouse/">Toulouse</a> · <a href="../tours/">Tours</a></p>
+        <p class="footer-links">
+          <a href="https://github.com/camilleroux/montpellier-temps-transport" rel="noopener">Code source sur GitHub</a> ·
+          <a href="https://github.com/camilleroux/montpellier-temps-transport/issues" rel="noopener">Proposer une ville ou signaler une erreur</a> ·
+          <a href="../mentions-legales/">Mentions légales et licences</a>
+        </p>
+        <p class="footer-credits">
+          Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
+          adapté ensuite à Paris par Jules Grandin
+          (<a href="https://julesgrandin.github.io/paris-temps-transport/">C'est encore loin&nbsp;?</a>).
+          Horaires&nbsp;: <a href="https://transport.data.gouv.fr/datasets/angers-loire-metropole-reseau-irigo-gtfs-gtfs-rt-siri">GTFS Irigo</a> (Angers Loire Métropole). Fond de carte © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
+          <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
+          <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
+          Données calculées publiées sous licence <a href="https://opendatacommons.org/licenses/odbl/1-0/">ODbL</a>, code sous licence MIT.
+        </p>
+      </div>
+    </footer>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="../app.js?v=97541c36"></script>
+    <!-- Cloudflare Web Analytics (sans cookie). "spa": false : les mises à jour de l'URL ne comptent pas comme des pages vues. -->
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "1904c17ed0624c0cab4d69ea1bacc5e7", "spa": false}'></script>
+  </body>
+</html>

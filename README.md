@@ -2,7 +2,9 @@
 
 Cartes interactives des temps de trajet en **tram et métro** (et, en option, en **bus**) dans les grandes villes françaises.
 
-👉 **https://tram.camilleroux.com/** — [Montpellier](https://tram.camilleroux.com/montpellier/) · [Bordeaux](https://tram.camilleroux.com/bordeaux/) · [Lyon](https://tram.camilleroux.com/lyon/) · [Toulouse](https://tram.camilleroux.com/toulouse/) · [Marseille](https://tram.camilleroux.com/marseille/)
+👉 **https://tram.camilleroux.com/**
+
+20 villes : [Angers](https://tram.camilleroux.com/angers/) · [Bordeaux](https://tram.camilleroux.com/bordeaux/) · [Brest](https://tram.camilleroux.com/brest/) · [Clermont-Ferrand](https://tram.camilleroux.com/clermont-ferrand/) · [Dijon](https://tram.camilleroux.com/dijon/) · [Grenoble](https://tram.camilleroux.com/grenoble/) · [Le Mans](https://tram.camilleroux.com/le-mans/) · [Lille](https://tram.camilleroux.com/lille/) · [Lyon](https://tram.camilleroux.com/lyon/) · [Marseille](https://tram.camilleroux.com/marseille/) · [Montpellier](https://tram.camilleroux.com/montpellier/) · [Nantes](https://tram.camilleroux.com/nantes/) · [Nice](https://tram.camilleroux.com/nice/) · [Reims](https://tram.camilleroux.com/reims/) · [Rennes](https://tram.camilleroux.com/rennes/) · [Rouen](https://tram.camilleroux.com/rouen/) · [Saint-Étienne](https://tram.camilleroux.com/saint-etienne/) · [Strasbourg](https://tram.camilleroux.com/strasbourg/) · [Toulouse](https://tram.camilleroux.com/toulouse/) · [Tours](https://tram.camilleroux.com/tours/)
 
 Idée originale : le [NYC Transit Time Cartogram](https://castrio.me/nyc/) d'Anthony Castrio, puis sa
 [déclinaison parisienne](https://github.com/JulesGrandin/paris-temps-transport) par Jules Grandin.
@@ -33,20 +35,12 @@ Chaque calcul écrit `sources/<ville>.json` (versionné) : URL de chaque fichier
 empreinte SHA-256, période couverte par le GTFS, jour de référence retenu, lignes exclues. `fetch_data.py` tient à jour
 le détail des téléchargements dans `data/<ville>/manifest.json`.
 
-| Ville | Réseau | GTFS téléchargé le | Validité du GTFS | Jour de référence | Fiche |
-|---|---|---|---|---|---|
-| Montpellier | TaM | 2026-10-03 | 2026-09-21 → 2026-12-31 | mardi 2026-11-03 | [sources/montpellier.json](sources/montpellier.json) |
-| Bordeaux | TBM | 2026-10-04 | 2026-10-03 → 2027-01-01 | jeudi 2026-11-05 | [sources/bordeaux.json](sources/bordeaux.json) |
-| Lyon | TCL | 2026-10-04 (à la main, compte data.grandlyon.com) | 2026-10-04 → 2027-02-01 | mardi 2026-10-06 | [sources/lyon.json](sources/lyon.json) |
-| Toulouse | Tisséo | 2026-10-04 | 2026-10-02 → 2026-11-05 | mardi 2026-10-06 | [sources/toulouse.json](sources/toulouse.json) |
-| Marseille | RTM | 2026-10-04 | 2026-10-03 → 2026-12-02 | mardi 2026-11-03 | [sources/marseille.json](sources/marseille.json) |
+Le tableau complet (licence, date de téléchargement, validité du GTFS, jour de référence pour chaque ville) est
+généré dans [sources/README.md](sources/README.md).
 
-Le GTFS Tisséo ne couvre qu'environ un mois : à retélécharger régulièrement. À Marseille, la carte se limite aux
-communes desservies par la RTM (Marseille, Allauch, Plan-de-Cuques, Septèmes-les-Vallons), la Métropole
-Aix-Marseille-Provence étant bien plus vaste que le réseau.
-
-Le GTFS TCL n'est pas téléchargeable sans compte : le récupérer sur data.grandlyon.com, le poser dans
-`data/lyon/gtfs.zip`, puis lancer `fetch_data.py lyon`, qui l'enregistre comme source manuelle.
+Particularités : le GTFS TCL (Lyon) se télécharge à la main sur data.grandlyon.com (compte requis) ; les GTFS Tisséo
+(Toulouse) et STAR (Rennes) ne couvrent que quelques semaines et sont à retélécharger souvent ; à Marseille et dans
+les nouvelles villes (`"communes": "served"`), la carte se limite aux communes réellement desservies.
 
 ## Organisation du site
 
@@ -66,7 +60,7 @@ Le GTFS TCL n'est pas téléchargeable sans compte : le récupérer sur data.gra
 
 ## Données
 
-- GTFS théoriques des réseaux : TaM (Montpellier), TBM (Bordeaux), Tisséo (Toulouse) et RTM (Marseille) via [transport.data.gouv.fr](https://transport.data.gouv.fr/), TCL (Lyon) via [data.grandlyon.com](https://data.grandlyon.com/)
+- GTFS théoriques des réseaux via [transport.data.gouv.fr](https://transport.data.gouv.fr/) (TCL via [data.grandlyon.com](https://data.grandlyon.com/)), sous Licence Ouverte, ODbL ou Licence Mobilités selon les réseaux
 - Tracés des lignes (quand le GTFS n'en fournit pas), eau et parcs : © contributeurs OpenStreetMap (ODbL), via Overpass
 - Contours des communes de chaque métropole ([geo.api.gouv.fr](https://geo.api.gouv.fr/))
 - Recherche d'adresse côté navigateur : [api-adresse.data.gouv.fr](https://adresse.data.gouv.fr/)
@@ -83,3 +77,12 @@ Les temps viennent des horaires GTFS d'un mardi ou jeudi de semaine scolaire typ
 - marche à pied à 75 m/min (4,5 km/h) à vol d'oiseau, sans pénalité d'accès (arrêts en surface).
 
 Pas de temps réel ni de perturbations. Les trajets à la demande (TaD) sont exclus.
+
+## Licences
+
+- Code : licence MIT (voir [LICENSE](LICENSE)).
+- Données calculées (`site/data/*.json`, `sources/*.json`) : bases de données dérivées publiées sous
+  [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), comme l'exigent OpenStreetMap et les GTFS sous ODbL ou
+  Licence Mobilités.
+- Mentions légales et licence de chaque source : https://tram.camilleroux.com/mentions-legales/
+

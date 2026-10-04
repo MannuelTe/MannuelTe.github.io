@@ -1,0 +1,44 @@
+{
+  "slug": "saint-etienne",
+  "path": "saint-etienne/",
+  "order": 20,
+  "name": "Saint-Étienne",
+  "title": "Saint-Étienne à portée de tram",
+  "titleSuffix": "Temps de trajet en tram STAS",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "STAS",
+  "metropole": "Saint-Étienne Métropole",
+  "area": "de la Métropole",
+  "epci": "244200770",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/fc66b270-658c-4678-9794-229a1a8a4938",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/horaires-du-reseau-stas",
+  "lat0": 45.44,
+  "osmBbox": [
+    45.22,
+    4.07,
+    45.66,
+    4.71
+  ],
+  "parksBbox": [
+    45.38,
+    4.31,
+    45.5,
+    4.47
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 45.43898,
+    "lon": 4.38759,
+    "label": "Place de l'Hôtel-de-Ville"
+  },
+  "searchExample": "Gare de Châteaucreux",
+  "ogImage": "og/saint-etienne.jpg?v=1",
+  "ogAlt": "Carte de Saint-Étienne colorée selon le temps de trajet en tram depuis place de l'Hôtel-de-Ville, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
+}

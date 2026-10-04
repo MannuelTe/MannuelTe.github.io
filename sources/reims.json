@@ -1,0 +1,79 @@
+{
+  "city": "Reims",
+  "builtAt": "2026-10-04T22:34:18+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "Citura",
+    "dataset": "https://transport.data.gouv.fr/datasets/offre-de-transport-du-reseau-grand-reims-mobilites-communaute-urbaine-du-grand-reims",
+    "source": "https://transport.data.gouv.fr/resources/80594/download",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:25:39+00:00",
+    "bytes": 2634451,
+    "sha256": "71ba91e72b3e403c2401a28dbdfbf16383c8f3e628641a1e3518d17e09a5467e",
+    "feedInfo": {
+      "feed_publisher_name": "Grand Reims Mobilités",
+      "feed_start_date": "20260928",
+      "feed_end_date": "20261101",
+      "feed_version": "20260928",
+      "feed_lang": "fr",
+      "feed_publisher_url": "http://fluo.grandest.fr"
+    },
+    "servicePeriod": [
+      "2026-09-28",
+      "2026-11-01"
+    ]
+  },
+  "communes": {
+    "metropole": "Grand Reims",
+    "epci": "200067213",
+    "source": "https://geo.api.gouv.fr/epcis/200067213/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:25:39+00:00",
+    "bytes": 594590,
+    "sha256": "ee5e82deb7cba4692877a6fe5dfdc6273e8177c42875bc2bd5cb6f92c6d67ac3"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](49.04,3.71,49.48,4.35);way[\"natural\"=\"water\"](49.04,3.71,49.48,4.35);relation[\"leisure\"=\"park\"](49.2,3.95,49.32,4.11);way[\"leisure\"=\"park\"](49.2,3.95,49.32,4.11););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:25:42+00:00",
+      "bytes": 3448972,
+      "sha256": "499434126b9c0895d5d01b51e6d5d3cf25f8198bc07465d0070cb749905d749d"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 26,
+      "tram": 1
+    },
+    "stops": 393,
+    "railStations": 24
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "TRAM",
+        "mode": "tram",
+        "color": "#E0001B",
+        "stations": 24,
+        "headway": 5.7
+      }
+    ],
+    "railStations": 24,
+    "busLines": 26,
+    "center": "Place d'Erlon",
+    "within15": 67,
+    "within30": 100,
+    "farthestStation": "Gare Champ. TGV",
+    "farthestMinutes": 21,
+    "ogTrip": {
+      "name": "Polyclinique",
+      "lat": 49.21768,
+      "lon": 4.00047
+    }
+  }
+}

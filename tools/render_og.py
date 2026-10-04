@@ -33,6 +33,7 @@ OVERLAY = """<style>
     border-radius: 16px; background: rgba(255,255,255,0.96); box-shadow: 0 6px 24px rgba(0,0,0,.08); }
   .og-title h1 { margin: 0; font-size: 42px; }
   .og-title p { margin: 6px 0 0; color: #4b4b4b; font-size: 19px; font-weight: 500; }
+  .og-credit { position: absolute; right: 24px; top: 14px; z-index: 5; color: #6b6b6b; font: 500 11px Inter, sans-serif; }
 </style>
 </head>"""
 
@@ -110,13 +111,16 @@ def main() -> None:
 def render_city(city: dict) -> None:
     page = (SITE / city["path"] / "index.html").read_text(encoding="utf-8")
     title = f'<div class="og-title"><h1>{city["title"]}</h1><p>La ville redessinée par le temps de trajet, depuis où vous voulez</p></div>'
-    page = page.replace("</head>", OVERLAY, 1).replace('<canvas id="mapCanvas"></canvas>', '<canvas id="mapCanvas"></canvas>\n' + title, 1)
+    credit = '<div class="og-credit">© contributeurs OpenStreetMap · horaires ' + city["network"] + '</div>'
+    page = page.replace("</head>", OVERLAY, 1).replace('<canvas id="mapCanvas"></canvas>', '<canvas id="mapCanvas"></canvas>\n' + title + credit, 1)
     preview = SITE / city["path"] / "_og.html"
     preview.write_text(page, encoding="utf-8")
 
     server = serve()
     try:
-        trip = city["ogTrip"]
+        # Trajet de l'aperçu : celui de la config, sinon une station à ~20 min du centre (calculée par build_data.py).
+        sources = json.loads((ROOT / "sources" / f"{city['slug']}.json").read_text(encoding="utf-8"))
+        trip = city.get("ogTrip") or sources["stats"]["ogTrip"]
         out = SITE / "og" / f"{city['slug']}.jpg"
         screenshot(f"http://127.0.0.1:{server.server_port}/{city['path']}_og.html?to={trip['lat']},{trip['lon']}", out)
         thumb = SITE / "og" / f"thumb-{city['slug']}.jpg"

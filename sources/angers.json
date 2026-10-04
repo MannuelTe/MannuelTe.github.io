@@ -1,0 +1,92 @@
+{
+  "city": "Angers",
+  "builtAt": "2026-10-04T22:34:13+00:00",
+  "referenceDate": "2026-11-03",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "Irigo",
+    "dataset": "https://transport.data.gouv.fr/datasets/angers-loire-metropole-reseau-irigo-gtfs-gtfs-rt-siri",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/32f30b64-33f7-43bb-9b6f-34c21c2f83a3",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:24:48+00:00",
+    "bytes": 4293354,
+    "sha256": "29aa9073915726d93465844e4e609f29e9535ba4be43936d4c2168be3e7dc8bd",
+    "feedInfo": {
+      "feed_publisher_name": "IRIGO",
+      "feed_publisher_url": "https://www.irigo.fr/",
+      "feed_lang": "FR",
+      "feed_start_date": "20261004",
+      "feed_end_date": "20270102"
+    },
+    "servicePeriod": [
+      "2026-09-19",
+      "2027-07-02"
+    ]
+  },
+  "communes": {
+    "metropole": "Angers Loire Métropole",
+    "epci": "244900015",
+    "source": "https://geo.api.gouv.fr/epcis/244900015/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:24:48+00:00",
+    "bytes": 309282,
+    "sha256": "855c39750d86df9414b4eed868ccff4be59542d42af3c963f24ece4a41632b53"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](47.25,-0.87,47.69,-0.23);way[\"natural\"=\"water\"](47.25,-0.87,47.69,-0.23);relation[\"leisure\"=\"park\"](47.41,-0.63,47.53,-0.47);way[\"leisure\"=\"park\"](47.41,-0.63,47.53,-0.47););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:24:55+00:00",
+      "bytes": 10990886,
+      "sha256": "ba20f8638a063e6ec7caab06e113ad1a0a9afa0df76478fec7f8092480eb81e1"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 97,
+      "tram": 3
+    },
+    "stops": 876,
+    "railStations": 42
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "tram",
+        "color": "#E30613",
+        "stations": 25,
+        "headway": 10.1
+      },
+      {
+        "name": "B",
+        "mode": "tram",
+        "color": "#00569D",
+        "stations": 18,
+        "headway": 10.8
+      },
+      {
+        "name": "C",
+        "mode": "tram",
+        "color": "#379E32",
+        "stations": 19,
+        "headway": 11.1
+      }
+    ],
+    "railStations": 42,
+    "busLines": 97,
+    "center": "Place du Ralliement",
+    "within15": 33,
+    "within30": 90,
+    "farthestStation": "Avrillé-Ardenne",
+    "farthestMinutes": 35,
+    "ogTrip": {
+      "name": "Jean Moulin",
+      "lat": 47.49057,
+      "lon": -0.55208
+    }
+  }
+}

@@ -24,7 +24,13 @@ ANALYTICS = (
     '    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" '
     "data-cf-beacon='{\"token\": \"1904c17ed0624c0cab4d69ea1bacc5e7\", \"spa\": false}'></script>"
 )
-MODE_NAMES = {"metro": "Métro", "tram": "Tram", "funicular": "Funiculaire", "cable": "Téléphérique"}
+LICENCES = {
+    "lo": ("Licence Ouverte 2.0", "https://www.etalab.gouv.fr/licence-ouverte-open-licence/"),
+    "odbl": ("ODbL", "https://opendatacommons.org/licenses/odbl/1-0/"),
+    "mobilites": ("Licence Mobilités", "https://wiki.lafabriquedesmobilites.fr/wiki/Licence_Mobilit%C3%A9s"),
+}
+ODBL_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
+MODE_NAMES = {"metro": "Métro", "tram": "Tram", "funicular": "Funiculaire", "cable": "Téléphérique", "busway": "Busway"}
 MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
 WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
@@ -50,7 +56,11 @@ def load_cities() -> list[dict]:
     cities = []
     for path in (ROOT / "cities").glob("*.json"):
         city = json.loads(path.read_text(encoding="utf-8"))
-        city["sources"] = json.loads((ROOT / "sources" / f"{city['slug']}.json").read_text(encoding="utf-8"))
+        sources = ROOT / "sources" / f"{city['slug']}.json"
+        if not sources.exists() or not (SITE / "data" / f"{city['slug']}.json").exists():
+            print(f"  {city['slug']} ignorée : lancer d'abord build_data.py {city['slug']}")
+            continue
+        city["sources"] = json.loads(sources.read_text(encoding="utf-8"))
         city["stats"] = city["sources"]["stats"]
         cities.append(city)
     return sorted(cities, key=lambda city: city["order"])
@@ -130,7 +140,7 @@ def header(base: str) -> str:
 
 
 def footer(cities: list[dict], base: str, data_credit: str) -> str:
-    links = " · ".join(f'<a href="{base}{city["path"]}">{esc(city["name"])}</a>' for city in cities)
+    links = " · ".join(f'<a href="{base}{city["path"]}">{esc(city["name"])}</a>' for city in sorted(cities, key=lambda c: c["name"]))
     return f"""    <footer class="site-footer">
       <div class="footer-inner">
         <p class="footer-author">
@@ -141,7 +151,8 @@ def footer(cities: list[dict], base: str, data_credit: str) -> str:
         <p class="footer-links">Villes&nbsp;: {links}</p>
         <p class="footer-links">
           <a href="{GITHUB_URL}" rel="noopener">Code source sur GitHub</a> ·
-          <a href="{GITHUB_URL}/issues" rel="noopener">Proposer une ville ou signaler une erreur</a>
+          <a href="{GITHUB_URL}/issues" rel="noopener">Proposer une ville ou signaler une erreur</a> ·
+          <a href="{base}mentions-legales/">Mentions légales et licences</a>
         </p>
         <p class="footer-credits">
           Idée originale&nbsp;: le <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> d'Anthony Castrio,
@@ -150,6 +161,7 @@ def footer(cities: list[dict], base: str, data_credit: str) -> str:
           {data_credit} Fond de carte © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>,
           <a href="https://geo.api.gouv.fr/">contours communaux</a>, recherche d'adresse via la
           <a href="https://adresse.data.gouv.fr/">Base Adresse Nationale</a>.
+          Données calculées publiées sous licence <a href="{ODBL_URL}">ODbL</a>, code sous licence MIT.
         </p>
       </div>
     </footer>"""
@@ -207,7 +219,7 @@ def city_faq(city: dict) -> list[tuple[str, str]]:
         ),
         (
             "D'où viennent les horaires utilisés ?",
-            f"Des horaires théoriques publiés par le réseau {city['network']} (format GTFS)"
+            f"Des horaires théoriques publiés par le réseau {city['network']} (format GTFS, {LICENCES[city['gtfsLicence']][0]})"
             + (f", téléchargés le {french_date(fetched)}" if fetched else "")
             + (f" et valables jusqu'au {french_date(period[1])}" if period[1] else "")
             + f". Les temps correspondent au {french_date(sources['referenceDate'], weekday=True)}, entre 7 h et 20 h.",
@@ -247,7 +259,7 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
             "applicationCategory": "TravelApplication",
             "operatingSystem": "Web",
             "isAccessibleForFree": True,
-            "image": SITE_URL + city["ogImage"],
+            "image": f"{SITE_URL}og/{city['slug']}.jpg",
             "author": {"@id": AUTHOR_URL + "#me"},
             "spatialCoverage": {"@type": "Place", "name": city["metropole"]},
             "isBasedOn": ["https://castrio.me/nyc/", "https://julesgrandin.github.io/paris-temps-transport/"],
@@ -278,12 +290,12 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
         for line in stats["lines"]
     )
     links = []
-    for other in cities:
+    for other in sorted(cities, key=lambda item: item["name"]):
         label = esc(other["name"])
         if other["slug"] == city["slug"]:
-            links.append(f'          <span class="chip active" aria-current="page">📍 {label}</span>')
+            links.append(f'            <span class="chip active" aria-current="page">{label}</span>')
         else:
-            links.append(f'          <a class="chip" href="{base}{other["path"]}">{label}</a>')
+            links.append(f'            <a class="chip" href="{base}{other["path"]}">{label}</a>')
     config = {
         "slug": city["slug"],
         "name": city["name"],
@@ -302,7 +314,7 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
             description=description,
             url=url,
             base=base,
-            image=SITE_URL + city["ogImage"],
+            image=f"{SITE_URL}og/{city['slug']}.jpg?v={short_hash(SITE / 'og' / (city['slug'] + '.jpg'))}",
             image_alt=city["ogAlt"],
             published=city["published"],
             graph=graph,
@@ -396,7 +408,7 @@ def render_home(template: Template, cities: list[dict]) -> str:
             graph=graph,
         ),
         "header": header("./"),
-        "footer": footer(cities, "./", "Horaires&nbsp;: GTFS des réseaux " + esc(networks) + "."),
+        "footer": footer(cities, "./", "Horaires&nbsp;: GTFS des réseaux de chaque ville (détail dans les mentions légales)."),
         "analytics": ANALYTICS,
         "city_count": str(len(cities)),
         "city_cards": "\n".join(city_card(city, "./", "h2") for city in cities),
@@ -404,6 +416,80 @@ def render_home(template: Template, cities: list[dict]) -> str:
         "styles_version": short_hash(SITE / "styles.css"),
     }
     return template.substitute(values)
+
+
+def render_legal(cities: list[dict]) -> str:
+    """Mentions légales (LCEN) and the licence of every source."""
+    rows = "\n".join(
+        f'          <tr><td>{esc(city["name"])}</td><td><a href="{esc(city["gtfsDataset"])}">GTFS {esc(city["network"])}</a></td>'
+        f'<td><a href="{LICENCES[city["gtfsLicence"]][1]}">{LICENCES[city["gtfsLicence"]][0]}</a></td>'
+        f'<td>{french_date(city["sources"]["gtfs"]["fetchedAt"]) if city["sources"]["gtfs"].get("fetchedAt") else "—"}</td></tr>'
+        for city in sorted(cities, key=lambda item: item["name"])
+    )
+    graph = [author_schema()]
+    return f"""<!doctype html>
+<html lang="fr">
+  <head>
+{head(title=f"Mentions légales et licences · {SITE_NAME}", description="Éditeur, hébergeur, mesure d'audience et licences des données utilisées par À portée de tram.", url=SITE_URL + "mentions-legales/", base="../", image=SITE_URL + "og/home.jpg", image_alt="À portée de tram", published="2026-10-05", graph=graph)}
+    <link rel="stylesheet" href="../styles.css?v={short_hash(SITE / 'styles.css')}" />
+  </head>
+  <body>
+{header('../')}
+    <main class="page">
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <a href="../">{SITE_NAME}</a> <span aria-hidden="true">›</span> <span aria-current="page">Mentions légales</span>
+      </nav>
+      <section class="section">
+        <h1 class="page-title">Mentions légales et licences</h1>
+        <h2>Éditeur</h2>
+        <p>Ce site est édité à titre personnel par <a href="{AUTHOR_URL}" rel="author">Camille Roux</a>. Contact&nbsp;: via
+        <a href="{AUTHOR_URL}">camilleroux.com</a> ou les <a href="{GITHUB_URL}/issues">issues GitHub</a> du projet.</p>
+        <h2>Hébergement</h2>
+        <p>GitHub, Inc. (GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.
+        Nom de domaine géré par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis.</p>
+        <h2>Mesure d'audience et données personnelles</h2>
+        <p>La fréquentation est mesurée avec Cloudflare Web Analytics, sans cookie ni identifiant personnel. Les trajets
+        sont calculés dans votre navigateur&nbsp;: aucune position ni adresse n'est enregistrée. La recherche d'adresse
+        interroge l'API de la Base Adresse Nationale (adresse.data.gouv.fr).</p>
+        <h2>Licences</h2>
+        <p>Le code est publié sous licence MIT sur <a href="{GITHUB_URL}">GitHub</a>. Les données calculées
+        (<code>data/*.json</code>) sont des bases de données dérivées, publiées sous licence <a href="{ODBL_URL}">ODbL</a>.
+        Fond de carte et tracés&nbsp;: © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>
+        (ODbL). Contours communaux&nbsp;: <a href="https://geo.api.gouv.fr/">geo.api.gouv.fr</a> (Licence Ouverte).</p>
+        <table class="lines-table">
+          <caption>Horaires utilisés pour chaque ville</caption>
+          <thead><tr><th scope="col">Ville</th><th scope="col">Source</th><th scope="col">Licence</th><th scope="col">Téléchargé le</th></tr></thead>
+          <tbody>
+{rows}
+          </tbody>
+        </table>
+      </section>
+    </main>
+{footer(cities, "../", "")}
+{ANALYTICS}
+  </body>
+</html>
+"""
+
+
+def write_sources_readme(cities: list[dict]) -> None:
+    lines = [
+        "# Provenance des données",
+        "",
+        "Généré par `build_pages.py` à partir des fiches `sources/<ville>.json`.",
+        "",
+        "| Ville | Réseau | Licence | GTFS téléchargé le | Validité du GTFS | Jour de référence |",
+        "|---|---|---|---|---|---|",
+    ]
+    for city in sorted(cities, key=lambda item: item["name"]):
+        gtfs = city["sources"]["gtfs"]
+        period = gtfs.get("servicePeriod") or ["?", "?"]
+        how = " (à la main)" if gtfs.get("how") == "manual" else ""
+        lines.append(
+            f"| [{city['name']}]({city['slug']}.json) | {city['network']} | {LICENCES[city['gtfsLicence']][0]} | "
+            f"{gtfs.get('fetchedAt', '?')[:10]}{how} | {period[0]} → {period[1]} | {city['sources']['referenceDate']} |"
+        )
+    (ROOT / "sources" / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def render_404(cities: list[dict]) -> str:
@@ -447,6 +533,9 @@ def main() -> None:
     home_template = Template((ROOT / "templates" / "home.html").read_text(encoding="utf-8"))
     (SITE / "index.html").write_text(render_home(home_template, cities), encoding="utf-8")
     (SITE / "404.html").write_text(render_404(cities), encoding="utf-8")
+    (SITE / "mentions-legales").mkdir(exist_ok=True)
+    (SITE / "mentions-legales" / "index.html").write_text(render_legal(cities), encoding="utf-8")
+    write_sources_readme(cities)
     print("Wrote site/index.html, site/404.html")
 
     today = date.today().isoformat()

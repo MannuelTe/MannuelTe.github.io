@@ -1,0 +1,47 @@
+{
+  "slug": "brest",
+  "path": "brest/",
+  "order": 17,
+  "name": "Brest",
+  "title": "Brest à portée de tram",
+  "titleSuffix": "Temps de trajet en tram Bibus",
+  "railLabel": "Tram et téléphérique",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "Bibus",
+  "metropole": "Brest Métropole",
+  "area": "de la Métropole",
+  "epci": "242900314",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/583d1419-058b-481b-b378-449cab744c82",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/horaires-theoriques-et-temps-reel-des-bus-et-tramways-circulant-sur-le-territoire-de-brest-metropole",
+  "lat0": 48.39,
+  "osmBbox": [
+    48.17,
+    -4.81,
+    48.61,
+    -4.17
+  ],
+  "parksBbox": [
+    48.33,
+    -4.57,
+    48.45,
+    -4.41
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 48.39073,
+    "lon": -4.48542,
+    "label": "Place de la Liberté"
+  },
+  "searchExample": "Gare de Brest",
+  "ogImage": "og/brest.jpg?v=1",
+  "ogAlt": "Carte de Brest colorée selon le temps de trajet en tram depuis place de la Liberté, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "seaDepartments": [
+    "29"
+  ],
+  "gtfsLicence": "lo"
+}

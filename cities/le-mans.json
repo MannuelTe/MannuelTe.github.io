@@ -1,0 +1,44 @@
+{
+  "slug": "le-mans",
+  "path": "le-mans/",
+  "order": 16,
+  "name": "Le Mans",
+  "title": "Le Mans à portée de tram",
+  "titleSuffix": "Temps de trajet en tram SETRAM",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "SETRAM",
+  "metropole": "Le Mans Métropole",
+  "area": "de l'agglomération",
+  "epci": "247200132",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/5339d96c-6d20-4a01-939a-40f7b56d6cc1",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/gtfs-du-reseau-des-transports-bus-et-tramway-setram-circulant-sur-le-territoire-le-mans-metropole",
+  "lat0": 48.0,
+  "osmBbox": [
+    47.78,
+    -0.12,
+    48.22,
+    0.52
+  ],
+  "parksBbox": [
+    47.94,
+    0.12,
+    48.06,
+    0.28
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 48.00405,
+    "lon": 0.19665,
+    "label": "Place de la République"
+  },
+  "searchExample": "Gare du Mans",
+  "ogImage": "og/le-mans.jpg?v=1",
+  "ogAlt": "Carte de Le Mans colorée selon le temps de trajet en tram depuis place de la République, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
+}

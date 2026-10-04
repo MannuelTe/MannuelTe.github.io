@@ -1,0 +1,79 @@
+{
+  "city": "Dijon",
+  "builtAt": "2026-10-04T22:34:17+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "Divia",
+    "dataset": "https://transport.data.gouv.fr/datasets/gtfs-diviamobilites",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/e0dbd217-15cd-4e28-9459-211a27511a34",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:25:01+00:00",
+    "bytes": 4255533,
+    "sha256": "e5251f492992440f612eb1c0a5f459539facbb7d8106085d36dbe43984c652e1",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-01-01",
+      "2026-12-31"
+    ]
+  },
+  "communes": {
+    "metropole": "Dijon Métropole",
+    "epci": "242100410",
+    "source": "https://geo.api.gouv.fr/epcis/242100410/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:25:02+00:00",
+    "bytes": 121868,
+    "sha256": "fa5bc3344152aad38a5d8325c2476c3ffa429c408c043138e5c9b3274f6fee28"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](47.1,4.71,47.54,5.35);way[\"natural\"=\"water\"](47.1,4.71,47.54,5.35);relation[\"leisure\"=\"park\"](47.26,4.95,47.38,5.11);way[\"leisure\"=\"park\"](47.26,4.95,47.38,5.11););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:25:05+00:00",
+      "bytes": 3340717,
+      "sha256": "74d9dae7e2e5774ed0f10780d5ff854f7fdb2d4a8201b846740727184b2ea033"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 37,
+      "tram": 2
+    },
+    "stops": 527,
+    "railStations": 34
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "T1",
+        "mode": "tram",
+        "color": "#AB0672",
+        "stations": 17,
+        "headway": 5.4
+      },
+      {
+        "name": "T2",
+        "mode": "tram",
+        "color": "#AB0672",
+        "stations": 21,
+        "headway": 6.7
+      }
+    ],
+    "railStations": 34,
+    "busLines": 37,
+    "center": "Place Darcy",
+    "within15": 53,
+    "within30": 100,
+    "farthestStation": "QUETIGNY Centre La Parenthèse",
+    "farthestMinutes": 28,
+    "ogTrip": {
+      "name": "Université",
+      "lat": 47.31139,
+      "lon": 5.07312
+    }
+  }
+}

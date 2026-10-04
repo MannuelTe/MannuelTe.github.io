@@ -1,6 +1,6 @@
 {
   "city": "Toulouse",
-  "builtAt": "2026-10-04T22:00:07+00:00",
+  "builtAt": "2026-10-04T22:34:48+00:00",
   "referenceDate": "2026-10-06",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -41,8 +41,8 @@
   "network": {
     "lines": {
       "bus": 119,
-      "metro": 2,
       "cable": 1,
+      "metro": 2,
       "tram": 1
     },
     "stops": 1834,
@@ -85,6 +85,11 @@
     "within15": 27,
     "within30": 77,
     "farthestStation": "MEETT",
-    "farthestMinutes": 51
+    "farthestMinutes": 51,
+    "ogTrip": {
+      "name": "Bellefontaine",
+      "lat": 43.56603,
+      "lon": 1.39914
+    }
   }
 }

@@ -1,6 +1,6 @@
 {
   "city": "Marseille",
-  "builtAt": "2026-10-04T22:00:11+00:00",
+  "builtAt": "2026-10-04T22:33:35+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -50,9 +50,9 @@
   "network": {
     "lines": {
       "bus": 112,
-      "tram": 3,
       "metro": 2,
-      "ferry": 1
+      "ferry": 1,
+      "tram": 3
     },
     "stops": 1355,
     "railStations": 65
@@ -101,6 +101,11 @@
     "within15": 38,
     "within30": 98,
     "farthestStation": "Les Caillols",
-    "farthestMinutes": 32
+    "farthestMinutes": 32,
+    "ogTrip": {
+      "name": "Sainte-Thérèse",
+      "lat": 43.29412,
+      "lon": 5.40962
+    }
   }
 }

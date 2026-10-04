@@ -1,0 +1,72 @@
+{
+  "city": "Tours",
+  "builtAt": "2026-10-04T22:34:16+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "Fil Bleu",
+    "dataset": "https://transport.data.gouv.fr/datasets/fil-bleu-syndicat-des-mobilites-gtfs-gtfs-rt",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/198b7602-5e74-4d88-b6bc-483af85a2430",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:24:55+00:00",
+    "bytes": 4343825,
+    "sha256": "8ecc51b50b0145dc7ba677bf6e37eabcf989535a7e195d47365e368249fd95ff",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-09-30",
+      "2027-01-01"
+    ]
+  },
+  "communes": {
+    "metropole": "Tours Métropole Val de Loire",
+    "epci": "243700754",
+    "source": "https://geo.api.gouv.fr/epcis/243700754/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:24:55+00:00",
+    "bytes": 171834,
+    "sha256": "daa0b3c3ebcc082e4daf9854a689ac0152e45b10049e76f5a510dc40f7bb5c10"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](47.17,0.37,47.61,1.01);way[\"natural\"=\"water\"](47.17,0.37,47.61,1.01);relation[\"leisure\"=\"park\"](47.33,0.61,47.45,0.77);way[\"leisure\"=\"park\"](47.33,0.61,47.45,0.77););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:25:01+00:00",
+      "bytes": 19707452,
+      "sha256": "4cec49b2e02aeb522387a07754aaebeda24dbf75b9d9215d5984dd4109302016"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 45,
+      "tram": 1
+    },
+    "stops": 780,
+    "railStations": 31
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "tram",
+        "color": "#bd074e",
+        "stations": 31,
+        "headway": 6.4
+      }
+    ],
+    "railStations": 31,
+    "busLines": 45,
+    "center": "Place Jean-Jaurès",
+    "within15": 52,
+    "within30": 97,
+    "farthestStation": "Lycée J. Monnet",
+    "farthestMinutes": 31,
+    "ogTrip": {
+      "name": "Marne",
+      "lat": 47.42371,
+      "lon": 0.69738
+    }
+  }
+}

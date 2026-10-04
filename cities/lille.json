@@ -1,0 +1,56 @@
+{
+  "slug": "lille",
+  "path": "lille/",
+  "order": 6,
+  "name": "Lille",
+  "title": "Lille à portée de métro",
+  "titleSuffix": "Temps de trajet en métro et tram Ilévia",
+  "railLabel": "Métro et tram",
+  "railNoun": "métro et tram",
+  "railStations": "stations de métro et de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "Ilévia",
+  "metropole": "Métropole Européenne de Lille",
+  "area": "de la Métropole",
+  "epci": "200093201",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/c9e5dd3f-8eed-4ad7-aec2-915240599cf6",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/ilevia-localisation-des-arrets-bus-metro-et-tram-gtfs",
+  "lat0": 50.64,
+  "osmBbox": [
+    50.42,
+    2.74,
+    50.86,
+    3.38
+  ],
+  "parksBbox": [
+    50.58,
+    2.98,
+    50.7,
+    3.14
+  ],
+  "railGeometry": "osm",
+  "defaultFrom": {
+    "lat": 50.6369,
+    "lon": 3.0636,
+    "label": "Grand'Place"
+  },
+  "searchExample": "Gare Lille-Flandres",
+  "ogImage": "og/lille.jpg?v=1",
+  "ogAlt": "Carte de Lille colorée selon le temps de trajet en métro et tram depuis Grand'Place, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "osmRailBbox": [
+    50.42,
+    2.74,
+    50.86,
+    3.38
+  ],
+  "osmRefAliases": {
+    "1": "M1",
+    "2": "M2",
+    "R": "TRAM",
+    "T": "TRAM"
+  },
+  "gtfsLicence": "lo"
+}

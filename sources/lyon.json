@@ -1,6 +1,6 @@
 {
   "city": "Lyon",
-  "builtAt": "2026-10-04T22:00:03+00:00",
+  "builtAt": "2026-10-04T22:33:27+00:00",
   "referenceDate": "2026-10-06",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -59,10 +59,10 @@
   "network": {
     "lines": {
       "bus": 179,
-      "tram": 7,
-      "metro": 4,
       "ferry": 1,
-      "funicular": 2
+      "metro": 4,
+      "funicular": 2,
+      "tram": 7
     },
     "stops": 2684,
     "railStations": 147
@@ -167,6 +167,11 @@
     "within15": 16,
     "within30": 69,
     "farthestStation": "Saint-Priest Bel Air",
-    "farthestMinutes": 51
+    "farthestMinutes": 51,
+    "ogTrip": {
+      "name": "Debourg",
+      "lat": 45.73137,
+      "lon": 4.83459
+    }
   }
 }

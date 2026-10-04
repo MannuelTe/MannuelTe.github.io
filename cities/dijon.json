@@ -1,0 +1,44 @@
+{
+  "slug": "dijon",
+  "path": "dijon/",
+  "order": 14,
+  "name": "Dijon",
+  "title": "Dijon à portée de tram",
+  "titleSuffix": "Temps de trajet en tram Divia",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "Divia",
+  "metropole": "Dijon Métropole",
+  "area": "de la Métropole",
+  "epci": "242100410",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/e0dbd217-15cd-4e28-9459-211a27511a34",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/gtfs-diviamobilites",
+  "lat0": 47.32,
+  "osmBbox": [
+    47.1,
+    4.71,
+    47.54,
+    5.35
+  ],
+  "parksBbox": [
+    47.26,
+    4.95,
+    47.38,
+    5.11
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 47.32339,
+    "lon": 5.0337,
+    "label": "Place Darcy"
+  },
+  "searchExample": "Gare Dijon-Ville",
+  "ogImage": "og/dijon.jpg?v=1",
+  "ogAlt": "Carte de Dijon colorée selon le temps de trajet en tram depuis place Darcy, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
+}

@@ -1,0 +1,44 @@
+{
+  "slug": "angers",
+  "path": "angers/",
+  "order": 12,
+  "name": "Angers",
+  "title": "Angers à portée de tram",
+  "titleSuffix": "Temps de trajet en tram Irigo",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "Irigo",
+  "metropole": "Angers Loire Métropole",
+  "area": "de l'agglomération",
+  "epci": "244900015",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/32f30b64-33f7-43bb-9b6f-34c21c2f83a3",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/angers-loire-metropole-reseau-irigo-gtfs-gtfs-rt-siri",
+  "lat0": 47.47,
+  "osmBbox": [
+    47.25,
+    -0.87,
+    47.69,
+    -0.23
+  ],
+  "parksBbox": [
+    47.41,
+    -0.63,
+    47.53,
+    -0.47
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 47.47115,
+    "lon": -0.55172,
+    "label": "Place du Ralliement"
+  },
+  "searchExample": "Gare Saint-Laud",
+  "ogImage": "og/angers.jpg?v=1",
+  "ogAlt": "Carte de Angers colorée selon le temps de trajet en tram depuis place du Ralliement, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "odbl"
+}

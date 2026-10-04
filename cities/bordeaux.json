@@ -16,13 +16,31 @@
   "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/10b87ffe-e6bb-494d-93df-bb6019e223d9",
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-et-scolaire-tbm",
   "lat0": 44.84,
-  "osmBbox": [44.68, -0.88, 45.08, -0.36],
-  "parksBbox": [44.78, -0.66, 44.90, -0.50],
+  "osmBbox": [
+    44.68,
+    -0.88,
+    45.08,
+    -0.36
+  ],
+  "parksBbox": [
+    44.78,
+    -0.66,
+    44.9,
+    -0.5
+  ],
   "railGeometry": "gtfs",
-  "defaultFrom": {"lat": 44.84470, "lon": -0.57350, "label": "Place des Quinconces"},
+  "defaultFrom": {
+    "lat": 44.8447,
+    "lon": -0.5735,
+    "label": "Place des Quinconces"
+  },
   "searchExample": "Gare Saint-Jean",
   "ogImage": "og/bordeaux.jpg?v=1",
   "ogAlt": "Carte de Bordeaux colorée selon le temps de trajet en tram depuis la place des Quinconces, avec les isochrones 15 et 30 minutes.",
-  "ogTrip": {"lat": 44.8256, "lon": -0.5562},
-  "published": "2026-10-05"
+  "ogTrip": {
+    "lat": 44.8256,
+    "lon": -0.5562
+  },
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
 }

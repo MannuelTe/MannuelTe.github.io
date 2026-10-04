@@ -1,0 +1,72 @@
+{
+  "city": "Clermont-Ferrand",
+  "builtAt": "2026-10-04T22:34:23+00:00",
+  "referenceDate": "2026-10-06",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "T2C",
+    "dataset": "https://transport.data.gouv.fr/datasets/syndicat-mixte-des-transports-en-commun-de-lagglomeration-clermontoise-smtc-ac-reseau-t2c-gtfs-gtfs-rt",
+    "source": "https://www.data.gouv.fr/api/1/datasets/r/4e237a58-cd14-4746-b729-1337a40a8a7b",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:27:51+00:00",
+    "bytes": 4346629,
+    "sha256": "3d96c42425c5a0e0fefe7c537b9afbd323a496d6679cebebd5f086484934a28b",
+    "feedInfo": null,
+    "servicePeriod": [
+      "2026-08-31",
+      "2026-12-31"
+    ]
+  },
+  "communes": {
+    "metropole": "Clermont Auvergne Métropole",
+    "epci": "246300701",
+    "source": "https://geo.api.gouv.fr/epcis/246300701/communes?fields=nom,code&format=geojson&geometry=contour",
+    "how": "download",
+    "fetchedAt": "2026-10-04T22:27:51+00:00",
+    "bytes": 157032,
+    "sha256": "3d4c5a2c11a42c8165c951f7cb03722cfaf9c8cd1ecc4e8eda45c23e2893045c"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © contributeurs OpenStreetMap",
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](45.56,2.76,46.0,3.4);way[\"natural\"=\"water\"](45.56,2.76,46.0,3.4);relation[\"leisure\"=\"park\"](45.72,3.0,45.84,3.16);way[\"leisure\"=\"park\"](45.72,3.0,45.84,3.16););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-04T22:27:54+00:00",
+      "bytes": 2594319,
+      "sha256": "05848868c863dadd27e1d0b42ef49affabc0d7a16db9f7d292a0cf9b295724ef"
+    }
+  },
+  "railGeometry": "GTFS shapes.txt",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 46,
+      "tram": 1
+    },
+    "stops": 661,
+    "railStations": 34
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "A",
+        "mode": "tram",
+        "color": "#a81815",
+        "stations": 34,
+        "headway": 5.9
+      }
+    ],
+    "railStations": 34,
+    "busLines": 46,
+    "center": "Place de Jaude",
+    "within15": 41,
+    "within30": 94,
+    "farthestStation": "Les Vergnes",
+    "farthestMinutes": 34,
+    "ogTrip": {
+      "name": "Cézeaux Pellez",
+      "lat": 45.76115,
+      "lon": 3.10892
+    }
+  }
+}

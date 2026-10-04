@@ -45,13 +45,20 @@ MIN_RING_DISTANCE = 45.0
 MIN_LINE_DISTANCE = 25.0
 MIN_PARK_AREA = 20_000.0
 MIN_WATER_AREA = 15_000.0
+CONTEXT_RING_DISTANCE = 80.0
 # Water bodies at least this large (or lagoons) are not land: no heatmap, no pins.
 WATER_MASK_AREA = 1_000_000.0
 
 # GTFS route_type → mode (basic and extended types).
-RAIL_MODES = {"tram", "metro", "funicular", "cable"}
+RAIL_MODES = {"tram", "metro", "funicular", "cable", "busway"}
 # Minutes to walk from the street to the platform (and back): stairs and corridors of underground lines.
 MODE_ACCESS_MINUTES = {"metro": 2.0, "funicular": 1.0, "cable": 1.0}
+# Communes kept when a city config says "communes": "served": enough stops, and not too far from tram/metro.
+SERVED_MIN_STOPS = 3
+SERVED_MAX_RAIL_DISTANCE = 12_000.0
+# Preview image (og): arrival at the rail station closest to this travel time from the centre.
+OG_TRIP_MINUTES = 20
+REFERENCE_HORIZON_DAYS = 60
 
 
 def route_mode(route_type: str) -> str:
@@ -253,10 +260,26 @@ class StationIndex:
 # --- Land, water, parks -----------------------------------------------------
 
 
-def extract_communes(data_dir: Path, city: dict) -> Tuple[List[dict], MultiPolygon]:
+def served_communes(payload: dict, stations: Sequence[dict]) -> set:
+    """Communes with a few stops of the network and a tram/metro station within reach: big intercommunalities
+    (Grand Reims, Nice Côte d'Azur…) reach far beyond their urban network."""
+    rail_points = [station["point"] for station in stations if station["rail"]]
+    names = set()
+    for feature in payload["features"]:
+        polygons = PolygonSet(coords_to_polygons(feature["geometry"]))
+        inside = [station["point"] for station in stations if polygons.contains(station["point"])]
+        if len(inside) < SERVED_MIN_STOPS:
+            continue
+        if min(dist(point, rail) for point in inside for rail in rail_points) <= SERVED_MAX_RAIL_DISTANCE:
+            names.add(feature["properties"]["nom"])
+    return names
+
+
+def extract_communes(data_dir: Path, city: dict, stations: Sequence[dict]) -> Tuple[List[dict], MultiPolygon]:
     payload = load_json(data_dir / "communes.geojson")
-    # Some metropolises are far larger than their urban network (Aix-Marseille-Provence): keep only the listed communes.
-    wanted = set(city.get("communes", []))
+    # Some metropolises are far larger than their urban network (Aix-Marseille-Provence): keep only the listed
+    # communes, or the ones actually served.
+    wanted = served_communes(payload, stations) if city.get("communes") == "served" else set(city.get("communes", []))
     communes = []
     all_polygons: MultiPolygon = []
     for feature in sorted(payload["features"], key=lambda f: f["properties"]["nom"]):
@@ -349,6 +372,27 @@ def extract_water_and_parks(data_dir: Path, bounds) -> Tuple[MultiPolygon, Multi
     return masked, water, parks
 
 
+def extract_context(data_dir: Path, city: dict) -> MultiPolygon:
+    """Land around a coastal metropolis (neighbouring communes, foreign territories such as Monaco), within the OSM
+    area of the city: the map draws it as land so that what remains uncovered reads as sea."""
+    south, west, north, east = city["osmBbox"]
+    min_x, min_y = lonlat_to_xy(west, south)
+    max_x, max_y = lonlat_to_xy(east, north)
+    polygons: MultiPolygon = []
+    if (data_dir / "context.geojson").exists():
+        for feature in load_json(data_dir / "context.geojson")["features"]:
+            polygons += coords_to_polygons(feature["geometry"], CONTEXT_RING_DISTANCE)
+    if (data_dir / "context_osm.json").exists():
+        for element in load_json(data_dir / "context_osm.json")["elements"]:
+            polygons += [[simplify_ring(ring, CONTEXT_RING_DISTANCE) for ring in polygon] for polygon in osm_polygons(element)]
+    kept = []
+    for polygon in polygons:
+        ring_min_x, ring_min_y, ring_max_x, ring_max_y = ring_bounds(polygon[0])
+        if ring_max_x >= min_x and ring_min_x <= max_x and ring_max_y >= min_y and ring_min_y <= max_y:
+            kept.append(polygon)
+    return kept
+
+
 # --- GTFS -------------------------------------------------------------------
 
 
@@ -393,16 +437,42 @@ def pick_reference_date(services: Dict[date, frozenset], trips_per_service: Coun
     """A plain school-term Tuesday or Thursday: the most common set of services among those days.
 
     Picking the busiest day instead would favour holidays with works and substitution buses. Days
-    with a thin timetable are left out: feeds often run months ahead with only a few lines filled in.
+    with a thinner timetable are left out: holidays, and feeds that run months ahead with only a few lines filled in.
     """
     weekdays = sorted(day for day, active in services.items() if day.weekday() in (1, 3) and active)
     upcoming = [day for day in weekdays if day >= date.today()] or weekdays
+    # Stay close to today when the feed allows it: a date months ahead reads oddly on the page.
+    soon = [day for day in upcoming if day <= upcoming[0] + timedelta(days=REFERENCE_HORIZON_DAYS)]
+    upcoming = soon if len(soon) >= 4 else upcoming
     volume = {day: sum(trips_per_service[service] for service in services[day]) for day in upcoming}
     busiest = max(volume.values())
-    candidates = [day for day in upcoming if volume[day] >= 0.6 * busiest]
+    # School holidays typically run 10–20 % fewer trips: only near-busiest days are plain term days.
+    candidates = [day for day in upcoming if volume[day] >= 0.92 * busiest]
     signatures = Counter(services[day] for day in candidates)
     typical = signatures.most_common(1)[0][0]
     return next(day for day in candidates if services[day] == typical)
+
+
+SMALL_WORDS = {"de", "du", "des", "la", "le", "les", "et", "en", "sur", "sous", "aux", "au", "à"}
+ACRONYMS = {"TGV", "SNCF", "CHU", "CHR", "IUT", "ZI", "ZA", "ZAC", "RN", "RD", "TER", "UFR", "INSA", "EDF", "CPAM", "IME", "MEETT"}
+
+
+def display_name(name: str) -> str:
+    """Some feeds write stop names in capitals (« LYCEE S. WEIL »): turn them into title case for display."""
+    letters = [c for c in name if c.isalpha()]
+    if len(letters) < 4 or not all(c.isupper() for c in letters):
+        return name
+    words = []
+    for i, word in enumerate(name.lower().split(" ")):
+        if word.upper().strip(".,") in ACRONYMS:
+            words.append(word.upper())
+        elif i and word in SMALL_WORDS:
+            words.append(word)
+        elif word[:2] in ("d'", "l'") and len(word) > 2:
+            words.append(word[:2] + word[2:3].upper() + word[3:])
+        else:
+            words.append("-".join(part[:1].upper() + part[1:] for part in word.split("-")))
+    return " ".join(words)
 
 
 def normalize_name(name: str) -> str:
@@ -441,7 +511,7 @@ def group_stops(stops: Dict[str, dict], used_stop_ids: set) -> Tuple[List[dict],
             complexes.append(
                 {
                     "id": min(cluster),
-                    "name": names.most_common(1)[0][0],
+                    "name": display_name(names.most_common(1)[0][0]),
                     "point": (sum(xs) / len(xs), sum(ys) / len(ys)),
                     "routes": set(),
                 }
@@ -468,11 +538,19 @@ def read_stop_times(archive: zipfile.ZipFile, trips: Dict[str, dict]) -> Dict[st
 
 
 def route_excluded(row: dict, city: dict) -> bool:
-    """School buses (extended types 712/713) are not open to the public; some cities exclude special lines."""
-    return row.get("route_type") in ("712", "713") or row["route_id"] in city.get("excludeRoutes", [])
+    """School buses (extended types 712/713) are not open to the public; some cities exclude special lines.
+    Regional aggregated feeds (Caen in the Normandy one) are narrowed to the city's operator."""
+    agencies = city.get("agencies")
+    return (
+        row.get("route_type") in ("712", "713")
+        or row["route_id"] in city.get("excludeRoutes", [])
+        or bool(agencies and row.get("agency_id") not in agencies)
+    )
 
 
 def extract_network(data_dir: Path, city: dict):
+    # Some feeds mislabel their lines (Reims declares its tram as a metro); configs fix them by short name.
+    mode_overrides = city.get("routeModes", {})
     with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
         routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
         excluded = {route_id for route_id, row in routes.items() if route_excluded(row, city)}
@@ -518,9 +596,9 @@ def extract_network(data_dir: Path, city: dict):
 
     served = {route_id for station in complexes for route_id in station["routes"]}
     route_info = {}
-    for route_id in served:
+    for route_id in sorted(served):  # sorted: identical output from one build to the next
         row = routes[route_id]
-        mode = route_mode(row.get("route_type", "3"))
+        mode = mode_overrides.get(row.get("route_short_name", ""), route_mode(row.get("route_type", "3")))
         route_info[route_id] = {
             "mode": mode,
             "rail": mode in RAIL_MODES,
@@ -534,7 +612,7 @@ def extract_network(data_dir: Path, city: dict):
     return reference_date, complexes, edges, waits, route_info, shape_routes
 
 
-def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict]):
+def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float]):
     route_states: List[dict] = []
     station_states: List[List[int]] = [[] for _ in complexes]
     lookup: Dict[Tuple[int, str], int] = {}
@@ -546,7 +624,7 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
                     "stationIndex": station_index,
                     "routeId": route_id,
                     "wait": waits.get((station_index, route_id), DEFAULT_BOARD_WAIT),
-                    "access": MODE_ACCESS_MINUTES.get(route_info[route_id]["mode"], 0.0),
+                    "access": access_minutes.get(route_info[route_id]["mode"], 0.0),
                 }
             )
             station_states[station_index].append(state_index)
@@ -720,7 +798,11 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         walk = dist(origin, stations[index]["point"]) / WALK_METERS_PER_MINUTE
         arrival[index] = min(arrival.get(index, math.inf), out, walk)
     rail_times = [arrival.get(i, math.inf) for i in rail_station_ids]
-    farthest = max((i for i in rail_station_ids if math.isfinite(arrival.get(i, math.inf))), key=lambda i: arrival[i])
+    reachable = [i for i in rail_station_ids if math.isfinite(arrival.get(i, math.inf))]
+    farthest = max(reachable, key=lambda i: arrival[i])
+    og_station = min(reachable, key=lambda i: abs(arrival[i] - OG_TRIP_MINUTES))
+    meters_per_deg_lat = 111_320.0
+    og_x, og_y = stations[og_station]["point"]
     return {
         "lines": lines,
         "railStations": len(rail_station_ids),
@@ -730,6 +812,11 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         "within30": round(100 * sum(t <= 30 for t in rail_times) / len(rail_times)),
         "farthestStation": stations[farthest]["name"],
         "farthestMinutes": round(arrival[farthest]),
+        "ogTrip": {
+            "name": stations[og_station]["name"],
+            "lat": round(og_y / meters_per_deg_lat, 5),
+            "lon": round(og_x / (meters_per_deg_lat * math.cos(math.radians(LAT0))), 5),
+        },
     }
 
 
@@ -783,14 +870,18 @@ def main() -> None:
     data_dir = ROOT / "data" / city["slug"]
     output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
 
-    communes, land = extract_communes(data_dir, city)
+    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir, city)
+    for station in complexes:
+        station["rail"] = any(route_info[route_id]["rail"] for route_id in station["routes"])
+    communes, land = extract_communes(data_dir, city, complexes)
     bounds = multipolygon_bounds(land, LAND_PAD_METERS)
     cols = round((bounds[2] - bounds[0]) / GRID_CELL_METERS)
     rows = round((bounds[3] - bounds[1]) / GRID_CELL_METERS)
     masked_water, water, parks = extract_water_and_parks(data_dir, bounds)
+    context = extract_context(data_dir, city)
 
-    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir, city)
-    route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info)
+    access_minutes = {**MODE_ACCESS_MINUTES, **city.get("modeAccess", {})}
+    route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info, access_minutes)
     if city.get("railGeometry") == "osm":
         routes = rail_routes_from_osm(data_dir, city, route_info)
     else:
@@ -828,7 +919,9 @@ def main() -> None:
             "originStationCount": ORIGIN_NEAREST_STATIONS,
             "cellNearestStations": CELL_NEAREST_STATIONS,
             "defaultBoardWait": DEFAULT_BOARD_WAIT,
+            "sea": bool(context),
         },
+        "context": [serialize_polygon(polygon) for polygon in context],
         "boroughs": communes,
         "water": [serialize_polygon(polygon) for polygon in masked_water + water],
         "parks": [serialize_polygon(polygon) for polygon in parks],

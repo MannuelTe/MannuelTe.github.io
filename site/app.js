@@ -13,6 +13,7 @@ const MODE_LABELS = {
   funicular: "Funiculaire",
   cable: "Téléphérique",
   ferry: "Bateau",
+  busway: "Busway",
   bus: "Bus",
 };
 const DEFAULT_MAX = 45;
@@ -548,6 +549,8 @@ function buildPaths(data) {
   }
   return {
     land: polygonsPath(data.boroughs.flatMap((commune) => commune.polygons)),
+    // Terres voisines des villes côtières : ce qui reste découvert autour est la mer.
+    context: polygonsPath(data.context ?? []),
     // Un chemin par polygone, rempli en « evenodd » : les îles (trous) restent de la terre ferme,
     // sans que deux plans d'eau qui se chevauchent s'annulent.
     water: data.water.map((polygon) => polygonsPath([polygon])),
@@ -744,10 +747,16 @@ function render() {
   const { width, height, dpr } = app.size;
   const px = 1 / app.view.scale;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = COLORS.background;
+  // Villes côtières : le fond est la mer, et les terres voisines sont dessinées par-dessus.
+  const sea = app.data.meta.sea;
+  ctx.fillStyle = sea ? COLORS.water : COLORS.background;
   ctx.fillRect(0, 0, width, height);
 
   useWorldTransform();
+  if (sea) {
+    ctx.fillStyle = COLORS.background;
+    ctx.fill(app.paths.context);
+  }
   ctx.fillStyle = COLORS.land;
   ctx.fill(app.paths.land, "evenodd");
 

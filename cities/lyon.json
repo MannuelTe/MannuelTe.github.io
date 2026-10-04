@@ -16,16 +16,42 @@
   "gtfsUrl": "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP",
   "gtfsManual": "data.grandlyon.com, compte requis",
   "gtfsDataset": "https://data.grandlyon.com/portail/fr/jeux-de-donnees/horaires-theoriques-du-reseau-transports-en-commun-lyonnais/info",
-  "excludeRoutes": ["RX", "TS"],
+  "excludeRoutes": [
+    "RX",
+    "TS"
+  ],
   "lat0": 45.76,
-  "osmBbox": [45.55, 4.66, 45.95, 5.12],
-  "parksBbox": [45.68, 4.76, 45.83, 4.95],
+  "osmBbox": [
+    45.55,
+    4.66,
+    45.95,
+    5.12
+  ],
+  "parksBbox": [
+    45.68,
+    4.76,
+    45.83,
+    4.95
+  ],
   "railGeometry": "osm",
-  "osmRailBbox": [45.62, 4.72, 45.86, 5.06],
-  "defaultFrom": {"lat": 45.75780, "lon": 4.83200, "label": "Place Bellecour"},
+  "osmRailBbox": [
+    45.62,
+    4.72,
+    45.86,
+    5.06
+  ],
+  "defaultFrom": {
+    "lat": 45.7578,
+    "lon": 4.832,
+    "label": "Place Bellecour"
+  },
   "searchExample": "Gare Part-Dieu",
   "ogImage": "og/lyon.jpg?v=1",
   "ogAlt": "Carte de Lyon colorée selon le temps de trajet en métro et tram depuis la place Bellecour, avec les isochrones 15 et 30 minutes.",
-  "ogTrip": {"lat": 45.7840, "lon": 4.8810},
-  "published": "2026-10-05"
+  "ogTrip": {
+    "lat": 45.784,
+    "lon": 4.881
+  },
+  "published": "2026-10-05",
+  "gtfsLicence": "mobilites"
 }

@@ -1,0 +1,44 @@
+{
+  "slug": "clermont-ferrand",
+  "path": "clermont-ferrand/",
+  "order": 19,
+  "name": "Clermont-Ferrand",
+  "title": "Clermont-Ferrand à portée de tram",
+  "titleSuffix": "Temps de trajet en tram T2C",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "T2C",
+  "metropole": "Clermont Auvergne Métropole",
+  "area": "de la Métropole",
+  "epci": "246300701",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/4e237a58-cd14-4746-b729-1337a40a8a7b",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/syndicat-mixte-des-transports-en-commun-de-lagglomeration-clermontoise-smtc-ac-reseau-t2c-gtfs-gtfs-rt",
+  "lat0": 45.78,
+  "osmBbox": [
+    45.56,
+    2.76,
+    46.0,
+    3.4
+  ],
+  "parksBbox": [
+    45.72,
+    3.0,
+    45.84,
+    3.16
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 45.77659,
+    "lon": 3.08206,
+    "label": "Place de Jaude"
+  },
+  "searchExample": "Gare de Clermont-Ferrand",
+  "ogImage": "og/clermont-ferrand.jpg?v=1",
+  "ogAlt": "Carte de Clermont-Ferrand colorée selon le temps de trajet en tram depuis place de Jaude, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
+}

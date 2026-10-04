@@ -1,0 +1,47 @@
+{
+  "slug": "rouen",
+  "path": "rouen/",
+  "order": 23,
+  "name": "Rouen",
+  "title": "Rouen à portée de métro",
+  "titleSuffix": "Temps de trajet en métro Astuce",
+  "railLabel": "Métro",
+  "railNoun": "métro",
+  "railStations": "stations de métro",
+  "busNoun": "bus et bac",
+  "busLabel": "Bus et bac",
+  "network": "Astuce",
+  "metropole": "Métropole Rouen Normandie",
+  "area": "de la Métropole",
+  "epci": "200023414",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/c0ebcf01-954a-4d24-b2d8-a00333ffe937",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/donnees-statiques-et-temps-reel-du-reseau-astuce-metropole-rouen-normandie",
+  "lat0": 49.44,
+  "osmBbox": [
+    49.22,
+    0.78,
+    49.66,
+    1.42
+  ],
+  "parksBbox": [
+    49.38,
+    1.02,
+    49.5,
+    1.18
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 49.4431,
+    "lon": 1.09861,
+    "label": "Hôtel de Ville"
+  },
+  "searchExample": "Gare de Rouen",
+  "ogImage": "og/rouen.jpg?v=1",
+  "ogAlt": "Carte de Rouen colorée selon le temps de trajet en métro depuis Hôtel de Ville, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "modeAccess": {
+    "metro": 1.0
+  },
+  "gtfsLicence": "lo"
+}

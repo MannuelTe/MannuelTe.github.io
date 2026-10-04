@@ -1,0 +1,44 @@
+{
+  "slug": "tours",
+  "path": "tours/",
+  "order": 13,
+  "name": "Tours",
+  "title": "Tours à portée de tram",
+  "titleSuffix": "Temps de trajet en tram Fil Bleu",
+  "railLabel": "Tram",
+  "railNoun": "tram",
+  "railStations": "stations de tram",
+  "busNoun": "bus",
+  "busLabel": "Bus",
+  "network": "Fil Bleu",
+  "metropole": "Tours Métropole Val de Loire",
+  "area": "de la Métropole",
+  "epci": "243700754",
+  "communes": "served",
+  "gtfsUrl": "https://www.data.gouv.fr/api/1/datasets/r/198b7602-5e74-4d88-b6bc-483af85a2430",
+  "gtfsDataset": "https://transport.data.gouv.fr/datasets/fil-bleu-syndicat-des-mobilites-gtfs-gtfs-rt",
+  "lat0": 47.39,
+  "osmBbox": [
+    47.17,
+    0.37,
+    47.61,
+    1.01
+  ],
+  "parksBbox": [
+    47.33,
+    0.61,
+    47.45,
+    0.77
+  ],
+  "railGeometry": "gtfs",
+  "defaultFrom": {
+    "lat": 47.38934,
+    "lon": 0.68915,
+    "label": "Place Jean-Jaurès"
+  },
+  "searchExample": "Gare de Tours",
+  "ogImage": "og/tours.jpg?v=1",
+  "ogAlt": "Carte de Tours colorée selon le temps de trajet en tram depuis place Jean-Jaurès, avec les isochrones 15 et 30 minutes.",
+  "published": "2026-10-05",
+  "gtfsLicence": "lo"
+}

@@ -1,6 +1,6 @@
 {
   "city": "Montpellier",
-  "builtAt": "2026-10-04T21:59:51+00:00",
+  "builtAt": "2026-10-04T22:33:15+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -47,8 +47,8 @@
   "excludedRoutes": [],
   "network": {
     "lines": {
-      "bus": 34,
-      "tram": 5
+      "tram": 5,
+      "bus": 34
     },
     "stops": 616,
     "railStations": 112
@@ -97,6 +97,11 @@
     "within15": 32,
     "within30": 88,
     "farthestStation": "Clapiers",
-    "farthestMinutes": 37
+    "farthestMinutes": 37,
+    "ogTrip": {
+      "name": "Tonnelles",
+      "lat": 43.61357,
+      "lon": 3.83884
+    }
   }
 }

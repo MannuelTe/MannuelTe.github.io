@@ -143,6 +143,62 @@ a {
   color: var(--ink);
 }
 
+.city-menu {
+  position: relative;
+}
+
+.city-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  background: var(--green-soft);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.city-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.city-menu summary span {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.city-menu summary::after {
+  content: "▾";
+  margin-left: 2px;
+  color: var(--ink-soft);
+}
+
+.city-menu[open] summary::after {
+  content: "▴";
+}
+
+.city-menu-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 640px;
+  margin: 12px auto 0;
+}
+
+.city-menu-list a.chip {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.city-menu-list a.chip:hover {
+  border-color: #cfcfcf;
+  color: var(--ink);
+}
+
 .chip.active {
   border-color: var(--green);
   background: var(--green-soft);
@@ -578,6 +634,13 @@ output {
 }
 
 /* --- Sections sous la carte ------------------------------------------ */
+
+.page-title {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
 
 .breadcrumb {
   padding-top: 18px;

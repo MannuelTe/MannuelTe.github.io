@@ -14,9 +14,12 @@ ${header}
       </nav>
 
       <section class="hero">
-        <nav class="city-switch" aria-label="Choisir une ville">
+        <details class="city-menu">
+          <summary>📍 ${name} <span>· Changer de ville</span></summary>
+          <nav class="city-menu-list" aria-label="Choisir une ville">
 ${city_links}
-        </nav>
+          </nav>
+        </details>
         <h1>${headline}</h1>
         <p class="lede">
           La ville redessinée par le temps qu'il faut pour y aller en ${rail_noun}. Choisissez un départ&nbsp;: la carte se

@@ -493,6 +493,8 @@ function buildItinerary(solution, point) {
   chain.reverse();
 
   const name = (state) => data.stations[graph.station[state]].name;
+  // A ride into a terminus arrives in the line's end state (build_data.split_terminating): same line, same leg.
+  const line = (state) => data.routeInfo[graph.route[state]]?.endOf ?? graph.route[state];
   const steps = [{ kind: "walk", text: `Walk to ${name(chain[0])}`, minutes: solution.seedWalk[chain[0]] }];
   let legStart = chain[0];
   const closeLeg = (legEnd) => {
@@ -507,7 +509,7 @@ function buildItinerary(solution, point) {
   for (let i = 1; i < chain.length; i += 1) {
     const from = chain[i - 1];
     const to = chain[i];
-    if (graph.route[from] === graph.route[to] && graph.station[from] !== graph.station[to]) continue;
+    if (line(from) === line(to) && graph.station[from] !== graph.station[to]) continue;
     closeLeg(from);
     if (graph.station[from] !== graph.station[to]) {
       const a = data.stations[graph.station[from]];

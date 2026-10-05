@@ -52,6 +52,11 @@ Public transport (a weekday in late autumn, 7:00–20:00, per timetable year):
   waiting for one's own line from the start or taking the first train and changing at the split, so shared corridors
   are fast and branch stops are not (an earlier version gave every line the pooled wait, which made single-line
   branches look 15 minutes closer: 524k residents within 30 min of HB against 415k now);
+- **termini:** where most trips on a segment end at the next stop (the 912/916 inbound at Bellevue), the ride arrives
+  in an arrive-only state; going on means changing vehicle, with the change time and the outbound wait, instead of
+  riding through the terminus;
+- wait shown in the route panel = half the headway of the line (or of the shared section) at that stop, from its
+  departures 7:00–20:00 on the reference day (912/916 at Opernhaus: 76 departures → 10.3 min headway → ~5 min);
 - changes: 1.5 min walk + wait; walking links between stops less than 450 m apart; 1.5 min to reach a railway
   platform, 1 min for funiculars and the cable car;
 - excluded: replacement buses (EV), extra trains (EXT), night services, on-demand buses (Rufbus), taxis.

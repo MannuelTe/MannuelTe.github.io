@@ -724,12 +724,20 @@ def extract_network(data_dir: Path, city: dict):
         for route_id, row in routes.items()
     }
     window_start, window_end = SERVICE_WINDOW
+    # Trips per segment, and how many of them end at its second stop (a terminus such as Bellevue for the 912).
+    segment_trips: Counter = Counter()
+    segment_ends: Counter = Counter()
     for trip_id, sequence in stop_times.items():
         trip = trips[trip_id]
         route_id = trip["route_id"]
         sequence.sort()
-        for (_, stop_a, _, dep_a), (_, stop_b, arr_b, _) in zip(sequence, sequence[1:]):
+        last = len(sequence) - 2
+        for k, ((_, stop_a, _, dep_a), (_, stop_b, arr_b, _)) in enumerate(zip(sequence, sequence[1:])):
             a, b = complex_of[stop_a], complex_of[stop_b]
+            if a != b:
+                segment_trips[(a, b, route_id)] += 1
+                if k == last:
+                    segment_ends[(a, b, route_id)] += 1
             complexes[a]["routes"].add(route_id)
             complexes[b]["routes"].add(route_id)
             if a == b or not window_start <= dep_a < window_end:
@@ -757,12 +765,44 @@ def extract_network(data_dir: Path, city: dict):
             "color": f"#{row['route_color'].strip().lstrip('#')}" if (row.get("route_color") or "").strip() else MODE_COLORS.get(mode, "#888888"),
             "name": row.get("route_short_name") or row.get("route_long_name") or route_id,
         }
+    end_edges = split_terminating(complexes, edges, waits, route_info, segment_trips, segment_ends)
     add_trunks(complexes, edges, waits, toward, route_info, group_of, window_minutes)
+    edges.update(end_edges)
     rail_shape_ids = {
         trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
     }
     shape_routes = {trip["shape_id"]: trip["route_id"] for trip in trips.values() if trip.get("shape_id") in rail_shape_ids}
     return reference_date, complexes, edges, waits, own_waits, route_info, shape_routes
+
+
+TERMINATING_SHARE = 0.5
+
+
+def split_terminating(complexes, edges, waits, route_info: Dict[str, dict], segment_trips: Counter, segment_ends: Counter) -> dict:
+    """Termini. A line's state at a stop serves every trip of the line there, so a bus arriving at its terminus
+    (912 inbound at Bellevue) could otherwise ride straight on as the outbound trip, with no new wait. Segments on
+    which most trips end at the second stop lead instead into an arrive-only state "end:<line>" there: one can
+    alight, or change (to anything, the same line's outbound trip included) with the usual change time and wait.
+    Lines that run through keep their direct edge. Returns the end edges, keyed (a, b, end id)."""
+    end_edges = {}
+    for (a, b, route_id), minutes in list(edges.items()):
+        trips = segment_trips[(a, b, route_id)]
+        if not trips or segment_ends[(a, b, route_id)] / trips < TERMINATING_SHARE:
+            continue
+        end_id = f"end:{route_id}"
+        if end_id not in route_info:
+            route_info[end_id] = {**route_info[route_id], "endOf": route_id}
+        del edges[(a, b, route_id)]
+        end_edges[(a, b, end_id)] = minutes
+        # The ride still starts in the line's own state at a; only the arrival is split off.
+        complexes[b]["routes"].add(end_id)
+        waits[(b, end_id)] = MAX_WAIT  # nothing departs from an end state
+    return end_edges
+
+
+def is_alias(info: dict) -> bool:
+    """Trunk routes and arrive-only end states are routing devices, not lines of the network."""
+    return bool(info.get("trunkOf") or info.get("endOf"))
 
 
 def add_trunks(complexes, edges, waits, toward: Counter, route_info: Dict[str, dict], group_of: Dict[str, str], window_minutes: float) -> None:
@@ -834,20 +874,24 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
     def add_edge(src: int, dst: int, weight: float) -> None:
         adjacency[src].append([dst, round(weight, 2)])
 
-    # Ride edges are directed: one-way loops and branches stay correct.
+    # Ride edges are directed: one-way loops and branches stay correct. An edge into a terminus leaves from the
+    # line's own state and arrives in its end state (see split_terminating).
     for (a, b, route_id), minutes in edges.items():
-        add_edge(lookup[(a, route_id)], lookup[(b, route_id)], minutes)
+        source = route_info[route_id].get("endOf", route_id)
+        add_edge(lookup[(a, source)], lookup[(b, route_id)], minutes)
 
     def transfer(src: int, dst: int, walk: float) -> float:
         # Leaving one platform and reaching the other: half of each access time, plus the wait.
         access = (route_states[src]["access"] + route_states[dst]["access"]) / 2.0
         return walk + access + route_states[dst]["wait"]
 
-    # Changing line inside a stop: short walk plus waiting for the next vehicle.
+    # Changing line inside a stop: short walk plus waiting for the next vehicle. Nothing boards an end state, so
+    # no change leads into one.
+    boardable = [not route_info[state["routeId"]].get("endOf") for state in route_states]
     for states in station_states:
         for src in states:
             for dst in states:
-                if src != dst:
+                if src != dst and boardable[dst]:
                     add_edge(src, dst, transfer(src, dst, TRANSFER_WALK))
 
     # Walking to a nearby stop with another name.
@@ -863,7 +907,7 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
                 continue
             for src in station_states[i]:
                 for dst in station_states[j]:
-                    if route_states[src]["routeId"] != route_states[dst]["routeId"]:
+                    if boardable[dst] and route_states[src]["routeId"] != route_states[dst]["routeId"]:
                         add_edge(src, dst, transfer(src, dst, walk))
     return route_states, station_states, adjacency
 
@@ -895,7 +939,7 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
     """Line geometry from OSM route relations, and their `colour` tag when the GTFS has no colours (Swiss feed).
     S-Bahn relations run far beyond the map: only the ways inside `bounds` are kept."""
     payload = load_json(data_dir / "osm_rail.json")
-    by_name = {info["name"]: route_id for route_id, info in route_info.items() if info["rail"]}
+    by_name = {info["name"]: route_id for route_id, info in route_info.items() if info["rail"] and not is_alias(info)}
     aliases = city.get("osmRefAliases", {})
     min_x, min_y, max_x, max_y = bounds
     colours: Dict[str, Counter] = defaultdict(Counter)
@@ -1042,7 +1086,7 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     lines = []
     mode_order = {"metro": 0, "tram": 1, "sbahn": 2, "funicular": 3, "cable": 4}
     for route_id, info in sorted(route_info.items(), key=lambda item: (mode_order.get(item[1]["mode"], 9), len(item[1]["name"]), item[1]["name"])):
-        if info["mode"] not in TABLE_MODES or info.get("trunkOf"):
+        if info["mode"] not in TABLE_MODES or is_alias(info):
             continue
         waits = sorted(own_waits.get((route_states[i]["stationIndex"], route_id), MAX_WAIT)
                        for i in rail_states if route_states[i]["routeId"] == route_id)
@@ -1110,7 +1154,7 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     return {
         "lines": lines,
         "railStations": len(shown_ids),
-        "busLines": sum(1 for info in route_info.values() if not info["rail"] and not info.get("trunkOf")),
+        "busLines": sum(1 for info in route_info.values() if not info["rail"] and not is_alias(info)),
         "center": city["defaultFrom"]["label"],
         "within15": round(100 * sum(t <= 15 for t in rail_times) / len(rail_times)),
         "within30": round(100 * sum(t <= 30 for t in rail_times) / len(rail_times)),
@@ -1160,7 +1204,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
         "excludedRoutes": city.get("excludeRoutes", []),
         "network": {
-            "lines": dict(Counter(info["mode"] for info in route_info.values() if not info.get("trunkOf"))),
+            "lines": dict(Counter(info["mode"] for info in route_info.values() if not is_alias(info))),
             "stops": len(stations),
             "railStations": sum(1 for station in stations if station["rail"]),
         },
@@ -1204,13 +1248,16 @@ def main() -> None:
         routes = rail_routes_from_osm(data_dir, city, route_info, bounds)
     else:
         routes = rail_routes_from_gtfs(data_dir, shape_routes, route_info)
+    for info in route_info.values():
+        if info.get("endOf"):
+            info["color"] = route_info[info["endOf"]]["color"]  # OSM colours were just assigned to the lines
 
     stations = [
         {
             "id": station["id"],
             "name": station["name"],
             "point": station["point"],
-            "routes": sorted((r for r in station["routes"] if not route_info[r].get("trunkOf")), key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
+            "routes": sorted((r for r in station["routes"] if not is_alias(route_info[r])), key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
             "rail": any(route_info[route_id]["rail"] for route_id in station["routes"]),
             "z": round(station["z"], 1),
         }
@@ -1266,7 +1313,7 @@ def main() -> None:
     provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])
-    modes = Counter(info["mode"] for info in route_info.values() if not info.get("trunkOf"))
+    modes = Counter(info["mode"] for info in route_info.values() if not is_alias(info))
     print(
         f"Wrote {output_path.relative_to(ROOT)} "
         f"({output_path.stat().st_size / 1_000_000:.2f} MB, GTFS du {reference_date}, lignes {dict(modes)}, "

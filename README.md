@@ -45,9 +45,13 @@ Public transport (a weekday in late autumn, 7:00–20:00, per timetable year):
 
 - ride time between stops = median of the scheduled times; route variants and operators of the Swiss feed are merged
   into one line per category and name (S10 runs under several route_ids);
-- wait = half the headway, between 1 and 15 min. **Common lines:** where several lines run to the same next stop
-  (HB → Oerlikon, tram trunks) the wait uses all of them — counting each S-Bahn line alone would mean a 15-minute wait
-  on a corridor served every few minutes;
+- wait = half the line's own headway, between 1 and 15 min;
+- **common lines:** where several lines run the same consecutive stops (S-Bahn HB → Hardbrücke → Altstetten, tram
+  trunks), a trunk route "any of S3, S5, …" runs over that shared section only, with half the combined headway as its
+  wait; where the lines split, the rider changes to the specific line and waits for it. Routing takes the better of
+  waiting for one's own line from the start or taking the first train and changing at the split, so shared corridors
+  are fast and branch stops are not (an earlier version gave every line the pooled wait, which made single-line
+  branches look 15 minutes closer: 524k residents within 30 min of HB against 415k now);
 - changes: 1.5 min walk + wait; walking links between stops less than 450 m apart; 1.5 min to reach a railway
   platform, 1 min for funiculars and the cable car;
 - excluded: replacement buses (EV), extra trains (EXT), night services, on-demand buses (Rufbus), taxis.

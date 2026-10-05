@@ -2,7 +2,7 @@ import fs from "fs";
 // Trip probe: time from the centre to the termini and stations, with door-to-door speed.
 // Usage: node tools/check_trips.mjs <city>   (abnormal speeds are flagged with ⚠)
 const slug = process.argv[2];
-const d = JSON.parse(fs.readFileSync(`site/data/${slug}.json`));
+const d = JSON.parse(fs.readFileSync(`site/data/${slug}-2026.json`));
 const city = JSON.parse(fs.readFileSync(`cities/${slug}.json`));
 const rs = d.routeStates, st = d.stations, ri = d.routeInfo, rail = (r) => ri[r].rail;
 const W = d.meta.walkMetersPerMinute, hyp = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -18,7 +18,7 @@ const out = new Array(st.length).fill(Infinity), best = new Array(st.length).fil
 rs.forEach((r, k) => { const o = dist[k] + r.access; if (o < out[r.stationIndex]) { out[r.stationIndex] = o; best[r.stationIndex] = k; } });
 // targets: termini of each rail line (stations of the line farthest apart) + stations named "Gare"
 const targets = new Map();
-for (const [id, info] of Object.entries(ri)) { if (!info.rail) continue;
+for (const [id, info] of Object.entries(ri)) { if (!info.rail || info.trunkOf) continue;
   const sts = [...new Set(rs.filter((r) => r.routeId === id).map((r) => r.stationIndex))];
   let a = sts[0], bb = sts[0], md = 0; for (const i of sts) for (const j of sts) { const dd = hyp(st[i].point, st[j].point); if (dd > md) { md = dd; a = i; bb = j; } }
   targets.set(a, `terminus ${info.name}`); targets.set(bb, `terminus ${info.name}`); }

@@ -165,7 +165,7 @@ def city_faq(city: dict) -> list[tuple]:
             "How are travel times computed?",
             "Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the "
             "scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway "
-            "platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or "
+            "platform. On a section that several lines share (HB to Hardbrücke, tram trunks) the rider takes whichever comes first and changes where the lines split; a stop served by one line waits for that line. No real-time data or "
             "disruptions: this is the city « on paper ».",
         ),
         (

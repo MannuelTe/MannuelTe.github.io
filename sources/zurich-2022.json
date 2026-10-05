@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:59:25+00:00",
+  "builtAt": "2026-10-05T20:17:32+00:00",
   "referenceDate": "2022-10-25",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -71,6 +71,13 @@
       "fetchedAt": "2026-10-05T16:48:13+00:00",
       "bytes": 4242292,
       "sha256": "521248608061ced0e08b427db75234c809a4ed47cc2f3bc3104c52569c4bb243"
+    },
+    "osm_bike": {
+      "source": "Overpass API (maps.mail.ru mirror): [out:json][timeout:180];(way[\"highway\"][\"area\"!~\"yes\"][\"highway\"!~\"abandoned|bus_guideway|construction|corridor|elevator|escalator|footway|motor|no|planned|platform|proposed|raceway|razed|steps|pedestrian|bridleway\"][\"bicycle\"!~\"no\"][\"service\"!~\"private\"][\"access\"!~\"private|no\"](47.28,8.55,47.35,8.67);way[\"highway\"~\"footway|pedestrian|bridleway|path\"][\"bicycle\"~\"yes|designated|permissive\"](47.28,8.55,47.35,8.67);way[\"highway\"][\"area\"!~\"yes\"][\"highway\"!~\"abandoned|bus_guideway|construction|corridor|elevator|escalator|footway|motor|no|planned|platform|proposed|raceway|razed|steps|pedestrian|bridleway\"][\"bicycle\"!~\"no\"][\"service\"!~\"private\"][\"access\"!~\"private|no\"](47.28,8.41,47.35,8.53);way[\"highway\"~\"footway|pedestrian|bridleway|path\"][\"bicycle\"~\"yes|designated|permissive\"](47.28,8.41,47.35,8.53);way[\"highway\"][\"area\"!~\"yes\"][\"highway\"!~\"abandoned|bus_guideway|construction|corridor|elevator|escalator|footway|motor|no|planned|platform|proposed|raceway|razed|steps|pedestrian|bridleway\"][\"bicycle\"!~\"no\"][\"service\"!~\"private\"][\"access\"!~\"private|no\"](47.43,8.53,47.49,8.63);way[\"highway\"~\"footway|pedestrian|bridleway|path\"][\"bicycle\"~\"yes|designated|permissive\"](47.43,8.53,47.49,8.63);way[\"highway\"][\"area\"!~\"yes\"][\"highway\"!~\"abandoned|bus_guideway|construction|corridor|elevator|escalator|footway|motor|no|planned|platform|proposed|raceway|razed|steps|pedestrian|bridleway\"][\"bicycle\"!~\"no\"][\"service\"!~\"private\"][\"access\"!~\"private|no\"](47.37,8.36,47.42,8.42);way[\"highway\"~\"footway|pedestrian|bridleway|path\"][\"bicycle\"~\"yes|designated|permissive\"](47.37,8.36,47.42,8.42););out body;>;out skel qt;",
+      "how": "download",
+      "fetchedAt": "2026-10-05T19:34:53+00:00",
+      "bytes": 17506380,
+      "sha256": "9c29f3d1754e7d43b65f8252cc9eac15942f9036ee9b11a21e98112d715d4371"
     }
   },
   "population": {
@@ -402,26 +409,26 @@
     "railStations": 265,
     "busLines": 171,
     "center": "Zürich HB",
-    "within15": 45,
-    "within30": 97,
+    "within15": 32,
+    "within30": 93,
     "population": {
       "total": 717159,
-      "45": 691559,
-      "30": 558780,
-      "15": 98796
+      "45": 658837,
+      "30": 412707,
+      "15": 62452
     },
     "jobs": {
       "total": 761616,
-      "45": 756747,
-      "30": 698292,
-      "15": 285122
+      "45": 734668,
+      "30": 621844,
+      "15": 228917
     },
     "farthestStation": "Felsenegg",
-    "farthestMinutes": 45,
+    "farthestMinutes": 49,
     "ogTrip": {
-      "name": "Oerlikerhus",
-      "lat": 47.41759,
-      "lon": 8.55421
+      "name": "Letzigrund",
+      "lat": 47.38124,
+      "lon": 8.50373
     }
   }
 }

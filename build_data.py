@@ -732,26 +732,16 @@ def extract_network(data_dir: Path, city: dict):
                 continue
             ride_samples[(a, b, route_id)].append(max(0, arr_b - dep_a) / 60.0)
             departures[(a, route_id)][trip.get("direction_id") or "0"] += 1
-            toward[(a, b, group_of[route_id])] += 1
+            toward[(a, b, route_id)] += 1
 
     edges = {key: max(MIN_RIDE_MINUTES, statistics.median(samples)) for key, samples in ride_samples.items()}
     window_minutes = (window_end - window_start) / 60.0
-    # Common lines: where several lines run to the same next stop (S-Bahn trunk HB → Oerlikon, tram trunks), a
-    # rider takes the first one, so the wait is half the headway of all of them. Lines that diverge further on make
-    # this slightly optimistic; counting each line alone would make it 15 min on a corridor served every 5 min.
-    next_stops: Dict[Tuple[int, str], set] = defaultdict(set)
-    for a, b, route_id in ride_samples:
-        next_stops[(a, route_id)].add(b)
+    # Each line waits on its own headway: a rider bound for a stop that only one line serves waits for that line.
     waits: Dict[Tuple[int, str], float] = {}
-    own_waits: Dict[Tuple[int, str], float] = {}  # the line alone, for the page's table
     for key, per_direction in departures.items():
         mean_departures = sum(per_direction.values()) / len(per_direction)
-        a, route_id = key
-        pooled = max((toward[(a, b, group_of[route_id])] for b in next_stops[key]), default=0)
-        headway = window_minutes / max(mean_departures, pooled)
-        waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, headway / 2.0)), 2)
-        own_waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / mean_departures / 2.0)), 2)
-
+        waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / mean_departures / 2.0)), 2)
+    own_waits = dict(waits)  # the lines alone, for the page's table (trunk routes are added to `waits` below)
     served = {route_id for station in complexes for route_id in station["routes"]}
     route_info = {}
     for route_id in sorted(served):  # sorted: identical output from one build to the next
@@ -763,11 +753,58 @@ def extract_network(data_dir: Path, city: dict):
             "color": f"#{row['route_color'].strip().lstrip('#')}" if (row.get("route_color") or "").strip() else MODE_COLORS.get(mode, "#888888"),
             "name": row.get("route_short_name") or row.get("route_long_name") or route_id,
         }
+    add_trunks(complexes, edges, waits, toward, route_info, group_of, window_minutes)
     rail_shape_ids = {
         trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
     }
     shape_routes = {trip["shape_id"]: trip["route_id"] for trip in trips.values() if trip.get("shape_id") in rail_shape_ids}
     return reference_date, complexes, edges, waits, own_waits, route_info, shape_routes
+
+
+def add_trunks(complexes, edges, waits, toward: Counter, route_info: Dict[str, dict], group_of: Dict[str, str], window_minutes: float) -> None:
+    """Common lines, done so that branches stay honest.
+
+    Where a set of lines runs the same consecutive stops (S-Bahn HB → Hardbrücke → Altstetten, tram trunks), a rider
+    going along that shared section takes whichever comes first. Each such set becomes a trunk route ("any of S3, S5,
+    …") with its own states, ride edges only on the stops that every line of the set serves in a row, and a wait of
+    half the combined headway. Where the lines split, the trunk ends and the rider changes to the specific line,
+    waiting for that line. Routing takes the better of the two: wait for one's own line from the start, or take the
+    first train and change where the lines part. The lines themselves keep their own waits."""
+    line_edges: Dict[str, set] = defaultdict(set)
+    for a, b, route_id in edges:
+        line_edges[route_id].add((a, b))
+    sets = set()
+    by_pair: Dict[Tuple[int, int, str], set] = defaultdict(set)
+    for a, b, route_id in edges:
+        by_pair[(a, b, group_of.get(route_id, "bus"))].add(route_id)
+    for lines in by_pair.values():
+        if len(lines) >= 2:
+            sets.add(frozenset(lines))
+    for lines in sorted(sets, key=lambda item: sorted(item)):
+        ordered = sorted(lines, key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"]))
+        trunk_id = "trunk:" + "+".join(ordered)
+        common = set.intersection(*(line_edges[r] for r in lines))
+        if not common:
+            continue
+        names = [route_info[r]["name"] for r in ordered]
+        first = route_info[ordered[0]]
+        route_info[trunk_id] = {
+            "mode": first["mode"],
+            "rail": all(route_info[r]["rail"] for r in lines),
+            "color": first["color"] if len({route_info[r]["color"] for r in lines}) == 1 else MODE_COLORS.get(first["mode"], "#888888"),
+            "name": "/".join(names) if len(names) <= 3 else "/".join(names[:2]) + f" +{len(names) - 2}",
+            "trunkOf": ordered,
+        }
+        for a, b in common:
+            edges[(a, b, trunk_id)] = statistics.median(edges[(a, b, r)] for r in lines)
+            complexes[a]["routes"].add(trunk_id)
+            complexes[b]["routes"].add(trunk_id)
+            departures = sum(toward[(a, b, r)] for r in lines)
+            if departures:
+                wait = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / departures / 2.0)), 2)
+                waits[(a, trunk_id)] = min(wait, waits.get((a, trunk_id), MAX_WAIT))
+        for station in {x for pair in common for x in pair}:
+            waits.setdefault((station, trunk_id), MAX_WAIT)  # last stop of the trunk: alighting only
 
 
 def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float], terrain: "Terrain"):
@@ -1001,7 +1038,7 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     lines = []
     mode_order = {"metro": 0, "tram": 1, "sbahn": 2, "funicular": 3, "cable": 4}
     for route_id, info in sorted(route_info.items(), key=lambda item: (mode_order.get(item[1]["mode"], 9), len(item[1]["name"]), item[1]["name"])):
-        if info["mode"] not in TABLE_MODES:
+        if info["mode"] not in TABLE_MODES or info.get("trunkOf"):
             continue
         waits = sorted(own_waits.get((route_states[i]["stationIndex"], route_id), MAX_WAIT)
                        for i in rail_states if route_states[i]["routeId"] == route_id)
@@ -1069,7 +1106,7 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     return {
         "lines": lines,
         "railStations": len(shown_ids),
-        "busLines": sum(1 for info in route_info.values() if not info["rail"]),
+        "busLines": sum(1 for info in route_info.values() if not info["rail"] and not info.get("trunkOf")),
         "center": city["defaultFrom"]["label"],
         "within15": round(100 * sum(t <= 15 for t in rail_times) / len(rail_times)),
         "within30": round(100 * sum(t <= 30 for t in rail_times) / len(rail_times)),
@@ -1119,7 +1156,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
         "excludedRoutes": city.get("excludeRoutes", []),
         "network": {
-            "lines": dict(Counter(info["mode"] for info in route_info.values())),
+            "lines": dict(Counter(info["mode"] for info in route_info.values() if not info.get("trunkOf"))),
             "stops": len(stations),
             "railStations": sum(1 for station in stations if station["rail"]),
         },
@@ -1169,7 +1206,7 @@ def main() -> None:
             "id": station["id"],
             "name": station["name"],
             "point": station["point"],
-            "routes": sorted(station["routes"], key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
+            "routes": sorted((r for r in station["routes"] if not route_info[r].get("trunkOf")), key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
             "rail": any(route_info[route_id]["rail"] for route_id in station["routes"]),
             "z": round(station["z"], 1),
         }
@@ -1225,7 +1262,7 @@ def main() -> None:
     provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])
-    modes = Counter(info["mode"] for info in route_info.values())
+    modes = Counter(info["mode"] for info in route_info.values() if not info.get("trunkOf"))
     print(
         f"Wrote {output_path.relative_to(ROOT)} "
         f"({output_path.stat().st_size / 1_000_000:.2f} MB, GTFS du {reference_date}, lignes {dict(modes)}, "

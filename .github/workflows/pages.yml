@@ -16,6 +16,9 @@ concurrency:
 
 jobs:
   deploy:
+    # The site is served from the user page (MannuelTe.github.io); copies of this history elsewhere (zh-cycling's
+    # main) keep their own Pages setup.
+    if: github.repository == 'MannuelTe/MannuelTe.github.io'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

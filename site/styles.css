@@ -1286,3 +1286,8 @@ output {
 @media (max-width: 640px) { .sources dl { grid-template-columns: 1fr; } .sources dd { margin-bottom: 8px; } }
 .mode-picker { margin: 0; padding: 0; border: 0; }
 .bike-mode .transit-only { opacity: 0.4; pointer-events: none; }
+.years-panel { margin-top: 12px; }
+.years-table td { vertical-align: middle; }
+.years-table tr.current td { font-weight: 600; }
+.years-table .badge { display: inline-block; min-width: 22px; margin-right: 4px; padding: 1px 6px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-align: center; }
+.year-bar { display: block; height: 6px; margin-top: 4px; border-radius: 3px; background: var(--green, #3aa70b); max-width: 160px; }

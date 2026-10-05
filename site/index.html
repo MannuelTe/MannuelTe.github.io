@@ -114,7 +114,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=adaa02ef" />
+    <link rel="stylesheet" href="./styles.css?v=aaa83a82" />
   </head>
   <body>
     <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "d13e1f52", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "43459b28", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "d608b76f", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "57cf0b32", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "bikeVersion": "dd4b6081", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
@@ -234,6 +234,10 @@
           <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
           <tbody></tbody>
         </table>
+        <details id="yearsPanel" class="faq years-panel">
+          <summary>This trip across the timetable years (2022 → 2027)</summary>
+          <div id="yearsBody"></div>
+        </details>
       </section>
 
       <section class="section" aria-labelledby="stats-title">
@@ -368,6 +372,6 @@
     </footer>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=e11c24ac"></script>
+    <script type="module" src="./app.js?v=6df71684"></script>
   </body>
 </html>

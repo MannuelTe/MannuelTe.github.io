@@ -1055,7 +1055,10 @@ function recompute({ fast = false } = {}) {
   app.grid = computeGrid(app.heatSolution);
   paintHeat(app.grid, { fast });
   updatePanel();
-  if (!fast) updateCounts();
+  if (!fast) {
+    updateCounts();
+    scheduleYears();
+  }
   requestRender();
 }
 
@@ -1074,6 +1077,7 @@ function setTo(point, label = null, { quiet = false, fast = false } = {}) {
     recompute({ fast });
   } else {
     updatePanel();
+    if (!fast) scheduleYears();
     requestRender();
   }
   if (!quiet) syncUrl();
@@ -1082,6 +1086,7 @@ function setTo(point, label = null, { quiet = false, fast = false } = {}) {
 
 function removeTo() {
   app.to = null;
+  scheduleYears();
   setHeatFrom("from");
   syncUrl();
 }
@@ -1174,6 +1179,102 @@ function reachCounts(grid, limits) {
     });
   }
   return { totals, within };
+}
+
+// --- This trip across the timetable years (expander under the map) --------------
+
+let yearsTimer = null;
+
+function scheduleYears() {
+  clearTimeout(yearsTimer);
+  yearsTimer = setTimeout(() => updateYears().catch((error) => console.error(error)), 250);
+}
+
+/** Runs `fn` with another year's network in place of the current one (the routing functions read `app`). */
+function withYear(prepared, fn) {
+  const saved = [app.data, app.graph, app.terrain];
+  [app.data, app.graph, app.terrain] = [prepared.data, prepared.graph, prepared.terrain];
+  try {
+    return fn();
+  } finally {
+    [app.data, app.graph, app.terrain] = saved;
+  }
+}
+
+async function updateYears() {
+  const panel = $("yearsPanel");
+  if (!panel?.open || !app.from) return;
+  const body = $("yearsBody");
+  if (app.mode === "bike") {
+    body.textContent = "The bike network is today's; switch to public transport to compare timetable years.";
+    return;
+  }
+  const years = Object.keys(CITY.timetables);
+  body.textContent = "Loading the timetables…";
+  const prepared = await Promise.all(years.map((year) => bundle(year)));
+  const rows = years.map((year, k) =>
+    withYear(prepared[k], () => {
+      const solution = solveFrom(app.from.point);
+      const itinerary = app.to ? buildItinerary(solution, app.to.point) : null;
+      const counts = reachCounts(computeGrid(solution), [30]).within[0];
+      const lines = itinerary
+        ? itinerary.steps.filter((step) => step.kind === "ride").map((step) => app.data.routeInfo[step.route])
+        : [];
+      return { year, minutes: itinerary?.minutes, lines, pop: counts.pop, jobs: counts.jobs };
+    }),
+  );
+  const longest = Math.max(...rows.map((row) => row.minutes ?? 0), 1);
+  const table = document.createElement("table");
+  table.className = "lines-table years-table";
+  table.innerHTML = `<thead><tr><th scope="col">Timetable</th>${app.to ? '<th scope="col">This trip</th><th scope="col">Lines</th>' : ""}
+    <th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+  rows.forEach((row, k) => {
+    const tr = document.createElement("tr");
+    if (row.year === app.year) tr.className = "current";
+    const cell = (content) => {
+      const td = document.createElement("td");
+      if (typeof content === "string") td.textContent = content;
+      else td.append(...content);
+      tr.append(td);
+    };
+    cell(CITY.timetables[row.year].label.startsWith("Draft") ? `${row.year} (draft)` : row.year);
+    if (app.to) {
+      const bar = document.createElement("span");
+      bar.className = "year-bar";
+      bar.style.width = `${Math.round((row.minutes / longest) * 100)}%`;
+      const previous = rows[k - 1]?.minutes;
+      const change = Math.round(row.minutes) - Math.round(previous ?? row.minutes);
+      const delta = previous == null ? "" : change === 0 ? " (same)" : ` (${change > 0 ? "+" : "−"}${formatMinutes(Math.abs(change))})`;
+      const label = document.createElement("span");
+      label.textContent = formatMinutes(row.minutes) + delta;
+      cell([label, bar]);
+      cell(
+        row.lines.length
+          ? row.lines.map((info) => {
+              const badge = document.createElement("span");
+              badge.className = "badge";
+              badge.textContent = info.name;
+              badge.style.background = info.color;
+              badge.style.color = contrastText(info.color);
+              return badge;
+            })
+          : "on foot",
+      );
+    }
+    const previous = rows[k - 1];
+    const change = (value, before) => (before == null ? "" : ` (${value - before >= 0 ? "+" : "−"}${compact.format(Math.abs(value - before))})`);
+    cell(compact.format(row.pop) + change(row.pop, previous?.pop));
+    cell(compact.format(row.jobs) + change(row.jobs, previous?.jobs));
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  const note = document.createElement("p");
+  note.className = "table-note";
+  note.textContent = `Same start${app.to ? " and destination" : ""} on each year's timetable${
+    app.includeBus ? ", buses and boats included" : ", tram and train only"
+  }; residents and jobs held at today's numbers. Changes are against the previous row.${app.to ? "" : " Click the map to add a destination."}`;
+  body.replaceChildren(table, note);
 }
 
 function updateCounts() {
@@ -1587,14 +1688,26 @@ document.addEventListener("click", (event) => {
 
 const bundles = new Map();
 
+/** A timetable year's data with its routing graph and terrain, fetched and prepared once. */
+function bundle(year) {
+  if (!bundles.has(year)) {
+    bundles.set(
+      year,
+      fetch(dataUrl(year))
+        .then((response) => response.json())
+        .then((data) => ({ data, graph: prepareGraph(data), terrain: prepareTerrain(data) })),
+    );
+  }
+  return bundles.get(year);
+}
+
 async function loadYear(year) {
-  if (!bundles.has(year)) bundles.set(year, fetch(dataUrl(year)).then((response) => response.json()));
-  const data = await bundles.get(year);
+  const { data, graph, terrain } = await bundle(year);
   app.year = year;
   app.data = data;
   app.offset = [data.meta.bounds[0], data.meta.bounds[1]];
-  app.graph = prepareGraph(data);
-  app.terrain = prepareTerrain(data);
+  app.graph = graph;
+  app.terrain = terrain;
   app.paths = buildPaths(data);
   for (const button of $("yearPicker").querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.year === year));
@@ -1641,6 +1754,7 @@ async function init() {
       })
       .catch(() => toast("Could not load the cycling layer."));
   });
+  $("yearsPanel").addEventListener("toggle", scheduleYears);
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;
     if (year) switchYear(year).catch(() => toast("Could not load that timetable."));

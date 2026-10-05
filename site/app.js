@@ -730,7 +730,13 @@ function buildPaths(data) {
     const { path } = routes.get(route.id);
     route.points.forEach(([x, y], i) => (i ? path.lineTo(x - ox, y - oy) : path.moveTo(x - ox, y - oy)));
   }
+  // Everything except water (a frame around the map plus the water rings, "evenodd"): isochrones are clipped with it.
+  const notWater = new Path2D();
+  const [minX, minY, maxX, maxY] = data.meta.bounds;
+  ringPath(notWater, [[minX - 1e4, minY - 1e4], [maxX + 1e4, minY - 1e4], [maxX + 1e4, maxY + 1e4], [minX - 1e4, maxY + 1e4]]);
+  for (const polygon of data.water) for (const ring of polygon) ringPath(notWater, ring);
   return {
+    notWater,
     land: polygonsPath(data.boroughs.flatMap((commune) => commune.polygons)),
     // Terres voisines des villes côtières : ce qui reste découvert autour est la mer.
     context: polygonsPath(data.context ?? []),
@@ -817,7 +823,9 @@ function drawIsochrones() {
       path.lineTo(b[0] - ox, b[1] - oy);
     }
     ctx.save();
+    // Land, then everything but water: the district polygons include part of the lake.
     ctx.clip(app.paths.land, "evenodd");
+    ctx.clip(app.paths.notWater, "evenodd");
     ctx.lineCap = "round";
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
     ctx.lineWidth = 4.5 * px;
@@ -958,11 +966,12 @@ function render() {
 
   ctx.fillStyle = COLORS.park;
   for (const park of app.paths.parks) ctx.fill(park, "evenodd");
-  ctx.fillStyle = COLORS.water;
-  for (const water of app.paths.water) ctx.fill(water, "evenodd");
+  // Boundaries first, water over them: Zurich's districts (Kreise) reach into the lake.
   ctx.strokeStyle = COLORS.communeLine;
   ctx.lineWidth = 1.1 * px;
   ctx.stroke(app.paths.communeLines);
+  ctx.fillStyle = COLORS.water;
+  for (const water of app.paths.water) ctx.fill(water, "evenodd");
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";

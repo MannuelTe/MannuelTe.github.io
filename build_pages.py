@@ -17,8 +17,8 @@ from cities import load_cities
 
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
-SITE_URL = "https://mannuelte.github.io/zurich-temps-transport/"
-GITHUB_URL = "https://github.com/MannuelTe/zurich-temps-transport"
+SITE_URL = "https://mannuelte.github.io/"
+GITHUB_URL = "https://github.com/MannuelTe/MannuelTe.github.io"
 UPSTREAM_URL = "https://github.com/camilleroux/montpellier-temps-transport"
 SITE_NAME = "How far is it in Zurich?"
 LICENCES = {
@@ -72,7 +72,7 @@ def head(*, title: str, description: str, url: str, base: str, graph: list) -> s
             f"    <title>{esc(title)}</title>",
             f'    <meta name="description" content="{esc(description)}" />',
             f'    <link rel="canonical" href="{url}" />',
-            '    <meta name="theme-color" content="#3aa70b" />',
+            '    <meta name="theme-color" content="#0f05a0" />',
             f'    <link rel="icon" href="{base}favicon.svg" type="image/svg+xml" />',
             f'    <link rel="icon" href="{base}favicon-32.png" type="image/png" sizes="32x32" />',
             f'    <link rel="apple-touch-icon" href="{base}apple-touch-icon.png" />',
@@ -91,11 +91,12 @@ def head(*, title: str, description: str, url: str, base: str, graph: list) -> s
 
 def header(base: str) -> str:
     return f"""    <header class="topbar">
-      <nav class="topbar-inner" aria-label="Main navigation">
-        <a class="brand" href="{base}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {esc(SITE_NAME)}</a>
-        <div class="topbar-links">
-          <a class="topbar-link" href="{GITHUB_URL}">Source on GitHub</a>
-        </div>
+      <a class="brand" href="{base}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {esc(SITE_NAME)}</a>
+      <nav class="topbar-links" aria-label="Main navigation">
+        <a href="#map-title">Map</a>
+        <a href="#history-title">Over time</a>
+        <a href="#faq-title">Questions</a>
+        <a class="topbar-pill" href="{GITHUB_URL}">GitHub <span aria-hidden="true">→</span></a>
       </nav>
     </header>"""
 
@@ -127,7 +128,7 @@ def footer(city: dict) -> str:
 
 
 def faq_block(entries: list[tuple]) -> str:
-    return "\n".join(f'        <details class="faq"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in entries)
+    return "\n".join(f'        <details class="expander faq"><summary>{esc(q)}</summary><div class="expander-body"><p>{esc(a)}</p></div></details>' for q, a in entries)
 
 
 def faq_schema(entries: list[tuple]) -> dict:
@@ -272,11 +273,13 @@ def sources_block(city: dict) -> str:
          f'dates) in <a href="{GITHUB_URL}/tree/main/sources">sources/</a>.'),
     ]
     rows = "\n".join(f"          <dt>{esc(title)}</dt><dd>{body}</dd>" for title, body in items)
-    return f"""        <details class="faq sources">
+    return f"""        <details class="expander sources">
           <summary>Data sources</summary>
-          <dl>
+          <div class="expander-body">
+            <dl>
 {rows}
-          </dl>
+            </dl>
+          </div>
         </details>"""
 
 
@@ -361,6 +364,7 @@ def render_page(template: Template, city: dict) -> str:
         "history_rows": history_rows,
         "history_note": esc(history_note),
         "center": esc(stats["center"]),
+        "default_year": esc(city["defaultTimetable"]),
         "faq_html": faq_block(faq) + "\n" + sources_block(city),
         "styles_version": short_hash(SITE / "styles.css"),
         "app_version": short_hash(SITE / "app.js"),

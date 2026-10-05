@@ -6,6 +6,7 @@ ${head}
   </head>
   <body>
     <script id="city-config" type="application/json">${city_config}</script>
+    <div class="frame">
 ${header}
 
     <main class="page">
@@ -13,146 +14,184 @@ ${header}
         <h1>${headline}</h1>
         <p class="lede">
           ${name} redrawn by how long it takes to get there. Pick a starting point and the map colours every place
-          in ${region_lower} by travel time.
+          in ${region_lower} by travel time, by public transport or by bike.
         </p>
         <form id="searchForm" class="search" role="search" autocomplete="off">
           <label class="visually-hidden" for="searchInput">Starting address</label>
+          <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
           <input id="searchInput" type="search" placeholder="Start from an address… (e.g. ${search_example})" />
           <button type="submit" class="button primary">Start here</button>
           <ul id="searchResults" class="search-results" hidden></ul>
         </form>
         <ol class="steps" aria-label="How to use">
-          <li><strong>1. Start</strong> Search for an address or drag the green dot.</li>
-          <li><strong>2. Destination</strong> Click anywhere: travel time and a detailed route.</li>
-          <li><strong>3. Read</strong> Green = close, red = far. Black lines: 15 and 30 min.</li>
+          <li><span class="num">1</span><strong>Start</strong> Search an address or drag the blue dot.</li>
+          <li><span class="num">2</span><strong>Destination</strong> Click anywhere for the time and route.</li>
+          <li><span class="num">3</span><strong>Read</strong> Green is close, red is far; lines mark 15 and 30 min.</li>
         </ol>
       </section>
 
-      <section class="map-card" aria-label="Travel time map">
-        <noscript>
-          <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
-        </noscript>
-        <div id="mapStage" class="map-stage">
-          <canvas id="mapCanvas"></canvas>
+      <section class="block" aria-labelledby="map-title">
+        <header class="block-head">
+          <span class="block-num">01</span>
+          <h2 id="map-title">Map</h2>
+          <span class="block-desc">Travel time from the start to every place on the map.</span>
+        </header>
+        <div class="map-card">
+          <noscript>
+            <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
+          </noscript>
+          <div id="mapStage" class="map-stage">
+            <canvas id="mapCanvas"></canvas>
 
-          <aside id="tripPanel" class="trip-panel" aria-live="polite">
-            <p class="trip-eyebrow">Start</p>
-            <p id="tripFrom" class="trip-from">Loading the network…</p>
-            <div id="tripResult" class="trip-result" hidden>
-              <div class="trip-row">
-                <p class="trip-eyebrow">Destination</p>
-                <button id="removeTo" type="button" class="link-button">Remove</button>
+            <aside id="tripPanel" class="trip-panel" aria-live="polite">
+              <p class="trip-eyebrow">Start</p>
+              <p id="tripFrom" class="trip-from">Loading the network…</p>
+              <div id="tripResult" class="trip-result" hidden>
+                <div class="trip-row">
+                  <p class="trip-eyebrow">Destination</p>
+                  <button id="removeTo" type="button" class="link-button">Remove</button>
+                </div>
+                <p id="tripTo" class="trip-to"></p>
+                <p id="tripDuration" class="trip-duration"></p>
+                <ol id="tripSteps" class="trip-steps"></ol>
+                <div class="trip-from-row">
+                  <span>Map from</span>
+                  <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
+                    <button type="button" data-source="from" aria-pressed="true">Start</button>
+                    <button type="button" data-source="to" aria-pressed="false">Destination</button>
+                  </div>
+                </div>
               </div>
-              <p id="tripTo" class="trip-to"></p>
-              <p id="tripDuration" class="trip-duration"></p>
-              <ol id="tripSteps" class="trip-steps"></ol>
-              <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
-                <span>Map from</span>
-                <button type="button" data-source="from" aria-pressed="true">the start</button>
-                <button type="button" data-source="to" aria-pressed="false">the destination</button>
+              <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
+            </aside>
+
+            <div class="map-buttons">
+              <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
+              <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
+              <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
+              <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
+            </div>
+
+            <div class="legend" aria-hidden="true">
+              <div id="legendBar" class="legend-bar"></div>
+              <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <div class="control-group">
+              <span class="control-label">Mode</span>
+              <div id="modePicker" class="segmented" role="group" aria-label="Mode of travel">
+                <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
+                <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
               </div>
             </div>
-            <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
-          </aside>
-
-          <div class="map-buttons">
-            <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
-            <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
-            <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
-            <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
-          </div>
-
-          <div class="legend" aria-hidden="true">
-            <div id="legendBar" class="legend-bar"></div>
-            <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div class="control-group">
-            <span class="control-label">Mode</span>
-            <div id="modePicker" class="segmented mode-picker" role="group" aria-label="Mode of travel">
-              <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
-              <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
-            </div>
-          </div>
-          <div class="control-group transit-only">
-            <span class="control-label">Timetable</span>
-            <div id="yearPicker" class="segmented year-picker" role="group" aria-label="Timetable year">
+            <div class="control-group transit-only">
+              <span class="control-label">Timetable</span>
+              <div id="yearPicker" class="segmented" role="group" aria-label="Timetable year">
 ${year_buttons}
+              </div>
+              <small id="yearNote" class="year-note"></small>
             </div>
-            <small id="yearNote" class="year-note"></small>
-          </div>
-          <div class="control-group transit-only">
-            <span class="control-label">Network</span>
-            <label class="pill-toggle"><input type="checkbox" checked disabled /> ${rail_label}</label>
-            <label class="pill-toggle"><input id="busToggle" type="checkbox" /> ${bus_label}</label>
-          </div>
-          <div id="isoToggles" class="control-group">
-            <span class="control-label">Isochrones</span>
-            <label class="pill-toggle"><input type="checkbox" value="15" checked /> 15 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="30" checked /> 30 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="45" /> 45 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="60" /> 60 min</label>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="maxRange">Scale</label>
-            <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
-            <output id="maxValue" for="maxRange">45 min</output>
-          </div>
-          <div class="control-group actions">
-            <button id="locate" type="button" class="button">My location</button>
-            <button id="swap" type="button" class="button">Swap</button>
-            <button id="share" type="button" class="button primary">Share</button>
+            <div class="control-group transit-only">
+              <span class="control-label">Network</span>
+              <label class="chip-toggle"><input type="checkbox" checked disabled /><span>${rail_label}</span></label>
+              <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>${bus_label}</span></label>
+            </div>
+            <div id="isoToggles" class="control-group">
+              <span class="control-label">Isochrones</span>
+              <label class="chip-toggle"><input type="checkbox" value="15" checked /><span>15 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="30" checked /><span>30 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="45" /><span>45 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="60" /><span>60 min</span></label>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="maxRange">Scale</label>
+              <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
+              <output id="maxValue" for="maxRange">45 min</output>
+            </div>
+            <div class="control-group actions">
+              <button id="locate" type="button" class="button">My location</button>
+              <button id="swap" type="button" class="button">Swap</button>
+              <button id="share" type="button" class="button primary">Share</button>
+            </div>
           </div>
         </div>
-        <p id="reach" class="reach"></p>
-        <table id="reachCounts" class="lines-table reach-counts">
-          <caption>Residents and jobs within reach of the point the map starts from, for the isochrones ticked above</caption>
-          <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <details id="yearsPanel" class="faq years-panel">
-          <summary>This trip across the timetable years (2022 → 2027)</summary>
-          <div id="yearsBody"></div>
+      </section>
+
+      <section class="block" aria-labelledby="reach-title">
+        <header class="block-head">
+          <span class="block-num">02</span>
+          <h2 id="reach-title">Within reach</h2>
+          <span class="block-desc">Residents and jobs inside the isochrones ticked above.</span>
+        </header>
+        <div class="card">
+          <p id="reach" class="reach"></p>
+          <table id="reachCounts" class="data-table reach-counts">
+            <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <details id="yearsPanel" class="expander">
+          <summary>This trip across the timetable years <span class="muted">2022 → 2027</span></summary>
+          <div id="yearsBody" class="expander-body"></div>
         </details>
       </section>
 
-      <section class="section" aria-labelledby="stats-title">
-        <h2 id="stats-title">${name} in numbers</h2>
+      <section class="block" aria-labelledby="stats-title">
+        <header class="block-head">
+          <span class="block-num">03</span>
+          <h2 id="stats-title">${name} in numbers</h2>
+          <span class="block-desc">From ${center}, on a weekday of the ${default_year} timetable.</span>
+        </header>
         <div class="stat-grid">
 ${stat_tiles}
         </div>
-        <table class="lines-table">
-          <caption>Tram, S-Bahn and funicular lines (${network}), on a weekday</caption>
-          <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th></tr></thead>
-          <tbody>
+        <details class="expander">
+          <summary>Tram, S-Bahn and funicular lines <span class="muted">${network}</span></summary>
+          <div class="expander-body">
+            <table class="data-table">
+              <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th></tr></thead>
+              <tbody>
 ${line_rows}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
-      <section class="section" aria-labelledby="history-title">
-        <h2 id="history-title">The network over time</h2>
-        <p>The same model run on the official timetable of each year, for a weekday in late autumn. Times from ${center}
-        by tram, S-Bahn and train; residents and jobs held at their current numbers so that only the network changes.</p>
-        <table class="lines-table">
-          <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
-          <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
-          <tbody>
+      <section class="block" aria-labelledby="history-title">
+        <header class="block-head">
+          <span class="block-num">04</span>
+          <h2 id="history-title">The network over time</h2>
+          <span class="block-desc">The same model on each year's official timetable; residents and jobs held at today's numbers.</span>
+        </header>
+        <div class="card">
+          <table class="data-table">
+            <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
+            <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+            <tbody>
 ${history_rows}
-          </tbody>
-        </table>
-        <p class="table-note">${history_note}</p>
+            </tbody>
+          </table>
+          <p class="table-note">${history_note}</p>
+        </div>
       </section>
 
-      <section class="section" aria-labelledby="faq-title">
-        <h2 id="faq-title">Questions</h2>
+      <section class="block" aria-labelledby="faq-title">
+        <header class="block-head">
+          <span class="block-num">05</span>
+          <h2 id="faq-title">Questions</h2>
+          <span class="block-desc">How the times are computed, and where the data comes from.</span>
+        </header>
+        <div class="faq-list">
 ${faq_html}
+        </div>
       </section>
     </main>
 
 ${footer}
+    </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
     <script type="module" src="${base}app.js?v=${app_version}"></script>

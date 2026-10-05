@@ -26,7 +26,7 @@ from pathlib import Path
 from cities import load_city
 
 ROOT = Path(__file__).resolve().parent
-USER_AGENT = "zurich-temps-transport/0.1 (build script; github.com/MannuelTe/zurich-temps-transport)"
+USER_AGENT = "zurich-temps-transport/0.1 (build script; github.com/MannuelTe/MannuelTe.github.io)"
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",

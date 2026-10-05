@@ -47,14 +47,14 @@ const NEIGHBOURS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const RIVER_BRIDGE_CELLS = 4; // cases de 200 m : de quoi traverser le Rhône ou la Garonne
 
 const COLORS = {
-  background: "#f1efe9",
-  land: "#e4e2dc",
-  water: "#bcd7e8",
-  park: "rgba(120, 180, 90, 0.18)",
-  communeLine: "rgba(255, 255, 255, 0.9)",
-  contour: "#111111",
-  from: "#3aa70b",
-  to: "#111111",
+  background: "#eef0f3",
+  land: "#e3e5e9",
+  water: "#cfdcea",
+  park: "rgba(110, 160, 110, 0.16)",
+  communeLine: "rgba(255, 255, 255, 0.95)",
+  contour: "#0f05a0", // Zürich blue, like the page accents
+  from: "#0f05a0",
+  to: "#1f2128",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -855,7 +855,7 @@ function drawIsochrones() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   for (const { text, at } of labels) {
-    drawHaloText(text, at[0], at[1], { font: "700 12px Inter, sans-serif", color: COLORS.contour, width: 5 });
+    drawHaloText(text, at[0], at[1], { font: "600 12px Inter, sans-serif", color: COLORS.contour, width: 5 });
   }
 }
 
@@ -1225,7 +1225,7 @@ async function updateYears() {
   );
   const longest = Math.max(...rows.map((row) => row.minutes ?? 0), 1);
   const table = document.createElement("table");
-  table.className = "lines-table years-table";
+  table.className = "data-table years-table";
   table.innerHTML = `<thead><tr><th scope="col">Timetable</th>${app.to ? '<th scope="col">This trip</th><th scope="col">Lines</th>' : ""}
     <th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>`;
   const tbody = document.createElement("tbody");
@@ -1242,7 +1242,7 @@ async function updateYears() {
     if (app.to) {
       const bar = document.createElement("span");
       bar.className = "year-bar";
-      bar.style.width = `${Math.round((row.minutes / longest) * 100)}%`;
+      bar.style.width = `${Math.round((row.minutes / longest) * 160)}px`; // longest trip = 160 px
       const previous = rows[k - 1]?.minutes;
       const change = Math.round(row.minutes) - Math.round(previous ?? row.minutes);
       const delta = previous == null ? "" : change === 0 ? " (same)" : ` (${change > 0 ? "+" : "−"}${formatMinutes(Math.abs(change))})`;

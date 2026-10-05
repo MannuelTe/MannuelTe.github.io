@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>How far is it in Zurich? · Travel times by public transport in Zurich</title>
     <meta name="description" content="Travel time map of Zurich by tram, S-Bahn and bus: pick a starting point and the whole city is coloured by how long it takes to get there." />
-    <link rel="canonical" href="https://mannuelte.github.io/zurich-temps-transport/" />
-    <meta name="theme-color" content="#3aa70b" />
+    <link rel="canonical" href="https://mannuelte.github.io/" />
+    <meta name="theme-color" content="#0f05a0" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
@@ -15,7 +15,7 @@
     <meta property="og:site_name" content="How far is it in Zurich?" />
     <meta property="og:title" content="How far is it in Zurich?" />
     <meta property="og:description" content="Travel time map of Zurich by tram, S-Bahn and bus: pick a starting point and the whole city is coloured by how long it takes to get there." />
-    <meta property="og:url" content="https://mannuelte.github.io/zurich-temps-transport/" />
+    <meta property="og:url" content="https://mannuelte.github.io/" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -23,7 +23,7 @@
         {
           "@type": "WebApplication",
           "name": "How far is it in Zurich?",
-          "url": "https://mannuelte.github.io/zurich-temps-transport/",
+          "url": "https://mannuelte.github.io/",
           "description": "Travel time map of Zurich by tram, S-Bahn and bus: pick a starting point and the whole city is coloured by how long it takes to get there.",
           "inLanguage": "en",
           "applicationCategory": "TravelApplication",
@@ -114,16 +114,18 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=aaa83a82" />
+    <link rel="stylesheet" href="./styles.css?v=d690f14b" />
   </head>
   <body>
     <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "d13e1f52", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "43459b28", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "d608b76f", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "57cf0b32", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "bikeVersion": "dd4b6081", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
+    <div class="frame">
     <header class="topbar">
-      <nav class="topbar-inner" aria-label="Main navigation">
-        <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
-        <div class="topbar-links">
-          <a class="topbar-link" href="https://github.com/MannuelTe/zurich-temps-transport">Source on GitHub</a>
-        </div>
+      <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
+      <nav class="topbar-links" aria-label="Main navigation">
+        <a href="#map-title">Map</a>
+        <a href="#history-title">Over time</a>
+        <a href="#faq-title">Questions</a>
+        <a class="topbar-pill" href="https://github.com/MannuelTe/MannuelTe.github.io">GitHub <span aria-hidden="true">→</span></a>
       </nav>
     </header>
 
@@ -132,116 +134,139 @@
         <h1>How far is it in Zurich?</h1>
         <p class="lede">
           Zurich redrawn by how long it takes to get there. Pick a starting point and the map colours every place
-          in the City of Zurich and neighbouring municipalities by travel time.
+          in the City of Zurich and neighbouring municipalities by travel time, by public transport or by bike.
         </p>
         <form id="searchForm" class="search" role="search" autocomplete="off">
           <label class="visually-hidden" for="searchInput">Starting address</label>
+          <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
           <input id="searchInput" type="search" placeholder="Start from an address… (e.g. Bellevue)" />
           <button type="submit" class="button primary">Start here</button>
           <ul id="searchResults" class="search-results" hidden></ul>
         </form>
         <ol class="steps" aria-label="How to use">
-          <li><strong>1. Start</strong> Search for an address or drag the green dot.</li>
-          <li><strong>2. Destination</strong> Click anywhere: travel time and a detailed route.</li>
-          <li><strong>3. Read</strong> Green = close, red = far. Black lines: 15 and 30 min.</li>
+          <li><span class="num">1</span><strong>Start</strong> Search an address or drag the blue dot.</li>
+          <li><span class="num">2</span><strong>Destination</strong> Click anywhere for the time and route.</li>
+          <li><span class="num">3</span><strong>Read</strong> Green is close, red is far; lines mark 15 and 30 min.</li>
         </ol>
       </section>
 
-      <section class="map-card" aria-label="Travel time map">
-        <noscript>
-          <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
-        </noscript>
-        <div id="mapStage" class="map-stage">
-          <canvas id="mapCanvas"></canvas>
+      <section class="block" aria-labelledby="map-title">
+        <header class="block-head">
+          <span class="block-num">01</span>
+          <h2 id="map-title">Map</h2>
+          <span class="block-desc">Travel time from the start to every place on the map.</span>
+        </header>
+        <div class="map-card">
+          <noscript>
+            <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
+          </noscript>
+          <div id="mapStage" class="map-stage">
+            <canvas id="mapCanvas"></canvas>
 
-          <aside id="tripPanel" class="trip-panel" aria-live="polite">
-            <p class="trip-eyebrow">Start</p>
-            <p id="tripFrom" class="trip-from">Loading the network…</p>
-            <div id="tripResult" class="trip-result" hidden>
-              <div class="trip-row">
-                <p class="trip-eyebrow">Destination</p>
-                <button id="removeTo" type="button" class="link-button">Remove</button>
+            <aside id="tripPanel" class="trip-panel" aria-live="polite">
+              <p class="trip-eyebrow">Start</p>
+              <p id="tripFrom" class="trip-from">Loading the network…</p>
+              <div id="tripResult" class="trip-result" hidden>
+                <div class="trip-row">
+                  <p class="trip-eyebrow">Destination</p>
+                  <button id="removeTo" type="button" class="link-button">Remove</button>
+                </div>
+                <p id="tripTo" class="trip-to"></p>
+                <p id="tripDuration" class="trip-duration"></p>
+                <ol id="tripSteps" class="trip-steps"></ol>
+                <div class="trip-from-row">
+                  <span>Map from</span>
+                  <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
+                    <button type="button" data-source="from" aria-pressed="true">Start</button>
+                    <button type="button" data-source="to" aria-pressed="false">Destination</button>
+                  </div>
+                </div>
               </div>
-              <p id="tripTo" class="trip-to"></p>
-              <p id="tripDuration" class="trip-duration"></p>
-              <ol id="tripSteps" class="trip-steps"></ol>
-              <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
-                <span>Map from</span>
-                <button type="button" data-source="from" aria-pressed="true">the start</button>
-                <button type="button" data-source="to" aria-pressed="false">the destination</button>
+              <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
+            </aside>
+
+            <div class="map-buttons">
+              <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
+              <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
+              <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
+              <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
+            </div>
+
+            <div class="legend" aria-hidden="true">
+              <div id="legendBar" class="legend-bar"></div>
+              <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <div class="control-group">
+              <span class="control-label">Mode</span>
+              <div id="modePicker" class="segmented" role="group" aria-label="Mode of travel">
+                <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
+                <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
               </div>
             </div>
-            <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
-          </aside>
-
-          <div class="map-buttons">
-            <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
-            <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
-            <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
-            <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
-          </div>
-
-          <div class="legend" aria-hidden="true">
-            <div id="legendBar" class="legend-bar"></div>
-            <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div class="control-group">
-            <span class="control-label">Mode</span>
-            <div id="modePicker" class="segmented mode-picker" role="group" aria-label="Mode of travel">
-              <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
-              <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
-            </div>
-          </div>
-          <div class="control-group transit-only">
-            <span class="control-label">Timetable</span>
-            <div id="yearPicker" class="segmented year-picker" role="group" aria-label="Timetable year">
+            <div class="control-group transit-only">
+              <span class="control-label">Timetable</span>
+              <div id="yearPicker" class="segmented" role="group" aria-label="Timetable year">
               <button type="button" data-year="2022" aria-pressed="false">2022</button>
               <button type="button" data-year="2024" aria-pressed="false">2024</button>
               <button type="button" data-year="2026" aria-pressed="true">2026</button>
               <button type="button" data-year="2027" aria-pressed="false">2027</button>
+              </div>
+              <small id="yearNote" class="year-note"></small>
             </div>
-            <small id="yearNote" class="year-note"></small>
-          </div>
-          <div class="control-group transit-only">
-            <span class="control-label">Network</span>
-            <label class="pill-toggle"><input type="checkbox" checked disabled /> Tram, S-Bahn and train</label>
-            <label class="pill-toggle"><input id="busToggle" type="checkbox" /> Bus and boat</label>
-          </div>
-          <div id="isoToggles" class="control-group">
-            <span class="control-label">Isochrones</span>
-            <label class="pill-toggle"><input type="checkbox" value="15" checked /> 15 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="30" checked /> 30 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="45" /> 45 min</label>
-            <label class="pill-toggle"><input type="checkbox" value="60" /> 60 min</label>
-          </div>
-          <div class="control-group">
-            <label class="control-label" for="maxRange">Scale</label>
-            <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
-            <output id="maxValue" for="maxRange">45 min</output>
-          </div>
-          <div class="control-group actions">
-            <button id="locate" type="button" class="button">My location</button>
-            <button id="swap" type="button" class="button">Swap</button>
-            <button id="share" type="button" class="button primary">Share</button>
+            <div class="control-group transit-only">
+              <span class="control-label">Network</span>
+              <label class="chip-toggle"><input type="checkbox" checked disabled /><span>Tram, S-Bahn and train</span></label>
+              <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>Bus and boat</span></label>
+            </div>
+            <div id="isoToggles" class="control-group">
+              <span class="control-label">Isochrones</span>
+              <label class="chip-toggle"><input type="checkbox" value="15" checked /><span>15 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="30" checked /><span>30 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="45" /><span>45 min</span></label>
+              <label class="chip-toggle"><input type="checkbox" value="60" /><span>60 min</span></label>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="maxRange">Scale</label>
+              <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
+              <output id="maxValue" for="maxRange">45 min</output>
+            </div>
+            <div class="control-group actions">
+              <button id="locate" type="button" class="button">My location</button>
+              <button id="swap" type="button" class="button">Swap</button>
+              <button id="share" type="button" class="button primary">Share</button>
+            </div>
           </div>
         </div>
-        <p id="reach" class="reach"></p>
-        <table id="reachCounts" class="lines-table reach-counts">
-          <caption>Residents and jobs within reach of the point the map starts from, for the isochrones ticked above</caption>
-          <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <details id="yearsPanel" class="faq years-panel">
-          <summary>This trip across the timetable years (2022 → 2027)</summary>
-          <div id="yearsBody"></div>
+      </section>
+
+      <section class="block" aria-labelledby="reach-title">
+        <header class="block-head">
+          <span class="block-num">02</span>
+          <h2 id="reach-title">Within reach</h2>
+          <span class="block-desc">Residents and jobs inside the isochrones ticked above.</span>
+        </header>
+        <div class="card">
+          <p id="reach" class="reach"></p>
+          <table id="reachCounts" class="data-table reach-counts">
+            <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <details id="yearsPanel" class="expander">
+          <summary>This trip across the timetable years <span class="muted">2022 → 2027</span></summary>
+          <div id="yearsBody" class="expander-body"></div>
         </details>
       </section>
 
-      <section class="section" aria-labelledby="stats-title">
-        <h2 id="stats-title">Zurich in numbers</h2>
+      <section class="block" aria-labelledby="stats-title">
+        <header class="block-head">
+          <span class="block-num">03</span>
+          <h2 id="stats-title">Zurich in numbers</h2>
+          <span class="block-desc">From Zürich HB, on a weekday of the 2026 timetable.</span>
+        </header>
         <div class="stat-grid">
           <div class="stat"><strong>93%</strong><span>of the tram and rail stops within 30 min of Zürich HB</span></div>
           <div class="stat"><strong>286</strong><span>tram and rail stops on the map</span></div>
@@ -252,10 +277,12 @@
           <div class="stat"><strong>524k</strong><span>residents within 30 min of Zürich HB by tram and train</span></div>
           <div class="stat"><strong>675k</strong><span>jobs within 30 min of Zürich HB by tram and train</span></div>
         </div>
-        <table class="lines-table">
-          <caption>Tram, S-Bahn and funicular lines (ZVV), on a weekday</caption>
-          <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th></tr></thead>
-          <tbody>
+        <details class="expander">
+          <summary>Tram, S-Bahn and funicular lines <span class="muted">ZVV</span></summary>
+          <div class="expander-body">
+            <table class="data-table">
+              <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th></tr></thead>
+              <tbody>
             <tr><td><span class="line-badge" style="background:#CB0A25;color:#fff">2</span> Tram</td><td>30</td><td>~7.5 min</td></tr>
             <tr><td><span class="line-badge" style="background:#00923C;color:#fff">3</span> Tram</td><td>24</td><td>~7.5 min</td></tr>
             <tr><td><span class="line-badge" style="background:#322E71;color:#fff">4</span> Tram</td><td>43</td><td>~5.4 min</td></tr>
@@ -300,40 +327,52 @@
             <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">24</span> Funicular</td><td>2</td><td>~5 min</td></tr>
             <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">25</span> Funicular</td><td>4</td><td>~11.3 min</td></tr>
             <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">26</span> Cable car</td><td>2</td><td>~16.2 min</td></tr>
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
-      <section class="section" aria-labelledby="history-title">
-        <h2 id="history-title">The network over time</h2>
-        <p>The same model run on the official timetable of each year, for a weekday in late autumn. Times from Zürich HB
-        by tram, S-Bahn and train; residents and jobs held at their current numbers so that only the network changes.</p>
-        <table class="lines-table">
-          <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
-          <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
-          <tbody>
+      <section class="block" aria-labelledby="history-title">
+        <header class="block-head">
+          <span class="block-num">04</span>
+          <h2 id="history-title">The network over time</h2>
+          <span class="block-desc">The same model on each year's official timetable; residents and jobs held at today's numbers.</span>
+        </header>
+        <div class="card">
+          <table class="data-table">
+            <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
+            <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+            <tbody>
             <tr><td><strong>2022</strong></td><td>25 October 2022</td><td>14</td><td>265</td><td>97%</td><td>559k</td><td>698k</td></tr>
             <tr><td><strong>2024</strong></td><td>22 October 2024</td><td>16</td><td>289</td><td>94%</td><td>541k</td><td>685k</td></tr>
             <tr><td><strong>2026</strong></td><td>20 October 2026</td><td>19</td><td>286</td><td>93%</td><td>524k</td><td>675k</td></tr>
             <tr><td><strong>2027</strong> (draft)</td><td>23 November 2027</td><td>16</td><td>280</td><td>96%</td><td>533k</td><td>684k</td></tr>
-          </tbody>
-        </table>
-        <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
+            </tbody>
+          </table>
+          <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
+        </div>
       </section>
 
-      <section class="section" aria-labelledby="faq-title">
-        <h2 id="faq-title">Questions</h2>
-        <details class="faq"><summary>How long does it take to cross Zurich by public transport?</summary><p>From Zürich HB, 47% of the 286 tram and rail stops on the map are less than 15 minutes away and 93% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 56 minutes.</p></details>
-        <details class="faq"><summary>Where do the timetables come from?</summary><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 5 October 2026 and valid until 12 December 2026. Times are those of Tuesday 20 October 2026, between 7:00 and 20:00.</p></details>
-        <details class="faq"><summary>Are buses included?</summary><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></details>
-        <details class="faq"><summary>How are travel times computed?</summary><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or disruptions: this is the city « on paper ».</p></details>
-        <details class="faq"><summary>Do hills and the lake count?</summary><p>Yes. Walking is slower uphill and a little faster on gentle descents (Tobler&#x27;s hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town.</p></details>
-        <details class="faq"><summary>How are bike times computed?</summary><p>On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.</p></details>
-        <details class="faq"><summary>Where do the resident and job figures come from?</summary><p>From the Federal Statistical Office&#x27;s hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></details>
-        <details class="faq"><summary>Why do some tram lines look unusual?</summary><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></details>
-        <details class="faq sources">
+      <section class="block" aria-labelledby="faq-title">
+        <header class="block-head">
+          <span class="block-num">05</span>
+          <h2 id="faq-title">Questions</h2>
+          <span class="block-desc">How the times are computed, and where the data comes from.</span>
+        </header>
+        <div class="faq-list">
+        <details class="expander faq"><summary>How long does it take to cross Zurich by public transport?</summary><div class="expander-body"><p>From Zürich HB, 47% of the 286 tram and rail stops on the map are less than 15 minutes away and 93% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 56 minutes.</p></div></details>
+        <details class="expander faq"><summary>Where do the timetables come from?</summary><div class="expander-body"><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 5 October 2026 and valid until 12 December 2026. Times are those of Tuesday 20 October 2026, between 7:00 and 20:00.</p></div></details>
+        <details class="expander faq"><summary>Are buses included?</summary><div class="expander-body"><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></div></details>
+        <details class="expander faq"><summary>How are travel times computed?</summary><div class="expander-body"><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or disruptions: this is the city « on paper ».</p></div></details>
+        <details class="expander faq"><summary>Do hills and the lake count?</summary><div class="expander-body"><p>Yes. Walking is slower uphill and a little faster on gentle descents (Tobler&#x27;s hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town.</p></div></details>
+        <details class="expander faq"><summary>How are bike times computed?</summary><div class="expander-body"><p>On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.</p></div></details>
+        <details class="expander faq"><summary>Where do the resident and job figures come from?</summary><div class="expander-body"><p>From the Federal Statistical Office&#x27;s hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></div></details>
+        <details class="expander faq"><summary>Why do some tram lines look unusual?</summary><div class="expander-body"><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></div></details>
+        <details class="expander sources">
           <summary>Data sources</summary>
-          <dl>
+          <div class="expander-body">
+            <dl>
           <dt>Timetables (GTFS)</dt><dd>Swiss national timetable, published by <a href="https://opentransportdata.swiss/">opentransportdata.swiss</a> (<a href="https://opentransportdata.swiss/en/terms-of-use/">terms of use</a>); older years from the <a href="https://mobilitydatabase.org/">Mobility Database</a> archive. Clipped to the Zurich area.<ul><li><a href="https://mobilitydatabase.org/feeds/mdb-1092">Swiss timetable 2022, last version archived by the Mobility Database (mdb-1092)</a>, valid 2021-12-12 → 2022-12-14, downloaded 5 October 2026.</li><li><a href="https://mobilitydatabase.org/feeds/mdb-2144">Swiss timetable 2024, last version archived by the Mobility Database (mdb-2144)</a>, valid 2023-12-10 → 2024-12-19, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020">Swiss timetable 2026 (opentransportdata.swiss)</a>, valid 2025-12-14 → 2026-12-12, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020">Swiss timetable 2027, first published version (opentransportdata.swiss)</a>, valid 2026-12-13 → 2027-12-11, downloaded 5 October 2026.</li></ul></dd>
           <dt>Municipal and district boundaries</dt><dd><a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swissBOUNDARIES3D</a> (swisstopo, via api3.geo.admin.ch) and the 12 Stadtkreise from <a href="https://data.stadt-zuerich.ch/">Stadt Zürich Open Data</a>, downloaded 5 October 2026. Open government data.</dd>
           <dt>Residents</dt><dd><a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html">STATPOP 2024</a> hectare grid, Federal Statistical Office (BFS), downloaded 5 October 2026.</dd>
@@ -341,9 +380,11 @@
           <dt>Elevation</dt><dd>swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the <a href="https://api3.geo.admin.ch/services/sdiservices.html#profile">geo.admin.ch profile service</a>, downloaded 5 October 2026.</dd>
           <dt>Lines, lakes, parks and cycling streets</dt><dd>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API, downloaded 5 October 2026.</dd>
           <dt>Address search</dt><dd>Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> (swisstopo) from your browser.</dd>
-          <dt>Method</dt><dd>Fork of <a href="https://github.com/camilleroux/montpellier-temps-transport">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, dates) in <a href="https://github.com/MannuelTe/zurich-temps-transport/tree/main/sources">sources/</a>.</dd>
-          </dl>
+          <dt>Method</dt><dd>Fork of <a href="https://github.com/camilleroux/montpellier-temps-transport">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, dates) in <a href="https://github.com/MannuelTe/MannuelTe.github.io/tree/main/sources">sources/</a>.</dd>
+            </dl>
+          </div>
         </details>
+        </div>
       </section>
     </main>
 
@@ -357,8 +398,8 @@
           <a href="https://julesgrandin.github.io/paris-temps-transport/">Paris version</a>.
         </p>
         <p class="footer-links">
-          <a href="https://github.com/MannuelTe/zurich-temps-transport" rel="noopener">Source code on GitHub</a> ·
-          <a href="https://github.com/MannuelTe/zurich-temps-transport/issues" rel="noopener">Report an error</a>
+          <a href="https://github.com/MannuelTe/MannuelTe.github.io" rel="noopener">Source code on GitHub</a> ·
+          <a href="https://github.com/MannuelTe/MannuelTe.github.io/issues" rel="noopener">Report an error</a>
         </p>
         <p class="footer-credits">
           Timetables: <a href="https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020">Swiss national GTFS</a> (opentransportdata.swiss).
@@ -370,8 +411,9 @@
         </p>
       </div>
     </footer>
+    </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=6df71684"></script>
+    <script type="module" src="./app.js?v=debaf99d"></script>
   </body>
 </html>

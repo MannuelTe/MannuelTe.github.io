@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+${head}
+    <link rel="stylesheet" href="${base}styles.css?v=${styles_version}" />
+  </head>
+  <body>
+    <script id="city-config" type="application/json">${city_config}</script>
+${header}
+
+    <main class="page">
+      <section class="hero">
+        <h1>${headline}</h1>
+        <p class="lede">
+          ${name} redrawn by how long it takes to get there. Pick a starting point and the map colours every place
+          in ${region_lower} by travel time.
+        </p>
+        <form id="searchForm" class="search" role="search" autocomplete="off">
+          <label class="visually-hidden" for="searchInput">Starting address</label>
+          <input id="searchInput" type="search" placeholder="Start from an address… (e.g. ${search_example})" />
+          <button type="submit" class="button primary">Start here</button>
+          <ul id="searchResults" class="search-results" hidden></ul>
+        </form>
+        <ol class="steps" aria-label="How to use">
+          <li><strong>1. Start</strong> Search for an address or drag the green dot.</li>
+          <li><strong>2. Destination</strong> Click anywhere: travel time and a detailed route.</li>
+          <li><strong>3. Read</strong> Green = close, red = far. Black lines: 15 and 30 min.</li>
+        </ol>
+      </section>
+
+      <section class="map-card" aria-label="Travel time map">
+        <noscript>
+          <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
+        </noscript>
+        <div id="mapStage" class="map-stage">
+          <canvas id="mapCanvas"></canvas>
+
+          <aside id="tripPanel" class="trip-panel" aria-live="polite">
+            <p class="trip-eyebrow">Start</p>
+            <p id="tripFrom" class="trip-from">Loading the network…</p>
+            <div id="tripResult" class="trip-result" hidden>
+              <div class="trip-row">
+                <p class="trip-eyebrow">Destination</p>
+                <button id="removeTo" type="button" class="link-button">Remove</button>
+              </div>
+              <p id="tripTo" class="trip-to"></p>
+              <p id="tripDuration" class="trip-duration"></p>
+              <ol id="tripSteps" class="trip-steps"></ol>
+              <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
+                <span>Map from</span>
+                <button type="button" data-source="from" aria-pressed="true">the start</button>
+                <button type="button" data-source="to" aria-pressed="false">the destination</button>
+              </div>
+            </div>
+            <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
+          </aside>
+
+          <div class="map-buttons">
+            <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
+            <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
+            <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
+            <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
+          </div>
+
+          <div class="legend" aria-hidden="true">
+            <div id="legendBar" class="legend-bar"></div>
+            <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <span class="control-label">Network</span>
+            <label class="pill-toggle"><input type="checkbox" checked disabled /> ${rail_label}</label>
+            <label class="pill-toggle"><input id="busToggle" type="checkbox" /> ${bus_label}</label>
+          </div>
+          <div id="isoToggles" class="control-group">
+            <span class="control-label">Isochrones</span>
+            <label class="pill-toggle"><input type="checkbox" value="15" checked /> 15 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="30" checked /> 30 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="45" /> 45 min</label>
+            <label class="pill-toggle"><input type="checkbox" value="60" /> 60 min</label>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="maxRange">Scale</label>
+            <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
+            <output id="maxValue" for="maxRange">45 min</output>
+          </div>
+          <div class="control-group actions">
+            <button id="locate" type="button" class="button">My location</button>
+            <button id="swap" type="button" class="button">Swap</button>
+            <button id="share" type="button" class="button primary">Share</button>
+          </div>
+        </div>
+        <p id="reach" class="reach"></p>
+      </section>
+
+      <section class="section" aria-labelledby="stats-title">
+        <h2 id="stats-title">${name} in numbers</h2>
+        <div class="stat-grid">
+${stat_tiles}
+        </div>
+        <table class="lines-table">
+          <caption>Tram, S-Bahn and funicular lines (${network}), on a weekday</caption>
+          <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th></tr></thead>
+          <tbody>
+${line_rows}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+${faq_html}
+      </section>
+    </main>
+
+${footer}
+
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="${base}app.js?v=${app_version}"></script>
+  </body>
+</html>

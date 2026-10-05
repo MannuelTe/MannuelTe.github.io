@@ -1,0 +1,427 @@
+{
+  "city": "Zurich",
+  "builtAt": "2026-10-05T18:25:20+00:00",
+  "referenceDate": "2026-10-20",
+  "serviceWindow": "7h–20h",
+  "gtfs": {
+    "network": "ZVV",
+    "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
+    "source": "gtfs_ch.zip clipped to [47.28, 8.36, 47.49, 8.68]",
+    "how": "derived",
+    "fetchedAt": "2026-10-05T16:47:55+00:00",
+    "bytes": 33189566,
+    "sha256": "9d3126a7edbf4532db9c58836ddae69351f2871993da14c07360758e4870ae0b",
+    "feedInfo": {
+      "feed_publisher_name": "SBB",
+      "feed_publisher_url": "https://sbb.ch",
+      "feed_lang": "DE",
+      "feed_start_date": "20251214",
+      "feed_end_date": "20261212",
+      "feed_version": "20260930"
+    },
+    "servicePeriod": [
+      "2025-12-14",
+      "2026-12-12"
+    ]
+  },
+  "boundaries": {
+    "municipalities": [
+      "Zürich",
+      "Adliswil",
+      "Dietikon",
+      "Dübendorf",
+      "Fällanden",
+      "Kilchberg (ZH)",
+      "Kloten",
+      "Küsnacht (ZH)",
+      "Oberengstringen",
+      "Opfikon",
+      "Regensdorf",
+      "Rümlang",
+      "Rüschlikon",
+      "Schlieren",
+      "Stallikon",
+      "Uitikon",
+      "Unterengstringen",
+      "Urdorf",
+      "Wallisellen",
+      "Zollikon",
+      "Zumikon"
+    ],
+    "source": "https://api3.geo.admin.ch/rest/services/api/MapServer/identify?layers=all:ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&timeInstant=2026&geometry=8.36,47.28,8.68,47.49&geometryType=esriGeometryEnvelope&returnGeometry=true&geometryFormat=geojson&sr=4326&tolerance=0&limit=200 + https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Stadtkreise?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=adm_stadtkreise_a&srsName=EPSG:4326",
+    "how": "download",
+    "fetchedAt": "2026-10-05T16:47:27+00:00",
+    "bytes": 795486,
+    "sha256": "5086509ff972761a8b7b3d708569c6648927ac617d1b94fa4d9147041ccdaca6"
+  },
+  "openStreetMap": {
+    "licence": "ODbL, © OpenStreetMap contributors",
+    "osm_rail": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"route\"~\"^(tram|light_rail|funicular|subway)$\"](47.3,8.4,47.47,8.64);relation[\"route\"=\"train\"][\"ref\"~\"^S[0-9]+$\"](47.3,8.4,47.47,8.64););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-05T16:47:37+00:00",
+      "bytes": 11079972,
+      "sha256": "fbcab3919768b753ae959382e8409cd354697146ca4dfdfcee38fee06b9b27e3"
+    },
+    "osm_water_parks": {
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](47.25,8.33,47.52,8.72);way[\"natural\"=\"water\"](47.25,8.33,47.52,8.72);relation[\"leisure\"=\"park\"](47.3,8.42,47.46,8.64);way[\"leisure\"=\"park\"](47.3,8.42,47.46,8.64););out geom;",
+      "how": "download",
+      "fetchedAt": "2026-10-05T16:48:13+00:00",
+      "bytes": 4242292,
+      "sha256": "521248608061ced0e08b427db75234c809a4ed47cc2f3bc3104c52569c4bb243"
+    }
+  },
+  "railGeometry": "OpenStreetMap",
+  "excludedRoutes": [],
+  "network": {
+    "lines": {
+      "bus": 165,
+      "ferry": 4,
+      "train": 16,
+      "funicular": 3,
+      "cable": 1,
+      "sbahn": 22,
+      "tram": 20
+    },
+    "stops": 1320,
+    "railStations": 314
+  },
+  "stats": {
+    "lines": [
+      {
+        "name": "2",
+        "mode": "tram",
+        "color": "#CB0A25",
+        "stations": 30,
+        "headway": 7.5
+      },
+      {
+        "name": "3",
+        "mode": "tram",
+        "color": "#00923C",
+        "stations": 24,
+        "headway": 7.5
+      },
+      {
+        "name": "4",
+        "mode": "tram",
+        "color": "#322E71",
+        "stations": 43,
+        "headway": 5.4
+      },
+      {
+        "name": "5",
+        "mode": "tram",
+        "color": "#70492C",
+        "stations": 31,
+        "headway": 7.4
+      },
+      {
+        "name": "6",
+        "mode": "tram",
+        "color": "#BE8543",
+        "stations": 19,
+        "headway": 7.4
+      },
+      {
+        "name": "7",
+        "mode": "tram",
+        "color": "#000000",
+        "stations": 31,
+        "headway": 7.5
+      },
+      {
+        "name": "8",
+        "mode": "tram",
+        "color": "#8BC036",
+        "stations": 55,
+        "headway": 7.5
+      },
+      {
+        "name": "9",
+        "mode": "tram",
+        "color": "#322E71",
+        "stations": 42,
+        "headway": 7.5
+      },
+      {
+        "name": "E",
+        "mode": "tram",
+        "color": "#1d4f91",
+        "stations": 7,
+        "headway": 30.0
+      },
+      {
+        "name": "10",
+        "mode": "tram",
+        "color": "#CE1F75",
+        "stations": 29,
+        "headway": 7.5
+      },
+      {
+        "name": "11",
+        "mode": "tram",
+        "color": "#00923C",
+        "stations": 36,
+        "headway": 7.5
+      },
+      {
+        "name": "12",
+        "mode": "tram",
+        "color": "#92D6E3",
+        "stations": 22,
+        "headway": 15.0
+      },
+      {
+        "name": "13",
+        "mode": "tram",
+        "color": "#F6C828",
+        "stations": 34,
+        "headway": 5.5
+      },
+      {
+        "name": "14",
+        "mode": "tram",
+        "color": "#0093D0",
+        "stations": 12,
+        "headway": 7.5
+      },
+      {
+        "name": "15",
+        "mode": "tram",
+        "color": "#CB0A25",
+        "stations": 20,
+        "headway": 7.5
+      },
+      {
+        "name": "17",
+        "mode": "tram",
+        "color": "#8D1D2C",
+        "stations": 32,
+        "headway": 7.5
+      },
+      {
+        "name": "18",
+        "mode": "tram",
+        "color": "#1d4f91",
+        "stations": 14,
+        "headway": 15.0
+      },
+      {
+        "name": "20",
+        "mode": "tram",
+        "color": "#A0216E",
+        "stations": 25,
+        "headway": 15.0
+      },
+      {
+        "name": "50",
+        "mode": "tram",
+        "color": "#000000",
+        "stations": 48,
+        "headway": 7.5
+      },
+      {
+        "name": "51",
+        "mode": "tram",
+        "color": "#000000",
+        "stations": 55,
+        "headway": 7.5
+      },
+      {
+        "name": "S",
+        "mode": "sbahn",
+        "color": "#2b74c7",
+        "stations": 16,
+        "headway": 30.0
+      },
+      {
+        "name": "S2",
+        "mode": "sbahn",
+        "color": "#5DA526",
+        "stations": 6,
+        "headway": 30.0
+      },
+      {
+        "name": "S3",
+        "mode": "sbahn",
+        "color": "#0097D8",
+        "stations": 9,
+        "headway": 30.0
+      },
+      {
+        "name": "S4",
+        "mode": "sbahn",
+        "color": "#E67D63",
+        "stations": 11,
+        "headway": 14.4
+      },
+      {
+        "name": "S5",
+        "mode": "sbahn",
+        "color": "#48B4CA",
+        "stations": 9,
+        "headway": 30.0
+      },
+      {
+        "name": "S6",
+        "mode": "sbahn",
+        "color": "#7751A1",
+        "stations": 17,
+        "headway": 30.0
+      },
+      {
+        "name": "S7",
+        "mode": "sbahn",
+        "color": "#FEBE10",
+        "stations": 9,
+        "headway": 30.0
+      },
+      {
+        "name": "S8",
+        "mode": "sbahn",
+        "color": "#5E2D91",
+        "stations": 10,
+        "headway": 30.0
+      },
+      {
+        "name": "S9",
+        "mode": "sbahn",
+        "color": "#00A34F",
+        "stations": 11,
+        "headway": 30.0
+      },
+      {
+        "name": "S10",
+        "mode": "sbahn",
+        "color": "#F6C454",
+        "stations": 8,
+        "headway": 20.0
+      },
+      {
+        "name": "S11",
+        "mode": "sbahn",
+        "color": "#CCAAFF",
+        "stations": 8,
+        "headway": 30.0
+      },
+      {
+        "name": "S12",
+        "mode": "sbahn",
+        "color": "#D8242B",
+        "stations": 9,
+        "headway": 30.0
+      },
+      {
+        "name": "S14",
+        "mode": "sbahn",
+        "color": "#6C421B",
+        "stations": 11,
+        "headway": 30.0
+      },
+      {
+        "name": "S15",
+        "mode": "sbahn",
+        "color": "#BDA07C",
+        "stations": 9,
+        "headway": 30.0
+      },
+      {
+        "name": "S16",
+        "mode": "sbahn",
+        "color": "#64B97A",
+        "stations": 12,
+        "headway": 30.0
+      },
+      {
+        "name": "S17",
+        "mode": "sbahn",
+        "color": "#198EA3",
+        "stations": 8,
+        "headway": 15.0
+      },
+      {
+        "name": "S19",
+        "mode": "sbahn",
+        "color": "#F58220",
+        "stations": 6,
+        "headway": 30.0
+      },
+      {
+        "name": "S20",
+        "mode": "sbahn",
+        "color": "#F05B94",
+        "stations": 4,
+        "headway": 30.0
+      },
+      {
+        "name": "S21",
+        "mode": "sbahn",
+        "color": "#799CCD",
+        "stations": 5,
+        "headway": 30.0
+      },
+      {
+        "name": "S23",
+        "mode": "sbahn",
+        "color": "#2b74c7",
+        "stations": 2,
+        "headway": 30.0
+      },
+      {
+        "name": "S24",
+        "mode": "sbahn",
+        "color": "#946644",
+        "stations": 11,
+        "headway": 30.0
+      },
+      {
+        "name": "S42",
+        "mode": "sbahn",
+        "color": "#9A6B31",
+        "stations": 3,
+        "headway": 30.0
+      },
+      {
+        "name": "23",
+        "mode": "funicular",
+        "color": "#6b4c9a",
+        "stations": 5,
+        "headway": 6.0
+      },
+      {
+        "name": "24",
+        "mode": "funicular",
+        "color": "#6b4c9a",
+        "stations": 2,
+        "headway": 5.0
+      },
+      {
+        "name": "25",
+        "mode": "funicular",
+        "color": "#6b4c9a",
+        "stations": 4,
+        "headway": 11.3
+      },
+      {
+        "name": "26",
+        "mode": "cable",
+        "color": "#6b4c9a",
+        "stations": 2,
+        "headway": 16.2
+      }
+    ],
+    "railStations": 286,
+    "busLines": 169,
+    "center": "Zürich HB",
+    "within15": 47,
+    "within30": 93,
+    "farthestStation": "Felsenegg",
+    "farthestMinutes": 53,
+    "ogTrip": {
+      "name": "Mattenhof",
+      "lat": 47.39869,
+      "lon": 8.59093
+    }
+  }
+}

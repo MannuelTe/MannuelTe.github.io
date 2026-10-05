@@ -1,18 +1,19 @@
-// Carte des temps de trajet en transports en commun (tram.camilleroux.com).
-// La ville affichée est décrite par le bloc JSON #city-config de la page.
-// Carte des temps de trajet en tram (et bus) sur le réseau TaM.
+// Public transport travel time map of Zurich (fork of tram.camilleroux.com by Camille Roux).
+// The city shown is described by the #city-config JSON block of the page.
 
 const CITY = JSON.parse(document.getElementById("city-config").textContent);
 const DATA_URL = new URL(`./data/${CITY.slug}.json?v=${CITY.dataVersion}`, import.meta.url);
-const GEOCODER_URL = "https://api-adresse.data.gouv.fr/search/";
+const GEOCODER_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer";
 
 const DEFAULT_FROM = CITY.defaultFrom;
 const MODE_LABELS = {
   tram: "Tram",
-  metro: "Métro",
-  funicular: "Funiculaire",
-  cable: "Téléphérique",
-  ferry: "Bateau",
+  metro: "Metro",
+  sbahn: "S-Bahn",
+  train: "Train",
+  funicular: "Funicular",
+  cable: "Cable car",
+  ferry: "Boat",
   busway: "Busway",
   bus: "Bus",
 };
@@ -93,7 +94,7 @@ function formatMinutes(minutes) {
   if (minutes < 60) return `${Math.round(minutes)} min`;
   const hours = Math.floor(minutes / 60);
   const rest = Math.round(minutes - hours * 60);
-  return `${hours} h ${String(rest).padStart(2, "0")}`;
+  return `${hours} h ${String(rest).padStart(2, "0")} min`;
 }
 
 function paletteColor(t) {
@@ -306,7 +307,9 @@ function travelTo(solution, point) {
 
 function routeLabel(routeId) {
   const info = app.data.routeInfo[routeId];
-  return `${MODE_LABELS[info.mode] ?? "Ligne"} ${info.name}`;
+  const mode = MODE_LABELS[info.mode] ?? "Line";
+  // S-Bahn and train names already say what they are (S3, IC5).
+  return /^[A-Z]/.test(info.name) ? info.name : `${mode} ${info.name}`;
 }
 
 /** Reconstitue l'itinéraire (marche, lignes, correspondances) vers un point. */
@@ -314,7 +317,7 @@ function buildItinerary(solution, point) {
   const { graph, data } = app;
   const result = travelTo(solution, point);
   if (result.station === -1) {
-    return { minutes: result.minutes, steps: [{ kind: "walk", text: "Tout à pied", minutes: result.minutes }] };
+    return { minutes: result.minutes, steps: [{ kind: "walk", text: "Walk all the way", minutes: result.minutes }] };
   }
 
   const chain = [];
@@ -322,7 +325,7 @@ function buildItinerary(solution, point) {
   chain.reverse();
 
   const name = (state) => data.stations[graph.station[state]].name;
-  const steps = [{ kind: "walk", text: `À pied jusqu'à ${name(chain[0])}`, minutes: solution.seedWalk[chain[0]] }];
+  const steps = [{ kind: "walk", text: `Walk to ${name(chain[0])}`, minutes: solution.seedWalk[chain[0]] }];
   let legStart = chain[0];
   const closeLeg = (legEnd) => {
     steps.push({
@@ -340,14 +343,14 @@ function buildItinerary(solution, point) {
     closeLeg(from);
     if (graph.station[from] !== graph.station[to]) {
       const meters = hypot(data.stations[graph.station[from]].point, data.stations[graph.station[to]].point);
-      steps.push({ kind: "walk", text: `Correspondance à pied vers ${name(to)}`, minutes: walkMinutes(meters) });
+      steps.push({ kind: "walk", text: `Walk to ${name(to)} to change`, minutes: walkMinutes(meters) });
     }
     legStart = to;
   }
   closeLeg(chain[chain.length - 1]);
   // La sortie du quai (métro) est comptée avec la marche finale.
   const exit = graph.access[chain[chain.length - 1]];
-  steps.push({ kind: "walk", text: "À pied jusqu'à l'arrivée", minutes: result.walk + exit });
+  steps.push({ kind: "walk", text: "Walk to the destination", minutes: result.walk + exit });
   return { minutes: result.minutes, steps };
 }
 
@@ -794,9 +797,9 @@ function render() {
   drawStops();
   if (app.to) {
     const minutes = app.solution ? formatMinutes(travelTo(app.solution, app.to.point).minutes) : null;
-    drawMarker(app.to.point, COLORS.to, app.heatFrom === "to" ? `Arrivée · ${minutes}` : minutes);
+    drawMarker(app.to.point, COLORS.to, app.heatFrom === "to" ? `Destination · ${minutes}` : minutes);
   }
-  if (app.from) drawMarker(app.from.point, COLORS.from, "Départ");
+  if (app.from) drawMarker(app.from.point, COLORS.from, "Start");
 }
 
 function requestRender() {
@@ -848,7 +851,7 @@ function nearestStopName(point) {
 function describePlace(point) {
   const stop = nearestStopName(point);
   const commune = communeAt(point);
-  return commune && commune !== CITY.name ? `Près de ${stop} (${commune})` : `Près de ${stop}`;
+  return commune ? `Near ${stop} (${commune})` : `Near ${stop}`;
 }
 
 function heatSource() {
@@ -930,7 +933,7 @@ function updatePanel() {
             badge.textContent = "🚶";
           }
           const text = document.createElement("span");
-          text.textContent = step.kind === "ride" ? `${step.text} · attente ~${Math.round(step.wait)} min` : step.text;
+          text.textContent = step.kind === "ride" ? `${step.text} · wait ~${Math.round(step.wait)} min` : step.text;
           const minutes = document.createElement("span");
           minutes.className = "minutes";
           minutes.textContent = formatMinutes(step.minutes);
@@ -948,9 +951,9 @@ function updatePanel() {
       return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
     }).length;
     const percent = Math.round((reachable / tram.length) * 100);
-    const where = source === app.from ? "de ce départ" : "de cette arrivée";
-    $("reach").textContent = `${percent} % des ${CITY.railStations} sont à moins de ${REACH_MINUTES} minutes ${where}${
-      app.includeBus ? ` (${CITY.railNoun} + ${CITY.busNoun})` : ""
+    const where = source === app.from ? "this start" : "this destination";
+    $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
+      app.includeBus ? ` (with ${CITY.busNoun})` : ""
     }.`;
   }
 }
@@ -983,7 +986,7 @@ function syncUrl() {
   const params = new URLSearchParams();
   if (app.from) params.set("from", formatPair(app.from.point));
   if (app.to) params.set("to", formatPair(app.to.point));
-  if (app.to && app.heatFrom === "to") params.set("carte", "arrivee");
+  if (app.to && app.heatFrom === "to") params.set("map", "to");
   if (app.includeBus) params.set("bus", "1");
   if (app.maxMinutes !== DEFAULT_MAX) params.set("max", String(app.maxMinutes));
   const iso = [...app.isochrones].sort((a, b) => a - b).join(",");
@@ -1014,7 +1017,7 @@ function restoreFromUrl() {
     setFrom(toWorld(DEFAULT_FROM.lat, DEFAULT_FROM.lon), DEFAULT_FROM.label, { quiet: true });
   }
   const to = parsePair(params.get("to"));
-  if (to && setTo(to, null, { quiet: true }) && params.get("carte") === "arrivee") setHeatFrom("to");
+  if (to && setTo(to, null, { quiet: true }) && params.get("map") === "to") setHeatFrom("to");
 }
 
 function toast(message) {
@@ -1104,7 +1107,7 @@ function endPointer(event) {
   canvas.classList.remove("panning");
   if (event.type === "pointercancel") return;
   if (drag.kind === "pan" && !drag.moved) {
-    if (!setTo(unproject(...eventPoint(event)))) toast("Ce point est hors de la Métropole ou sur l'eau.");
+    if (!setTo(unproject(...eventPoint(event)))) toast("This point is outside the map or on water.");
   } else if (drag.kind === "marker") {
     recompute();
     syncUrl();
@@ -1128,49 +1131,6 @@ canvas.addEventListener(
 );
 
 // --- Commandes ----------------------------------------------------------------
-
-// Changer de ville : le nom de la ville dans le titre ouvre un panneau avec recherche.
-const cityPanel = $("cityPanel");
-const cityTrigger = $("cityTrigger");
-const citySearch = $("citySearch");
-const cityItems = [...cityPanel.querySelectorAll(".city-item")];
-
-function setCityPanel(open) {
-  cityPanel.hidden = !open;
-  cityTrigger.setAttribute("aria-expanded", String(open));
-  if (open) {
-    citySearch.value = "";
-    filterCities();
-    citySearch.focus();
-  }
-}
-
-function filterCities() {
-  // Recherche sur le début des mots : « s » donne Saint-Étienne et Strasbourg, « et » Saint-Étienne.
-  const query = normalize(citySearch.value);
-  for (const item of cityItems) item.hidden = !normalize(item.dataset.name).split(" ").some((word) => word.startsWith(query));
-}
-
-cityTrigger.addEventListener("click", (event) => {
-  event.stopPropagation();
-  setCityPanel(cityPanel.hidden);
-});
-$("cityClose").addEventListener("click", () => setCityPanel(false));
-citySearch.addEventListener("input", filterCities);
-citySearch.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  const first = cityItems.find((item) => !item.hidden);
-  if (first) location.href = first.href;
-});
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !cityPanel.hidden) {
-    setCityPanel(false);
-    cityTrigger.focus();
-  }
-});
-document.addEventListener("click", (event) => {
-  if (!cityPanel.hidden && !cityPanel.contains(event.target)) setCityPanel(false);
-});
 
 $("zoomIn").addEventListener("click", () => zoomAt(1.4, app.size.width / 2, app.size.height / 2));
 $("zoomOut").addEventListener("click", () => zoomAt(1 / 1.4, app.size.width / 2, app.size.height / 2));
@@ -1207,7 +1167,7 @@ $("maxRange").addEventListener("input", (event) => {
 
 $("swap").addEventListener("click", () => {
   if (!app.to) {
-    toast("Posez d'abord une arrivée sur la carte.");
+    toast("Click the map to set a destination first.");
     return;
   }
   [app.from, app.to] = [app.to, app.from];
@@ -1226,14 +1186,14 @@ $("heatFrom").addEventListener("click", (event) => {
 
 $("locate").addEventListener("click", () => {
   if (!navigator.geolocation) {
-    toast("La géolocalisation n'est pas disponible.");
+    toast("Geolocation is not available.");
     return;
   }
   navigator.geolocation.getCurrentPosition(
     ({ coords }) => {
-      if (!setFrom(toWorld(coords.latitude, coords.longitude), "Ma position")) toast("Vous êtes hors de la Métropole.");
+      if (!setFrom(toWorld(coords.latitude, coords.longitude), "My location")) toast("You are outside the map.");
     },
-    () => toast("Impossible d'obtenir votre position."),
+    () => toast("Could not get your location."),
   );
 });
 
@@ -1249,13 +1209,13 @@ $("share").addEventListener("click", async () => {
   }
   try {
     await navigator.clipboard.writeText(url);
-    toast("Lien copié !");
+    toast("Link copied!");
   } catch {
     toast(url);
   }
 });
 
-// --- Recherche d'adresse (Base Adresse Nationale) ----------------------------
+// --- Address search (geo.admin.ch, swisstopo) --------------------------------
 
 const searchInput = $("searchInput");
 const searchResults = $("searchResults");
@@ -1279,7 +1239,7 @@ function searchStops(query) {
     .slice(0, 3)
     .map((station) => ({
       label: station.name,
-      context: `Station · ${station.routes
+      context: `Stop · ${station.routes
         .filter((id) => app.data.routeInfo[id]?.rail)
         .map((id) => routeLabel(id))
         .join(", ")}`,
@@ -1291,18 +1251,29 @@ async function searchAddress(query) {
   const stops = searchStops(query);
   searchController?.abort();
   searchController = new AbortController();
-  const params = new URLSearchParams({ q: query, limit: "6", lat: String(DEFAULT_FROM.lat), lon: String(DEFAULT_FROM.lon) });
-  let payload = { features: [] };
+  // The search box only filters with a bounding box in Swiss coordinates (LV95); results still carry lat/lon.
+  const params = new URLSearchParams({
+    searchText: query,
+    type: "locations",
+    origins: "address,gazetteer,zipcode",
+    limit: "8",
+    sr: "2056",
+    bbox: CITY.searchBbox.join(","),
+  });
+  let payload = { results: [] };
   try {
     const response = await fetch(`${GEOCODER_URL}?${params}`, { signal: searchController.signal });
     payload = await response.json();
   } catch (error) {
     if (error.name === "AbortError" || !stops.length) throw error;
   }
-  const addresses = payload.features
-    .map((feature) => {
-      const [lon, lat] = feature.geometry.coordinates;
-      return { label: feature.properties.label, context: feature.properties.context, point: toWorld(lat, lon) };
+  // Labels come as HTML (« Bahnhofstrasse 1 <b>8001 Zürich</b> »): street first, the bold part as context.
+  const plain = (html) => new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
+  const addresses = (payload.results ?? [])
+    .map(({ attrs }) => {
+      const [street, place] = attrs.label.split("<b>");
+      const title = plain(street) || plain(attrs.label);
+      return { label: title, context: place ? plain(`<b>${place}`) : attrs.origin, point: toWorld(attrs.lat, attrs.lon) };
     })
     .filter((result) => isOnLand(result.point));
   return [...stops, ...addresses].slice(0, 7);
@@ -1360,9 +1331,9 @@ $("searchForm").addEventListener("submit", async (event) => {
   try {
     const results = await searchAddress(query);
     if (results.length) chooseResult(results[0]);
-    else toast("Adresse introuvable dans la Métropole.");
+    else toast("No address found on the map.");
   } catch (error) {
-    if (error.name !== "AbortError") toast("La recherche d'adresse ne répond pas.");
+    if (error.name !== "AbortError") toast("The address search is not responding.");
   }
 });
 
@@ -1387,5 +1358,5 @@ async function init() {
 
 init().catch((error) => {
   console.error(error);
-  $("tripFrom").textContent = "Impossible de charger le réseau.";
+  $("tripFrom").textContent = "Could not load the network.";
 });

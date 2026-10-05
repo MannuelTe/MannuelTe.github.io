@@ -1,0 +1,84 @@
+{
+  "slug": "zurich",
+  "name": "Zurich",
+  "network": "ZVV",
+  "region": "City of Zurich and neighbouring municipalities",
+  "gtfsUrl": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink",
+  "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
+  "gtfsLicence": "opentransportdata",
+  "gtfsClipBbox": [
+    47.28,
+    8.36,
+    47.49,
+    8.68
+  ],
+  "municipalities": [
+    "Zürich",
+    "Adliswil",
+    "Dietikon",
+    "Dübendorf",
+    "Fällanden",
+    "Kilchberg (ZH)",
+    "Kloten",
+    "Küsnacht (ZH)",
+    "Oberengstringen",
+    "Opfikon",
+    "Regensdorf",
+    "Rümlang",
+    "Rüschlikon",
+    "Schlieren",
+    "Stallikon",
+    "Uitikon",
+    "Unterengstringen",
+    "Urdorf",
+    "Wallisellen",
+    "Zollikon",
+    "Zumikon"
+  ],
+  "excludeRouteCategories": [
+    "EV",
+    "EXT",
+    "NJ",
+    "PE",
+    "TX",
+    "RUB",
+    "BN",
+    "SN",
+    "CAR",
+    "ASC"
+  ],
+  "defaultFrom": {
+    "lat": 47.37802,
+    "lon": 8.5402,
+    "label": "Zürich HB"
+  },
+  "searchExample": "Bellevue",
+  "published": "2026-10-05",
+  "osmBbox": [
+    47.25,
+    8.33,
+    47.52,
+    8.72
+  ],
+  "parksBbox": [
+    47.3,
+    8.42,
+    47.46,
+    8.64
+  ],
+  "osmRailBbox": [
+    47.3,
+    8.4,
+    47.47,
+    8.64
+  ],
+  "railGeometry": "osm",
+  "stopPrefix": "Zürich",
+  "referenceNotBefore": "2026-10-19",
+  "searchBboxLV95": [
+    2670000,
+    1235000,
+    2697000,
+    1262000
+  ]
+}

@@ -1,6 +1,6 @@
 import fs from "fs";
-// Sondage des trajets : temps depuis le centre jusqu'aux terminus et aux gares, avec la vitesse porte à porte.
-// Usage : node tools/check_trips.mjs <ville>   (une vitesse anormale est signalée par ⚠)
+// Trip probe: time from the centre to the termini and stations, with door-to-door speed.
+// Usage: node tools/check_trips.mjs <city>   (abnormal speeds are flagged with ⚠)
 const slug = process.argv[2];
 const d = JSON.parse(fs.readFileSync(`site/data/${slug}.json`));
 const city = JSON.parse(fs.readFileSync(`cities/${slug}.json`));
@@ -26,6 +26,6 @@ st.forEach((s, i) => { if (s.rail && /^gare\b|gare /i.test(s.name) && !targets.h
 const rows = [];
 for (const [i, why] of targets) { const t = out[i]; const km = hyp(origin, st[i].point) / 1000; const kmh = km / (t / 60);
   const lines = []; for (let k = best[i]; k !== -1; k = prev[k]) { const r = ri[rs[k].routeId].name; if (lines[0] !== r) lines.unshift(r); }
-  const flag = !isFinite(t) ? "  ⚠ INJOIGNABLE" : (kmh < 8 && km > 2) || kmh > 35 ? "  ⚠ vitesse" : "";
+  const flag = !isFinite(t) ? "  ⚠ UNREACHABLE" : (kmh < 8 && km > 2) || kmh > 35 ? "  ⚠ speed" : "";
   rows.push(`  ${st[i].name.slice(0, 30).padEnd(30)} ${why.padEnd(14)} ${km.toFixed(1).padStart(5)} km ${isFinite(t) ? t.toFixed(0).padStart(3) : "  ∞"} min ${isFinite(kmh) ? kmh.toFixed(0).padStart(3) : "  -"} km/h [${lines.join(">")}]${flag}`); }
-console.log(`== ${city.name} (depuis ${city.defaultFrom.label})`); console.log(rows.join("\n"));
+console.log(`== ${city.name} (from ${city.defaultFrom.label})`); console.log(rows.join("\n"));

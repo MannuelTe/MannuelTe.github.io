@@ -50,9 +50,16 @@ CONTEXT_RING_DISTANCE = 80.0
 WATER_MASK_AREA = 1_000_000.0
 
 # GTFS route_type → mode (basic and extended types).
-RAIL_MODES = {"tram", "metro", "funicular", "cable", "busway"}
-# Minutes to walk from the street to the platform (and back): stairs and corridors of underground lines.
-MODE_ACCESS_MINUTES = {"metro": 1.0, "funicular": 1.0, "cable": 1.0}
+RAIL_MODES = {"tram", "metro", "sbahn", "train", "funicular", "cable", "busway"}
+# Minutes to walk from the street to the platform (and back): stairs, underpasses, long platforms.
+MODE_ACCESS_MINUTES = {"metro": 1.0, "sbahn": 1.5, "train": 1.5, "funicular": 1.0, "cable": 1.0}
+# Default line colours when neither the GTFS nor OpenStreetMap gives one.
+MODE_COLORS = {"tram": "#1d4f91", "sbahn": "#2b74c7", "train": "#c7202f", "funicular": "#6b4c9a", "cable": "#6b4c9a",
+               "ferry": "#1f8fbf", "bus": "#888888"}
+# Modes whose lines share the wait towards a common next stop.
+WAIT_GROUPS = {"sbahn": "rail", "train": "rail", "tram": "tram", "bus": "bus", "busway": "bus"}
+# Lines of these modes are listed in the page's table (long-distance trains would swamp it).
+TABLE_MODES = ("tram", "sbahn", "funicular", "cable")
 # Communes kept when a city config says "communes": "served": enough stops, and not too far from tram/metro.
 SERVED_MIN_STOPS = 3
 SERVED_MAX_RAIL_DISTANCE = 12_000.0
@@ -65,7 +72,11 @@ def route_mode(route_type: str) -> str:
     value = int(route_type or 3)
     if value == 0 or 900 <= value < 1000:
         return "tram"
-    if value in (1, 2) or 100 <= value < 200 or 400 <= value < 500:
+    if value == 109:
+        return "sbahn"
+    if value == 2 or 100 <= value < 200:
+        return "train"
+    if value == 1 or 400 <= value < 500:
         return "metro"
     if value == 7 or 1400 <= value < 1500:
         return "funicular"
@@ -271,7 +282,7 @@ def served_communes(payload: dict, stations: Sequence[dict]) -> set:
         if len(inside) < SERVED_MIN_STOPS:
             continue
         if min(dist(point, rail) for point in inside for rail in rail_points) <= SERVED_MAX_RAIL_DISTANCE:
-            names.add(feature["properties"]["nom"])
+            names.add(feature["properties"]["name"])
     return names
 
 
@@ -282,8 +293,8 @@ def extract_communes(data_dir: Path, city: dict, stations: Sequence[dict]) -> Tu
     wanted = served_communes(payload, stations) if city.get("communes") == "served" else set(city.get("communes", []))
     communes = []
     all_polygons: MultiPolygon = []
-    for feature in sorted(payload["features"], key=lambda f: f["properties"]["nom"]):
-        if wanted and feature["properties"]["nom"] not in wanted:
+    for feature in sorted(payload["features"], key=lambda f: f["properties"]["name"]):
+        if wanted and feature["properties"]["name"] not in wanted:
             continue
         polygons = coords_to_polygons(feature["geometry"])
         if not polygons:
@@ -291,7 +302,7 @@ def extract_communes(data_dir: Path, city: dict, stations: Sequence[dict]) -> Tu
         largest = max((polygon[0] for polygon in polygons), key=lambda ring: abs(ring_area(ring)))
         communes.append(
             {
-                "name": feature["properties"]["nom"],
+                "name": feature["properties"]["name"],
                 "polygons": [serialize_polygon(polygon) for polygon in polygons],
                 "outline": [[round_point(point) for point in polygon[0]] for polygon in polygons],
                 "label": round_point(polygon_centroid(largest)),
@@ -433,14 +444,15 @@ def services_by_date(calendar: Sequence[dict], calendar_dates: Sequence[dict]) -
     return {day: frozenset(services) for day, services in active.items()}
 
 
-def pick_reference_date(services: Dict[date, frozenset], trips_per_service: Counter) -> date:
+def pick_reference_date(services: Dict[date, frozenset], trips_per_service: Counter, not_before: date | None = None) -> date:
     """A plain school-term Tuesday or Thursday: the most common set of services among those days.
 
     Picking the busiest day instead would favour holidays with works and substitution buses. Days
     with a thinner timetable are left out: holidays, and feeds that run months ahead with only a few lines filled in.
     """
     weekdays = sorted(day for day, active in services.items() if day.weekday() in (1, 3) and active)
-    upcoming = [day for day in weekdays if day >= date.today()] or weekdays
+    start = max(date.today(), not_before) if not_before else date.today()
+    upcoming = [day for day in weekdays if day >= start] or weekdays
     # Stay close to today when the feed allows it: a date months ahead reads oddly on the page.
     soon = [day for day in upcoming if day <= upcoming[0] + timedelta(days=REFERENCE_HORIZON_DAYS)]
     upcoming = soon if len(soon) >= 4 else upcoming
@@ -475,11 +487,17 @@ def display_name(name: str) -> str:
     return " ".join(words)
 
 
+def strip_city_prefix(name: str, city: dict) -> str:
+    """Swiss stop names start with their municipality (« Zürich, Bellevue »): drop it inside the main city."""
+    prefix = f"{city.get('stopPrefix', '')}, "
+    return name[len(prefix):] if prefix != ", " and name.startswith(prefix) else name
+
+
 def normalize_name(name: str) -> str:
     return " ".join(name.lower().replace("-", " ").replace("’", "'").split())
 
 
-def group_stops(stops: Dict[str, dict], used_stop_ids: set) -> Tuple[List[dict], Dict[str, int]]:
+def group_stops(stops: Dict[str, dict], used_stop_ids: set, city: dict) -> Tuple[List[dict], Dict[str, int]]:
     """Merge stops sharing a name and lying close together into one complex."""
     by_name: Dict[str, List[str]] = defaultdict(list)
     for stop_id in used_stop_ids:
@@ -511,7 +529,7 @@ def group_stops(stops: Dict[str, dict], used_stop_ids: set) -> Tuple[List[dict],
             complexes.append(
                 {
                     "id": min(cluster),
-                    "name": display_name(names.most_common(1)[0][0]),
+                    "name": strip_city_prefix(display_name(names.most_common(1)[0][0]), city),
                     "point": (sum(xs) / len(xs), sum(ys) / len(ys)),
                     "routes": set(),
                 }
@@ -543,6 +561,7 @@ def route_excluded(row: dict, city: dict) -> bool:
     agencies = city.get("agencies")
     return (
         row.get("route_type") in ("712", "713")
+        or row.get("route_desc") in city.get("excludeRouteCategories", [])
         or row.get("route_type") in city.get("excludeRouteTypes", [])
         or row.get("route_short_name") in city.get("excludeRouteNames", [])
         or row["route_id"] in city.get("excludeRoutes", [])
@@ -550,12 +569,21 @@ def route_excluded(row: dict, city: dict) -> bool:
     )
 
 
+def line_key(row: dict) -> str:
+    name = row.get("route_short_name") or row.get("route_long_name") or row["route_id"]
+    return f"{row.get('route_desc') or row.get('route_type')}:{name}"
+
+
 def extract_network(data_dir: Path, city: dict):
     # Some feeds mislabel their lines (Reims declares its tram as a metro); configs fix them by short name.
     mode_overrides = city.get("routeModes", {})
     with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
-        routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
-        excluded = {route_id for route_id, row in routes.items() if route_excluded(row, city)}
+        raw_routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
+        excluded = {route_id for route_id, row in raw_routes.items() if route_excluded(row, city)}
+        # The Swiss feed has one route_id per operator and timetable variant (S10 runs as several): a line is
+        # its category and name, so that headways count every vehicle of the line.
+        line_of = {route_id: line_key(row) for route_id, row in raw_routes.items()}
+        routes = {line_of[route_id]: row for route_id, row in sorted(raw_routes.items())}
         stops = {row["stop_id"]: row for row in read_gtfs_table(archive, "stops.txt")}
         services = services_by_date(list(read_gtfs_table(archive, "calendar.txt")), list(read_gtfs_table(archive, "calendar_dates.txt")))
         # Demand-responsive trips (TaM flags them in a "TAD" column) cannot be modelled with fixed times.
@@ -564,16 +592,21 @@ def extract_network(data_dir: Path, city: dict):
             for row in read_gtfs_table(archive, "trips.txt")
             if not (row.get("TAD") or "").strip() and row["route_id"] not in excluded
         ]
-        reference_date = pick_reference_date(services, Counter(row["service_id"] for row in all_trips))
+        # Configs can skip school holidays that the trip volume does not reveal (Zurich keeps its timetable).
+        not_before = date.fromisoformat(city["referenceNotBefore"]) if city.get("referenceNotBefore") else None
+        reference_date = pick_reference_date(services, Counter(row["service_id"] for row in all_trips), not_before)
         active_services = services[reference_date]
-        trips = {row["trip_id"]: row for row in all_trips if row["service_id"] in active_services}
+        trips = {row["trip_id"]: {**row, "route_id": line_of[row["route_id"]]} for row in all_trips if row["service_id"] in active_services}
         stop_times = read_stop_times(archive, trips)
 
     used_stop_ids = {stop_id for sequence in stop_times.values() for _, stop_id, _, _ in sequence}
-    complexes, complex_of = group_stops(stops, used_stop_ids)
+    complexes, complex_of = group_stops(stops, used_stop_ids, city)
 
     ride_samples: Dict[Tuple[int, int, str], List[float]] = defaultdict(list)
     departures: Dict[Tuple[int, str], Counter] = defaultdict(Counter)
+    # Departures towards each next stop, all lines of a mode group together (see waits below).
+    toward: Counter = Counter()
+    group_of = {route_id: WAIT_GROUPS.get(route_mode(row.get("route_type", "3")), "bus") for route_id, row in routes.items()}
     window_start, window_end = SERVICE_WINDOW
     for trip_id, sequence in stop_times.items():
         trip = trips[trip_id]
@@ -587,14 +620,25 @@ def extract_network(data_dir: Path, city: dict):
                 continue
             ride_samples[(a, b, route_id)].append(max(0, arr_b - dep_a) / 60.0)
             departures[(a, route_id)][trip.get("direction_id") or "0"] += 1
+            toward[(a, b, group_of[route_id])] += 1
 
     edges = {key: max(MIN_RIDE_MINUTES, statistics.median(samples)) for key, samples in ride_samples.items()}
     window_minutes = (window_end - window_start) / 60.0
+    # Common lines: where several lines run to the same next stop (S-Bahn trunk HB → Oerlikon, tram trunks), a
+    # rider takes the first one, so the wait is half the headway of all of them. Lines that diverge further on make
+    # this slightly optimistic; counting each line alone would make it 15 min on a corridor served every 5 min.
+    next_stops: Dict[Tuple[int, str], set] = defaultdict(set)
+    for a, b, route_id in ride_samples:
+        next_stops[(a, route_id)].add(b)
     waits: Dict[Tuple[int, str], float] = {}
+    own_waits: Dict[Tuple[int, str], float] = {}  # the line alone, for the page's table
     for key, per_direction in departures.items():
         mean_departures = sum(per_direction.values()) / len(per_direction)
-        headway = window_minutes / mean_departures
+        a, route_id = key
+        pooled = max((toward[(a, b, group_of[route_id])] for b in next_stops[key]), default=0)
+        headway = window_minutes / max(mean_departures, pooled)
         waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, headway / 2.0)), 2)
+        own_waits[key] = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / mean_departures / 2.0)), 2)
 
     served = {route_id for station in complexes for route_id in station["routes"]}
     route_info = {}
@@ -604,14 +648,14 @@ def extract_network(data_dir: Path, city: dict):
         route_info[route_id] = {
             "mode": mode,
             "rail": mode in RAIL_MODES,
-            "color": f"#{(row.get('route_color') or '888888').strip().lstrip('#') or '888888'}",
+            "color": f"#{row['route_color'].strip().lstrip('#')}" if (row.get("route_color") or "").strip() else MODE_COLORS.get(mode, "#888888"),
             "name": row.get("route_short_name") or row.get("route_long_name") or route_id,
         }
     rail_shape_ids = {
         trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
     }
     shape_routes = {trip["shape_id"]: trip["route_id"] for trip in trips.values() if trip.get("shape_id") in rail_shape_ids}
-    return reference_date, complexes, edges, waits, route_info, shape_routes
+    return reference_date, complexes, edges, waits, own_waits, route_info, shape_routes
 
 
 def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float]):
@@ -691,10 +735,27 @@ def rail_routes_from_gtfs(data_dir: Path, shape_routes: Dict[str, str], route_in
     return shapes
 
 
-def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]) -> List[dict]:
+def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict], bounds) -> List[dict]:
+    """Line geometry from OSM route relations, and their `colour` tag when the GTFS has no colours (Swiss feed).
+    S-Bahn relations run far beyond the map: only the ways inside `bounds` are kept."""
     payload = load_json(data_dir / "osm_rail.json")
     by_name = {info["name"]: route_id for route_id, info in route_info.items() if info["rail"]}
     aliases = city.get("osmRefAliases", {})
+    min_x, min_y, max_x, max_y = bounds
+    colours: Dict[str, Counter] = defaultdict(Counter)
+    for relation in payload["elements"]:
+        tags = relation.get("tags", {})
+        route_id = by_name.get(aliases.get(tags.get("ref", ""), tags.get("ref", "")))
+        colour = tags.get("colour", "")
+        if route_id and colour.startswith("#") and len(colour) == 7 and colour.upper() != "#FFFFFF":
+            # Count the ways inside the map: a namesake line elsewhere in Switzerland (S24) weighs little.
+            inside = sum(1 for m in relation.get("members", []) for p in m.get("geometry", [])[:1]
+                         if p and min_x <= lonlat_to_xy(p["lon"], p["lat"])[0] <= max_x and min_y <= lonlat_to_xy(p["lon"], p["lat"])[1] <= max_y)
+            colours[route_id][colour.upper()] += inside
+    for route_id, counter in colours.items():
+        colour, weight = counter.most_common(1)[0]
+        if weight:
+            route_info[route_id]["color"] = colour
     seen: Dict[str, set] = defaultdict(set)
     shapes = []
     for relation in sorted(payload["elements"], key=lambda item: item["id"]):
@@ -706,15 +767,21 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
             if member["type"] != "way" or member.get("role") not in ("", None) or member["ref"] in seen[route_id]:
                 continue
             seen[route_id].add(member["ref"])
-            points = way_points(member.get("geometry", []))
-            if len(points) >= 2:
-                shapes.append(
-                    {
-                        "id": route_id,
-                        "color": route_info[route_id]["color"],
-                        "points": [round_point(p) for p in simplify_polyline(points, MIN_LINE_DISTANCE)],
-                    }
-                )
+            runs: List[List[Point]] = [[]]
+            for x, y in way_points(member.get("geometry", [])):
+                if min_x <= x <= max_x and min_y <= y <= max_y:
+                    runs[-1].append((x, y))
+                elif runs[-1]:
+                    runs.append([])
+            for points in runs:
+                if len(points) >= 2:
+                    shapes.append(
+                        {
+                            "id": route_id,
+                            "color": route_info[route_id]["color"],
+                            "points": [round_point(p) for p in simplify_polyline(points, MIN_LINE_DISTANCE)],
+                        }
+                    )
     return shapes
 
 
@@ -751,28 +818,33 @@ def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequenc
     return cells, mask
 
 
-def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency) -> dict:
+def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency, on_map, own_waits) -> dict:
     """Figures shown on the page (and its FAQ): lines, headways, share of rail stations within 30 min of the centre."""
     rail_states = [i for i, state in enumerate(route_states) if route_info[state["routeId"]]["rail"]]
     lines = []
-    mode_order = {"metro": 0, "tram": 1, "funicular": 2, "cable": 3}
+    mode_order = {"metro": 0, "tram": 1, "sbahn": 2, "funicular": 3, "cable": 4}
     for route_id, info in sorted(route_info.items(), key=lambda item: (mode_order.get(item[1]["mode"], 9), len(item[1]["name"]), item[1]["name"])):
-        if not info["rail"]:
+        if info["mode"] not in TABLE_MODES:
             continue
-        waits = sorted(route_states[i]["wait"] for i in rail_states if route_states[i]["routeId"] == route_id)
+        waits = sorted(own_waits.get((route_states[i]["stationIndex"], route_id), MAX_WAIT)
+                       for i in rail_states if route_states[i]["routeId"] == route_id)
+        # Diversions add a few sparsely served stops to a line: the headway is read on its regular section.
+        regular = [wait for wait in waits if wait < MAX_WAIT] or waits
         lines.append(
             {
                 "name": info["name"],
                 "mode": info["mode"],
                 "color": info["color"],
                 "stations": len(waits),
-                "headway": round(statistics.median(waits) * 2, 1),
+                "headway": round(statistics.median(regular) * 2, 1),
             }
         )
 
     # Same model as the browser: walk to the nearest rail stations, then rail only.
     origin = lonlat_to_xy(city["defaultFrom"]["lon"], city["defaultFrom"]["lat"])
     rail_station_ids = [i for i, station in enumerate(stations) if station["rail"]]
+    # Figures cover the stations on the map; the clipped feed reaches a little beyond it.
+    shown_ids = [i for i in rail_station_ids if on_map(stations[i]["point"])]
     seeds = sorted(rail_station_ids, key=lambda i: dist(origin, stations[i]["point"]))[:ORIGIN_NEAREST_STATIONS]
     best = [math.inf] * len(route_states)
     heap: List[Tuple[float, int]] = []
@@ -799,15 +871,15 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         out = time + route_states[state]["access"]
         walk = dist(origin, stations[index]["point"]) / WALK_METERS_PER_MINUTE
         arrival[index] = min(arrival.get(index, math.inf), out, walk)
-    rail_times = [arrival.get(i, math.inf) for i in rail_station_ids]
-    reachable = [i for i in rail_station_ids if math.isfinite(arrival.get(i, math.inf))]
+    rail_times = [arrival.get(i, math.inf) for i in shown_ids]
+    reachable = [i for i in shown_ids if math.isfinite(arrival.get(i, math.inf))]
     farthest = max(reachable, key=lambda i: arrival[i])
     og_station = min(reachable, key=lambda i: abs(arrival[i] - OG_TRIP_MINUTES))
     meters_per_deg_lat = 111_320.0
     og_x, og_y = stations[og_station]["point"]
     return {
         "lines": lines,
-        "railStations": len(rail_station_ids),
+        "railStations": len(shown_ids),
         "busLines": sum(1 for info in route_info.values() if not info["rail"]),
         "center": city["defaultFrom"]["label"],
         "within15": round(100 * sum(t <= 15 for t in rail_times) / len(rail_times)),
@@ -843,9 +915,9 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
             "feedInfo": feed_info,
             "servicePeriod": [days[0].isoformat(), days[-1].isoformat()] if days else None,
         },
-        "communes": {"metropole": city["metropole"], "epci": city["epci"], **manifest.get("communes.geojson", {})},
+        "boundaries": {"municipalities": city["municipalities"], **manifest.get("communes.geojson", {})},
         "openStreetMap": {
-            "licence": "ODbL, © contributeurs OpenStreetMap",
+            "licence": "ODbL, © OpenStreetMap contributors",
             **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json") if name in manifest},
         },
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
@@ -872,7 +944,7 @@ def main() -> None:
     data_dir = ROOT / "data" / city["slug"]
     output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
 
-    reference_date, complexes, edges, waits, route_info, shape_routes = extract_network(data_dir, city)
+    reference_date, complexes, edges, waits, own_waits, route_info, shape_routes = extract_network(data_dir, city)
     for station in complexes:
         station["rail"] = any(route_info[route_id]["rail"] for route_id in station["routes"])
     communes, land = extract_communes(data_dir, city, complexes)
@@ -885,7 +957,7 @@ def main() -> None:
     access_minutes = {**MODE_ACCESS_MINUTES, **city.get("modeAccess", {})}
     route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info, access_minutes)
     if city.get("railGeometry") == "osm":
-        routes = rail_routes_from_osm(data_dir, city, route_info)
+        routes = rail_routes_from_osm(data_dir, city, route_info, bounds)
     else:
         routes = rail_routes_from_gtfs(data_dir, shape_routes, route_info)
 
@@ -899,7 +971,10 @@ def main() -> None:
         }
         for station in complexes
     ]
-    rail_points = [station["point"] for station in stations if station["rail"]]
+    # Fit the view to the stations on the map (the clipped feed reaches a little beyond it).
+    land_set, water_set = PolygonSet(land), PolygonSet(masked_water)
+    on_map = lambda point: land_set.contains(point) and not water_set.contains(point)  # noqa: E731
+    rail_points = [station["point"] for station in stations if station["rail"] and on_map(station["point"])]
     view_bounds = (
         min(x for x, _ in rail_points) - VIEW_PAD_METERS,
         min(y for _, y in rail_points) - VIEW_PAD_METERS,
@@ -936,7 +1011,7 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency)
+    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency, on_map, own_waits)
     provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])

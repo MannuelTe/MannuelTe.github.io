@@ -1,6 +1,6 @@
 {
   "city": "Nantes",
-  "builtAt": "2026-10-04T23:02:49+00:00",
+  "builtAt": "2026-10-05T14:41:59+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -41,12 +41,12 @@
   "network": {
     "lines": {
       "tram": 3,
-      "bus": 80,
-      "busway": 1,
+      "bus": 79,
+      "busway": 2,
       "ferry": 3
     },
     "stops": 1095,
-    "railStations": 98
+    "railStations": 111
   },
   "stats": {
     "lines": [
@@ -77,19 +77,26 @@
         "color": "#ffcd1c",
         "stations": 15,
         "headway": 4.1
+      },
+      {
+        "name": "5",
+        "mode": "busway",
+        "color": "#0bbbef",
+        "stations": 15,
+        "headway": 5.3
       }
     ],
-    "railStations": 98,
-    "busLines": 83,
+    "railStations": 111,
+    "busLines": 82,
     "center": "Place du Commerce",
-    "within15": 35,
+    "within15": 33,
     "within30": 96,
     "farthestStation": "Orvault Grand Val",
     "farthestMinutes": 34,
     "ogTrip": {
-      "name": "Ferrière",
-      "lat": 47.24383,
-      "lon": -1.59123
+      "name": "Haubans",
+      "lat": 47.21453,
+      "lon": -1.52998
     }
   }
 }

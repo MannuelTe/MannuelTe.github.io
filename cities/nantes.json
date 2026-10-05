@@ -10,7 +10,8 @@
   "gtfsDataset": "https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib",
   "gtfsLicence": "lo",
   "routeModes": {
-    "4": "busway"
+    "4": "busway",
+    "5": "busway"
   },
   "defaultFrom": {
     "lat": 47.21348,

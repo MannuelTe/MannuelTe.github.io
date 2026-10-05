@@ -1,6 +1,6 @@
 {
   "city": "Marseille",
-  "builtAt": "2026-10-04T23:02:34+00:00",
+  "builtAt": "2026-10-05T12:19:32+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -98,14 +98,14 @@
     "railStations": 65,
     "busLines": 113,
     "center": "Vieux-Port",
-    "within15": 38,
+    "within15": 48,
     "within30": 98,
     "farthestStation": "Les Caillols",
-    "farthestMinutes": 32,
+    "farthestMinutes": 30,
     "ogTrip": {
-      "name": "Sainte-Thérèse",
-      "lat": 43.29412,
-      "lon": 5.40962
+      "name": "Gèze",
+      "lat": 43.32804,
+      "lon": 5.3673
     }
   }
 }

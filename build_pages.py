@@ -280,7 +280,7 @@ def city_faq(city: dict) -> list[tuple]:
             "Comment les temps de trajet sont-ils calculés ?",
             "Pour chaque trajet : marche jusqu'à l'arrêt à 4,5 km/h, attente égale à la moitié de l'intervalle entre deux "
             "passages, durée prévue entre les arrêts, correspondances avec 1,5 minute de marche"
-            + (", et 2 minutes pour rejoindre le quai du métro" if any(line["mode"] == "metro" for line in lines) else "")
+            + (", et 1 minute pour rejoindre le quai du métro" if any(line["mode"] == "metro" for line in lines) else "")
             + ". Pas de temps réel ni de perturbations : c'est la ville « sur le papier ».",
         ),
         credits_entry(f"Qui a réalisé cette carte de {name} ?"),

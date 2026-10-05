@@ -1,6 +1,6 @@
 {
   "city": "Rennes",
-  "builtAt": "2026-10-04T23:02:58+00:00",
+  "builtAt": "2026-10-05T12:19:49+00:00",
   "referenceDate": "2026-10-06",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -75,14 +75,14 @@
     "railStations": 28,
     "busLines": 143,
     "center": "Place de la République",
-    "within15": 71,
+    "within15": 86,
     "within30": 100,
     "farthestStation": "Cesson - Viasilva",
-    "farthestMinutes": 21,
+    "farthestMinutes": 19,
     "ogTrip": {
-      "name": "Atalante",
-      "lat": 48.12727,
-      "lon": -1.62848
+      "name": "Cesson - Viasilva",
+      "lat": 48.13229,
+      "lon": -1.61998
     }
   }
 }

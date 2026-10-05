@@ -1,6 +1,6 @@
 {
   "city": "Lille",
-  "builtAt": "2026-10-04T23:02:39+00:00",
+  "builtAt": "2026-10-05T12:19:42+00:00",
   "referenceDate": "2026-11-03",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -81,14 +81,14 @@
     "railStations": 91,
     "busLines": 153,
     "center": "Grand'Place",
-    "within15": 20,
-    "within30": 73,
+    "within15": 27,
+    "within30": 75,
     "farthestStation": "C.H. Dron",
-    "farthestMinutes": 46,
+    "farthestMinutes": 44,
     "ogTrip": {
-      "name": "Port De Lille",
-      "lat": 50.63003,
-      "lon": 3.03592
+      "name": "Jean Jaurès",
+      "lat": 50.65878,
+      "lon": 3.13525
     }
   }
 }

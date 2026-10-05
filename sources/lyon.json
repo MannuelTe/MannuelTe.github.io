@@ -1,6 +1,6 @@
 {
   "city": "Lyon",
-  "builtAt": "2026-10-04T23:02:26+00:00",
+  "builtAt": "2026-10-05T12:19:28+00:00",
   "referenceDate": "2026-10-06",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -164,14 +164,14 @@
     "railStations": 147,
     "busLines": 180,
     "center": "Place Bellecour",
-    "within15": 16,
-    "within30": 69,
+    "within15": 22,
+    "within30": 75,
     "farthestStation": "Saint-Priest Bel Air",
-    "farthestMinutes": 51,
+    "farthestMinutes": 50,
     "ogTrip": {
-      "name": "Debourg",
-      "lat": 45.73137,
-      "lon": 4.83459
+      "name": "Jean XXIII - M. Bastié",
+      "lat": 45.74022,
+      "lon": 4.87451
     }
   }
 }

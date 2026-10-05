@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:40:56+00:00",
+  "builtAt": "2026-10-05T18:46:37+00:00",
   "referenceDate": "2022-10-25",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -385,22 +385,22 @@
     "within30": 97,
     "population": {
       "total": 717159,
-      "45": 698394,
-      "30": 577137,
-      "15": 101593
+      "45": 691559,
+      "30": 558780,
+      "15": 98796
     },
     "jobs": {
       "total": 761616,
-      "45": 758219,
-      "30": 700467,
-      "15": 286710
+      "45": 756747,
+      "30": 698292,
+      "15": 285122
     },
     "farthestStation": "Felsenegg",
-    "farthestMinutes": 43,
+    "farthestMinutes": 45,
     "ogTrip": {
-      "name": "Titlisstrasse",
-      "lat": 47.37097,
-      "lon": 8.56495
+      "name": "Oerlikerhus",
+      "lat": 47.41759,
+      "lon": 8.55421
     }
   }
 }

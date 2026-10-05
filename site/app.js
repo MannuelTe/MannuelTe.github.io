@@ -234,6 +234,70 @@ function walkMinutes(meters) {
   return meters / app.data.meta.walkMetersPerMinute;
 }
 
+// --- Terrain: hills (Tobler's hiking function) and lakes -----------------------
+
+/** Elevation and lake grids, built once per bundle from the data (cell elevations, lake bitmap). */
+function prepareTerrain(data) {
+  const { gridCols: cols, gridRows: rows } = data.meta;
+  const z = new Float32Array(cols * rows).fill(NaN);
+  for (const cell of data.cells) z[cell.row * cols + cell.col] = cell.z ?? 0;
+  const lakes = data.lakes;
+  const bits = lakes ? Uint8Array.from(atob(lakes.bits), (c) => c.charCodeAt(0)) : null;
+  // Points off land (lake shores, the edge of the map) borrow the elevation of their neighbours.
+  return { z: fillGaps(z, cols, rows, 6), bits };
+}
+
+function elevationAt(point) {
+  const { meta } = app.data;
+  const [minX, minY, maxX, maxY] = meta.bounds;
+  const cols = meta.gridCols;
+  const rows = meta.gridRows;
+  const gx = clamp(((point[0] - minX) / (maxX - minX)) * cols - 0.5, 0, cols - 1);
+  const gy = clamp(((point[1] - minY) / (maxY - minY)) * rows - 0.5, 0, rows - 1);
+  const c0 = Math.floor(gx);
+  const r0 = Math.floor(gy);
+  const c1 = Math.min(c0 + 1, cols - 1);
+  const r1 = Math.min(r0 + 1, rows - 1);
+  const tx = gx - c0;
+  const ty = gy - r0;
+  const z = app.terrain.z;
+  const at = (r, c) => (Number.isNaN(z[r * cols + c]) ? 0 : z[r * cols + c]);
+  return (at(r0, c0) * (1 - tx) + at(r0, c1) * tx) * (1 - ty) + (at(r1, c0) * (1 - tx) + at(r1, c1) * tx) * ty;
+}
+
+function isLake(point) {
+  const { lakes, meta } = app.data;
+  if (!app.terrain.bits) return false;
+  const col = Math.floor((point[0] - meta.bounds[0]) / lakes.cell);
+  const row = Math.floor((point[1] - meta.bounds[1]) / lakes.cell);
+  if (col < 0 || row < 0 || col >= lakes.cols || row >= lakes.rows) return false;
+  const index = row * lakes.cols + col;
+  return (app.terrain.bits[index >> 3] >> (index & 7)) & 1;
+}
+
+function crossesLake(a, b) {
+  if (!app.terrain.bits) return false;
+  const steps = Math.max(1, Math.ceil(hypot(a, b) / app.data.lakes.step));
+  for (let k = 1; k < steps; k += 1) {
+    if (isLake([a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps])) return true;
+  }
+  return false;
+}
+
+/** Minutes on foot from a to b on the straight line, slower uphill (same model as build_data.py). Lakes are checked
+ * separately with crossesLake, only for the candidates that would win: it is the costly part. */
+function hillWalk(a, za, b, zb) {
+  const meters = hypot(a, b);
+  const { k, offset, minRun } = app.data.meta.tobler ?? { k: 0, offset: 0, minRun: 1 };
+  const slope = (zb - za) / Math.max(meters, minRun);
+  const factor = Math.exp(-k * Math.abs(slope + offset)) / Math.exp(-k * offset);
+  return walkMinutes(meters) / factor;
+}
+
+function walkBetween(a, za, b, zb) {
+  return crossesLake(a, b) ? Infinity : hillWalk(a, za, b, zb);
+}
+
 function stationUsable(index) {
   return app.includeBus || app.data.stations[index].rail;
 }
@@ -246,9 +310,14 @@ function solveFrom(point) {
   const seedWalk = new Float64Array(graph.count);
   const heap = new MinHeap();
 
+  const z = elevationAt(point);
   const seeds = data.stations
-    .map((station, index) => ({ index, walk: walkMinutes(hypot(point, station.point)) }))
+    .map((station, index) => ({ index, meters: hypot(point, station.point) }))
     .filter((seed) => stationUsable(seed.index))
+    .sort((a, b) => a.meters - b.meters)
+    .slice(0, data.meta.originStationCount * 2)
+    .map((seed) => ({ ...seed, walk: walkBetween(point, z, data.stations[seed.index].point, data.stations[seed.index].z ?? z) }))
+    .filter((seed) => Number.isFinite(seed.walk))
     .sort((a, b) => a.walk - b.walk)
     .slice(0, data.meta.originStationCount);
 
@@ -291,20 +360,24 @@ function solveFrom(point) {
       stationBest[station] = state;
     }
   }
-  return { point, dist, prev, seedWalk, stationTime, stationBest };
+  return { point, z, dist, prev, seedWalk, stationTime, stationBest };
 }
 
 /** Meilleur temps vers un point quelconque : à pied direct, ou via l'arrêt le plus favorable. */
 function travelTo(solution, point) {
-  let best = { minutes: walkMinutes(hypot(solution.point, point)), station: -1, walk: 0 };
-  best.walk = best.minutes;
+  const z = elevationAt(point);
+  const direct = walkBetween(solution.point, solution.z, point, z);
+  let best = { minutes: direct, station: -1, walk: direct };
+  const candidates = [];
   app.data.stations.forEach((station, index) => {
     const arrival = solution.stationTime[index];
     if (!Number.isFinite(arrival)) return;
-    const walk = walkMinutes(hypot(station.point, point));
-    if (arrival + walk < best.minutes) best = { minutes: arrival + walk, station: index, walk };
+    const walk = hillWalk(station.point, station.z ?? z, point, z);
+    if (arrival + walk < best.minutes) candidates.push({ minutes: arrival + walk, station: index, walk });
   });
-  return best;
+  // Best first; the lake check only runs until a candidate passes.
+  candidates.sort((a, b) => a.minutes - b.minutes);
+  return candidates.find((c) => c.minutes < best.minutes && !crossesLake(app.data.stations[c.station].point, point)) ?? best;
 }
 
 function routeLabel(routeId) {
@@ -344,8 +417,9 @@ function buildItinerary(solution, point) {
     if (graph.route[from] === graph.route[to] && graph.station[from] !== graph.station[to]) continue;
     closeLeg(from);
     if (graph.station[from] !== graph.station[to]) {
-      const meters = hypot(data.stations[graph.station[from]].point, data.stations[graph.station[to]].point);
-      steps.push({ kind: "walk", text: `Walk to ${name(to)} to change`, minutes: walkMinutes(meters) });
+      const a = data.stations[graph.station[from]];
+      const b = data.stations[graph.station[to]];
+      steps.push({ kind: "walk", text: `Walk to ${name(to)} to change`, minutes: hillWalk(a.point, a.z ?? 0, b.point, b.z ?? 0) });
     }
     legStart = to;
   }
@@ -390,11 +464,14 @@ function computeGrid(solution) {
   const { gridCols: cols, gridRows: rows } = meta;
   const times = new Float32Array(cols * rows).fill(NaN);
   for (const cell of cells) {
-    let best = walkMinutes(hypot(solution.point, cell.point));
-    for (const [station, meters] of cell.access) {
-      const time = solution.stationTime[station] + walkMinutes(meters);
+    // cell.access: nearby stops with the walk from the stop to the cell, in minutes (hills and lakes included).
+    let best = Infinity;
+    for (const [station, minutes] of cell.access) {
+      const time = solution.stationTime[station] + minutes;
       if (time < best) best = time;
     }
+    const direct = hillWalk(solution.point, solution.z, cell.point, cell.z ?? solution.z);
+    if (direct < best && !crossesLake(solution.point, cell.point)) best = direct;
     times[cell.row * cols + cell.col] = best;
   }
   // Les isochrones enjambent les fleuves (comblés avec les valeurs des rives) au lieu d'en faire le tour ;
@@ -950,7 +1027,7 @@ function updatePanel() {
     const source = heatSource();
     const tram = app.data.stations.map((station, index) => ({ station, index })).filter(({ station }) => station.rail);
     const reachable = tram.filter(({ station, index }) => {
-      const byFoot = walkMinutes(hypot(source.point, station.point));
+      const byFoot = walkBetween(source.point, elevationAt(source.point), station.point, station.z ?? 0);
       return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
     }).length;
     const percent = Math.round((reachable / tram.length) * 100);
@@ -1399,6 +1476,7 @@ async function loadYear(year) {
   app.data = data;
   app.offset = [data.meta.bounds[0], data.meta.bounds[1]];
   app.graph = prepareGraph(data);
+  app.terrain = prepareTerrain(data);
   app.paths = buildPaths(data);
   for (const button of $("yearPicker").querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.year === year));

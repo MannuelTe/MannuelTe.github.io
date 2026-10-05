@@ -8,6 +8,7 @@ Usage: python3 build_data.py <city> [year]
 
 from __future__ import annotations
 
+import base64
 import csv
 import heapq
 import io
@@ -29,8 +30,19 @@ LAND_PAD_METERS = 1200.0
 VIEW_PAD_METERS = 900.0
 
 GRID_CELL_METERS = 200.0
-# Walking speed (4.5 km/h), applied to straight-line distances: tram lines run along straight avenues.
+# Walking speed on the flat (4.5 km/h), applied to straight-line distances: tram lines run along straight avenues.
 WALK_METERS_PER_MINUTE = 75.0
+# Hills: Tobler's hiking function, speed ∝ exp(-3.5·|slope + 0.05|), scaled so that the flat stays at 4.5 km/h
+# (fastest on a gentle 5 % descent, half speed around 15 % uphill). Slopes are read on the straight line between
+# the two ends, over at least SLOPE_MIN_METERS so that a few metres of noise do not count as a cliff.
+TOBLER_K = 3.5
+TOBLER_OFFSET = 0.05
+SLOPE_MIN_METERS = 60.0
+# Lakes cannot be walked across: rasterised at this resolution, and walking legs sampled every BARRIER_STEP metres.
+BARRIER_CELL_METERS = 50.0
+BARRIER_STEP_METERS = 25.0
+# Cells look a little further for stops, since legs across a lake are dropped.
+CELL_CANDIDATE_STATIONS = 10
 CELL_NEAREST_STATIONS = 5
 CELL_NEAREST_RAIL_STATIONS = 3
 ORIGIN_NEAREST_STATIONS = 8  # stations reachable on foot from a departure point (also read by site/app.js)
@@ -50,6 +62,7 @@ MIN_WATER_AREA = 15_000.0
 CONTEXT_RING_DISTANCE = 80.0
 # Water bodies at least this large (or lagoons) are not land: no heatmap, no pins.
 WATER_MASK_AREA = 1_000_000.0
+LAKE_MIN_AREA = 100_000.0
 
 # GTFS route_type → mode (basic and extended types).
 RAIL_MODES = {"tram", "metro", "sbahn", "train", "funicular", "cable", "busway"}
@@ -271,6 +284,97 @@ class StationIndex:
         ]
 
 
+# --- Terrain: elevation and lakes -------------------------------------------
+
+
+def xy_to_lonlat(point: Point) -> Tuple[float, float]:
+    meters_per_deg_lat = 111_320.0
+    return point[0] / (meters_per_deg_lat * math.cos(math.radians(LAT0))), point[1] / meters_per_deg_lat
+
+
+def wgs84_to_lv95(lat: float, lon: float) -> Tuple[float, float]:
+    """swisstopo's approximate formulas (about 1 m accurate): (lat, lon) → LV95 (east, north)."""
+    phi = (lat * 3600 - 169028.66) / 10000
+    lam = (lon * 3600 - 26782.5) / 10000
+    east = 2600072.37 + 211455.93 * lam - 10938.51 * lam * phi - 0.36 * lam * phi ** 2 - 44.54 * lam ** 3
+    north = 1200147.07 + 308807.95 * phi + 3745.25 * lam ** 2 + 76.63 * phi ** 2 - 194.56 * lam ** 2 * phi + 119.79 * phi ** 3
+    return east, north
+
+
+def tobler_factor(rise: float, run: float) -> float:
+    """Walking speed relative to the flat for a climb of `rise` metres over `run` metres (negative: downhill)."""
+    slope = rise / max(run, SLOPE_MIN_METERS)
+    return math.exp(-TOBLER_K * abs(slope + TOBLER_OFFSET)) / math.exp(-TOBLER_K * TOBLER_OFFSET)
+
+
+class Terrain:
+    """Elevation (swisstopo, data/<city>/elevation.json) and lakes, for walking times. Without the elevation file the
+    city is flat; without lakes nothing blocks."""
+
+    def __init__(self, data_dir: Path, bounds, lakes: MultiPolygon):
+        path = data_dir / "elevation.json"
+        self.grid = load_json(path) if path.exists() else None
+        if not self.grid:
+            print("  elevation.json missing: walking on the flat (python3 fetch_data.py <city> --context-only)")
+        min_x, min_y, max_x, max_y = bounds
+        self.origin = (min_x, min_y)
+        self.cols = math.ceil((max_x - min_x) / BARRIER_CELL_METERS)
+        self.rows = math.ceil((max_y - min_y) / BARRIER_CELL_METERS)
+        self.bits = bytearray((self.cols * self.rows + 7) // 8)
+        lake_set = PolygonSet(lakes)
+        for polygon in lakes:
+            px0, py0, px1, py1 = ring_bounds(polygon[0])
+            c0, c1 = max(0, int((px0 - min_x) // BARRIER_CELL_METERS)), min(self.cols - 1, int((px1 - min_x) // BARRIER_CELL_METERS))
+            r0, r1 = max(0, int((py0 - min_y) // BARRIER_CELL_METERS)), min(self.rows - 1, int((py1 - min_y) // BARRIER_CELL_METERS))
+            for row in range(r0, r1 + 1):
+                for col in range(c0, c1 + 1):
+                    centre = (min_x + (col + 0.5) * BARRIER_CELL_METERS, min_y + (row + 0.5) * BARRIER_CELL_METERS)
+                    if lake_set.contains(centre):
+                        index = row * self.cols + col
+                        self.bits[index >> 3] |= 1 << (index & 7)
+
+    def z(self, point: Point) -> float:
+        if not self.grid:
+            return 0.0
+        lon, lat = xy_to_lonlat(point)
+        east, north = wgs84_to_lv95(lat, lon)
+        g = self.grid
+        gx = clamp((east - g["minE"]) / g["step"], 0, g["cols"] - 1)
+        gy = clamp((north - g["minN"]) / g["step"], 0, g["rows"] - 1)
+        c0, r0 = int(gx), int(gy)
+        c1, r1 = min(c0 + 1, g["cols"] - 1), min(r0 + 1, g["rows"] - 1)
+        tx, ty = gx - c0, gy - r0
+        z = g["z"]
+        return (z[r0][c0] * (1 - tx) + z[r0][c1] * tx) * (1 - ty) + (z[r1][c0] * (1 - tx) + z[r1][c1] * tx) * ty
+
+    def is_lake(self, point: Point) -> bool:
+        col = int((point[0] - self.origin[0]) // BARRIER_CELL_METERS)
+        row = int((point[1] - self.origin[1]) // BARRIER_CELL_METERS)
+        if not (0 <= col < self.cols and 0 <= row < self.rows):
+            return False
+        index = row * self.cols + col
+        return bool(self.bits[index >> 3] >> (index & 7) & 1)
+
+    def crosses_lake(self, a: Point, b: Point) -> bool:
+        steps = max(1, math.ceil(dist(a, b) / BARRIER_STEP_METERS))
+        return any(self.is_lake((a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps)) for k in range(1, steps))
+
+    def walk(self, a: Point, za: float, b: Point, zb: float) -> float:
+        """Minutes on foot from a to b, uphill slower and gently downhill faster; infinite across a lake."""
+        meters = dist(a, b)
+        if self.crosses_lake(a, b):
+            return math.inf
+        return meters / (WALK_METERS_PER_MINUTE * tobler_factor(zb - za, meters))
+
+    def serialize(self) -> dict:
+        return {"cell": BARRIER_CELL_METERS, "step": BARRIER_STEP_METERS, "cols": self.cols, "rows": self.rows,
+                "bits": base64.b64encode(bytes(self.bits)).decode()}
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
 # --- Land, water, parks -----------------------------------------------------
 
 
@@ -360,13 +464,14 @@ def osm_polygons(element: dict) -> MultiPolygon:
     return polygons
 
 
-def extract_water_and_parks(data_dir: Path, bounds) -> Tuple[MultiPolygon, MultiPolygon, MultiPolygon]:
-    """Return (water that is not land, other water shown on the map, parks)."""
+def extract_water_and_parks(data_dir: Path, bounds) -> Tuple[MultiPolygon, MultiPolygon, MultiPolygon, MultiPolygon]:
+    """Return (water that is not land, other water shown on the map, parks, lakes that block walking)."""
     payload = load_json(data_dir / "osm_water_parks.json")
     min_x, min_y, max_x, max_y = bounds
     masked: MultiPolygon = []
     water: MultiPolygon = []
     parks: MultiPolygon = []
+    lakes: MultiPolygon = []
     for element in payload["elements"]:
         tags = element.get("tags", {})
         for polygon in osm_polygons(element):
@@ -381,9 +486,12 @@ def extract_water_and_parks(data_dir: Path, bounds) -> Tuple[MultiPolygon, Multi
                 simplified = [simplify_ring(ring, tolerance) for ring in polygon]
                 target = masked if tags.get("water") == "lagoon" or area >= WATER_MASK_AREA else water
                 target.append(simplified)
+                # Rivers have bridges every few hundred metres in town: only lakes stop a walk.
+                if tags.get("water") in ("lake", "reservoir", "lagoon") and area >= LAKE_MIN_AREA:
+                    lakes.append(simplified)
             elif tags.get("leisure") == "park" and area >= MIN_PARK_AREA:
                 parks.append([simplify_ring(ring, 15.0) for ring in polygon])
-    return masked, water, parks
+    return masked, water, parks, lakes
 
 
 def extract_context(data_dir: Path, city: dict) -> MultiPolygon:
@@ -662,7 +770,7 @@ def extract_network(data_dir: Path, city: dict):
     return reference_date, complexes, edges, waits, own_waits, route_info, shape_routes
 
 
-def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float]):
+def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float], terrain: "Terrain"):
     route_states: List[dict] = []
     station_states: List[List[int]] = [[] for _ in complexes]
     lookup: Dict[Tuple[int, str], int] = {}
@@ -708,7 +816,10 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
         for j in index.within(a["point"], INTER_COMPLEX_WALK_RADIUS):
             if i == j:
                 continue
-            walk = dist(a["point"], complexes[j]["point"]) / WALK_METERS_PER_MINUTE + TRANSFER_WALK
+            b = complexes[j]
+            walk = terrain.walk(a["point"], a["z"], b["point"], b["z"]) + TRANSFER_WALK
+            if not math.isfinite(walk):
+                continue
             for src in station_states[i]:
                 for dst in station_states[j]:
                     if route_states[src]["routeId"] != route_states[dst]["routeId"]:
@@ -841,7 +952,9 @@ def hectare_counts(data_dir: Path, bounds, cols: int, rows: int, mask: Sequence[
 # --- Grid -------------------------------------------------------------------
 
 
-def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequence[dict], bounds, cols: int, rows: int):
+def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequence[dict], bounds, cols: int, rows: int, terrain: "Terrain"):
+    """Land cells and, for each, the nearby stops with the walk from the stop to the cell (minutes, hills included;
+    stops across a lake are left out)."""
     min_x, min_y, max_x, max_y = bounds
     cell_w = (max_x - min_x) / cols
     cell_h = (max_y - min_y) / rows
@@ -856,22 +969,33 @@ def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequenc
             point = (min_x + (col + 0.5) * cell_w, min_y + (row + 0.5) * cell_h)
             if not land_set.contains(point) or water_set.contains(point):
                 continue
-            nearest = {index: meters for meters, index in all_index.nearest(point, CELL_NEAREST_STATIONS)}
-            for meters, index in rail_index.nearest(point, CELL_NEAREST_RAIL_STATIONS):
-                nearest[index] = meters
+            z = terrain.z(point)
+
+            def egress(candidates, keep):
+                found = []
+                for _, index in candidates:
+                    station = stations[index]
+                    minutes = terrain.walk(station["point"], station["z"], point, z)
+                    if math.isfinite(minutes):
+                        found.append((index, minutes))
+                return found[:keep]
+
+            nearest = dict(egress(all_index.nearest(point, CELL_CANDIDATE_STATIONS), CELL_NEAREST_STATIONS))
+            nearest.update(egress(rail_index.nearest(point, CELL_CANDIDATE_STATIONS), CELL_NEAREST_RAIL_STATIONS))
             mask[row * cols + col] = len(cells)
             cells.append(
                 {
                     "row": row,
                     "col": col,
                     "point": round_point(point),
-                    "access": [[index, round(meters, 1)] for index, meters in sorted(nearest.items(), key=lambda item: item[1])],
+                    "z": round(z),
+                    "access": [[index, round(minutes, 2)] for index, minutes in sorted(nearest.items(), key=lambda item: item[1])],
                 }
             )
     return cells, mask
 
 
-def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells) -> dict:
+def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells, terrain) -> dict:
     """Figures shown on the page (and its FAQ): lines, headways, share of rail stations within 30 min of the centre."""
     rail_states = [i for i, state in enumerate(route_states) if route_info[state["routeId"]]["rail"]]
     lines = []
@@ -898,11 +1022,12 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     rail_station_ids = [i for i, station in enumerate(stations) if station["rail"]]
     # Figures cover the stations on the map; the clipped feed reaches a little beyond it.
     shown_ids = [i for i in rail_station_ids if on_map(stations[i]["point"])]
+    origin_z = terrain.z(origin)
     seeds = sorted(rail_station_ids, key=lambda i: dist(origin, stations[i]["point"]))[:ORIGIN_NEAREST_STATIONS]
     best = [math.inf] * len(route_states)
     heap: List[Tuple[float, int]] = []
     for station_index in seeds:
-        walk = dist(origin, stations[station_index]["point"]) / WALK_METERS_PER_MINUTE
+        walk = terrain.walk(origin, origin_z, stations[station_index]["point"], stations[station_index]["z"])
         for state in station_states[station_index]:
             if route_info[route_states[state]["routeId"]]["rail"]:
                 time = walk + route_states[state]["access"] + route_states[state]["wait"]
@@ -922,15 +1047,15 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
     for state, time in enumerate(best):
         index = route_states[state]["stationIndex"]
         out = time + route_states[state]["access"]
-        walk = dist(origin, stations[index]["point"]) / WALK_METERS_PER_MINUTE
+        walk = terrain.walk(origin, origin_z, stations[index]["point"], stations[index]["z"])
         arrival[index] = min(arrival.get(index, math.inf), out, walk)
     rail_times = [arrival.get(i, math.inf) for i in shown_ids]
     # Residents and jobs reachable from the centre (rail only, as on the page's default map).
     reach = {"pop": Counter(), "jobs": Counter()}
     for cell in cells:
-        time = dist(origin, cell["point"]) / WALK_METERS_PER_MINUTE
-        for index, meters in cell["access"]:
-            time = min(time, arrival.get(index, math.inf) + meters / WALK_METERS_PER_MINUTE)
+        time = terrain.walk(origin, origin_z, cell["point"], cell["z"])
+        for index, minutes in cell["access"]:
+            time = min(time, arrival.get(index, math.inf) + minutes)
         for key in reach:
             reach[key]["total"] += cell.get(key, 0)
             for limit in (15, 30, 45):
@@ -1023,11 +1148,14 @@ def main() -> None:
     bounds = multipolygon_bounds(land, LAND_PAD_METERS)
     cols = round((bounds[2] - bounds[0]) / GRID_CELL_METERS)
     rows = round((bounds[3] - bounds[1]) / GRID_CELL_METERS)
-    masked_water, water, parks = extract_water_and_parks(data_dir, bounds)
+    masked_water, water, parks, lakes = extract_water_and_parks(data_dir, bounds)
+    terrain = Terrain(data_dir, bounds, lakes)
+    for station in complexes:
+        station["z"] = terrain.z(station["point"])
     context = extract_context(data_dir, city)
 
     access_minutes = {**MODE_ACCESS_MINUTES, **city.get("modeAccess", {})}
-    route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info, access_minutes)
+    route_states, station_states, adjacency = build_graph(complexes, edges, waits, route_info, access_minutes, terrain)
     if city.get("railGeometry") == "osm":
         routes = rail_routes_from_osm(data_dir, city, route_info, bounds)
     else:
@@ -1040,6 +1168,7 @@ def main() -> None:
             "point": station["point"],
             "routes": sorted(station["routes"], key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"])),
             "rail": any(route_info[route_id]["rail"] for route_id in station["routes"]),
+            "z": round(station["z"], 1),
         }
         for station in complexes
     ]
@@ -1053,7 +1182,7 @@ def main() -> None:
         max(x for x, _ in rail_points) + VIEW_PAD_METERS,
         max(y for _, y in rail_points) + VIEW_PAD_METERS,
     )
-    cells, mask = build_grid(land, masked_water, stations, bounds, cols, rows)
+    cells, mask = build_grid(land, masked_water, stations, bounds, cols, rows, terrain)
     counts = hectare_counts(data_dir, bounds, cols, rows, mask)
     for key, per_cell in counts.items():
         for index, value in per_cell.items():
@@ -1068,6 +1197,7 @@ def main() -> None:
             "gridCols": cols,
             "gridRows": rows,
             "walkMetersPerMinute": WALK_METERS_PER_MINUTE,
+            "tobler": {"k": TOBLER_K, "offset": TOBLER_OFFSET, "minRun": SLOPE_MIN_METERS},
             "originStationCount": ORIGIN_NEAREST_STATIONS,
             "sea": bool(context),
         },
@@ -1082,12 +1212,13 @@ def main() -> None:
         "stationStates": station_states,
         "adjacency": adjacency,
         "cells": cells,
+        "lakes": terrain.serialize(),
         "mask": mask,
     }
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells)
+    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells, terrain)
     provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])

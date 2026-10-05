@@ -252,6 +252,58 @@ def fetch_osm(city: dict, out: Path) -> None:
     record(out, "osm_water_parks.json", f"Overpass API: {query}")
 
 
+# Elevation: swisstopo's profile service samples its terrain model (swissALTI3D / DHM25) along a line, so one call
+# per row of a 100 m LV95 grid is enough for the whole map (instead of hundreds of 1 km swissALTI3D tiles).
+PROFILE_URL = "https://api3.geo.admin.ch/rest/services/profile.json"
+ELEVATION_STEP = 100
+
+
+def wgs84_to_lv95(lat: float, lon: float) -> tuple[float, float]:
+    """swisstopo's approximate formulas (about 1 m accurate): (lat, lon) → LV95 (east, north)."""
+    phi = (lat * 3600 - 169028.66) / 10000
+    lam = (lon * 3600 - 26782.5) / 10000
+    east = 2600072.37 + 211455.93 * lam - 10938.51 * lam * phi - 0.36 * lam * phi ** 2 - 44.54 * lam ** 3
+    north = 1200147.07 + 308807.95 * phi + 3745.25 * lam ** 2 + 76.63 * phi ** 2 - 194.56 * lam ** 2 * phi + 119.79 * phi ** 3
+    return east, north
+
+
+def fetch_elevation(city: dict, out: Path) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    south, west, north, east = city["gtfsClipBbox"]
+    corners = [wgs84_to_lv95(lat, lon) for lat in (south, north) for lon in (west, east)]
+    step = ELEVATION_STEP
+    min_e = int(min(e for e, _ in corners) // step * step)
+    max_e = int(-(-max(e for e, _ in corners) // step) * step)
+    min_n = int(min(n for _, n in corners) // step * step)
+    max_n = int(-(-max(n for _, n in corners) // step) * step)
+    cols = (max_e - min_e) // step + 1
+    northings = list(range(min_n, max_n + 1, step))
+    print(f"Elevation (swisstopo profile service, {cols}×{len(northings)} points)…")
+
+    def row(northing: int) -> list[float]:
+        query = urllib.parse.urlencode({
+            "geom": json.dumps({"type": "LineString", "coordinates": [[min_e, northing], [max_e, northing]]}),
+            "sr": "2056", "nb_points": str(cols), "distinct_points": "true",
+        })
+        for attempt in range(5):
+            try:
+                points = json.loads(download(f"{PROFILE_URL}?{query}"))
+                return [round(point["alts"]["COMB"], 1) for point in points]
+            except Exception as error:  # noqa: BLE001 - the public service throttles bursts
+                print(f"  row {northing} failed ({error}), retrying…")
+                time.sleep(2 * (attempt + 1))
+        raise RuntimeError("profile service unavailable")
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        rows = list(pool.map(row, northings))
+    if any(len(values) != cols for values in rows):
+        sys.exit("Elevation rows have unexpected lengths")
+    grid = {"crs": "EPSG:2056", "minE": min_e, "minN": min_n, "step": step, "cols": cols, "rows": len(rows), "z": rows}
+    (out / "elevation.json").write_text(json.dumps(grid, separators=(",", ":")), encoding="utf-8")
+    record(out, "elevation.json", f"{PROFILE_URL} (COMB terrain model), {step} m LV95 grid")
+
+
 def fetch_bfs(out: Path) -> None:
     for name, url in BFS_ASSETS.items():
         print(f"BFS hectare grid {name}…")
@@ -274,6 +326,7 @@ def main() -> None:
     fetch_boundaries(city, out)
     fetch_osm(city, out)
     fetch_bfs(out)
+    fetch_elevation(city, out)
 
 
 if __name__ == "__main__":

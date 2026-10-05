@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:40:51+00:00",
+  "builtAt": "2026-10-05T18:46:25+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -399,22 +399,22 @@
     "within30": 96,
     "population": {
       "total": 717159,
-      "45": 692685,
-      "30": 548546,
-      "15": 141308
+      "45": 685662,
+      "30": 533169,
+      "15": 136992
     },
     "jobs": {
       "total": 761616,
-      "45": 750905,
-      "30": 685755,
-      "15": 331354
+      "45": 749693,
+      "30": 683976,
+      "15": 323376
     },
     "farthestStation": "Felsenegg",
-    "farthestMinutes": 45,
+    "farthestMinutes": 47,
     "ogTrip": {
-      "name": "Mattenhof",
-      "lat": 47.39871,
-      "lon": 8.59094
+      "name": "Hadlaubstrasse",
+      "lat": 47.38676,
+      "lon": 8.55108
     }
   }
 }

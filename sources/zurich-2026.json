@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:41:00+00:00",
+  "builtAt": "2026-10-05T18:45:32+00:00",
   "referenceDate": "2026-10-20",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -420,22 +420,22 @@
     "within30": 93,
     "population": {
       "total": 717159,
-      "45": 697775,
-      "30": 535629,
-      "15": 139507
+      "45": 688890,
+      "30": 523645,
+      "15": 129871
     },
     "jobs": {
       "total": 761616,
-      "45": 751883,
-      "30": 677787,
-      "15": 315427
+      "45": 751361,
+      "30": 674994,
+      "15": 312592
     },
     "farthestStation": "Felsenegg",
-    "farthestMinutes": 53,
+    "farthestMinutes": 56,
     "ogTrip": {
-      "name": "Mattenhof",
-      "lat": 47.39869,
-      "lon": 8.59093
+      "name": "Fernsehstudio",
+      "lat": 47.41816,
+      "lon": 8.56168
     }
   }
 }

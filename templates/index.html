@@ -166,15 +166,46 @@ ${line_rows}
           <h2 id="history-title">The network over time</h2>
           <span class="block-desc">The same model on each year's official timetable; residents and jobs held at today's numbers.</span>
         </header>
-        <div class="card">
-          <table class="data-table">
-            <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
-            <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
-            <tbody>
+        <div id="insights" class="insights">
+          <div class="insights-head">
+            <h3>Insights <span id="insCount" class="muted"></span></h3>
+            <div class="pager">
+              <button id="insPrev" type="button" class="pager-button" aria-label="Previous insight">‹</button>
+              <button id="insNext" type="button" class="pager-button" aria-label="Next insight">›</button>
+            </div>
+          </div>
+          <p id="insLede" class="insights-lede" aria-live="polite"></p>
+          <div class="insight-card">
+            <div class="insight-title">
+              <span id="insArrow" class="insight-arrow" aria-hidden="true"></span>
+              <strong id="insTitle"></strong>
+              <span id="insTag" class="tag"></span>
+            </div>
+            <div class="chart-panel">
+              <div class="chart-bar">
+                <span id="insRef" class="muted"></span>
+                <div id="insMetric" class="segmented" role="group" aria-label="Measure"></div>
+              </div>
+              <div id="insChart" class="chart" role="img"></div>
+            </div>
+            <div class="insight-foot">
+              <div id="insValue" class="insight-value"></div>
+              <div class="insight-delta"><span id="insDelta"></span> <span id="insVs" class="muted"></span></div>
+            </div>
+          </div>
+          <details class="expander insights-table">
+            <summary>Show as table</summary>
+            <div class="expander-body">
+              <table class="data-table">
+                <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
+                <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+                <tbody>
 ${history_rows}
-            </tbody>
-          </table>
-          <p class="table-note">${history_note}</p>
+                </tbody>
+              </table>
+              <p class="table-note">${history_note}</p>
+            </div>
+          </details>
         </div>
       </section>
 

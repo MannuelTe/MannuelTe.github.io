@@ -1201,18 +1201,11 @@ function withYear(prepared, fn) {
   }
 }
 
-async function updateYears() {
-  const panel = $("yearsPanel");
-  if (!panel?.open || !app.from) return;
-  const body = $("yearsBody");
-  if (app.mode === "bike") {
-    body.textContent = "The bike network is today's; switch to public transport to compare timetable years.";
-    return;
-  }
+/** The current start (and destination) on every timetable year: trip time, lines, residents and jobs within 30 min. */
+async function tripAcrossYears() {
   const years = Object.keys(CITY.timetables);
-  body.textContent = "Loading the timetables…";
   const prepared = await Promise.all(years.map((year) => bundle(year)));
-  const rows = years.map((year, k) =>
+  return years.map((year, k) =>
     withYear(prepared[k], () => {
       const solution = solveFrom(app.from.point);
       const itinerary = app.to ? buildItinerary(solution, app.to.point) : null;
@@ -1223,6 +1216,19 @@ async function updateYears() {
       return { year, minutes: itinerary?.minutes, lines, pop: counts.pop, jobs: counts.jobs };
     }),
   );
+}
+
+async function updateYears() {
+  if (app.from && insights.page?.id === "trip") renderInsight().catch((error) => console.error(error));
+  const panel = $("yearsPanel");
+  if (!panel?.open || !app.from) return;
+  const body = $("yearsBody");
+  if (app.mode === "bike") {
+    body.textContent = "The bike network is today's; switch to public transport to compare timetable years.";
+    return;
+  }
+  body.textContent = "Loading the timetables…";
+  const rows = await tripAcrossYears();
   const longest = Math.max(...rows.map((row) => row.minutes ?? 0), 1);
   const table = document.createElement("table");
   table.className = "data-table years-table";
@@ -1723,6 +1729,278 @@ async function switchYear(year) {
   if (app.to) app.to.label = describePlace(app.to.point);
   recompute();
   syncUrl();
+  if (insights.page && insights.page.id !== "trip") renderInsight();
+}
+
+// --- Insights: the network over time as a line chart (after beautifului.dev's insight card) -------------
+
+// One series per chart. The mark is a lighter step of Zürich blue: #0F05A0 itself is too dark for a data mark
+// (OKLab L 0.33, below the 0.43–0.77 band); #3b32d4 passes lightness, chroma and contrast on the chart surface.
+const SERIES_COLOR = "#3b32d4";
+const CHART_SURFACE = "#f6f7f9";
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const HISTORY = CITY.history ?? [];
+const metricOf = (key, limit) => (row) =>
+  key === "stops" ? row[`within${limit}`] : (row[key === "pop" ? "population" : "jobs"][limit] ?? 0);
+const METRICS = {
+  pop: { label: "Residents", noun: "residents", format: (v) => compact.format(v) },
+  jobs: { label: "Jobs", noun: "jobs", format: (v) => compact.format(v) },
+  stops: { label: "Rail stops", noun: "points of rail stops", format: (v) => `${v}%` },
+};
+
+const INSIGHT_PAGES = [
+  { id: "reach30", limit: "30", metrics: ["pop", "jobs", "stops"], title: (m) => `${METRICS[m].label} within 30 min of ${CITY.center}` },
+  { id: "reach15", limit: "15", metrics: ["pop", "jobs", "stops"], title: (m) => `${METRICS[m].label} within 15 min of ${CITY.center}` },
+  {
+    id: "network",
+    metrics: ["railStations", "tramLines"],
+    labels: { railStations: "Rail stops", tramLines: "Tram lines" },
+    title: (m) => (m === "railStations" ? "Tram and rail stops on the map" : "Tram lines in service"),
+  },
+  { id: "trip", metrics: ["minutes"], labels: { minutes: "Trip time" }, title: () => "This trip, year by year" },
+];
+
+const insights = { index: 0, metric: {}, page: null, trip: null };
+
+function signed(value, format) {
+  if (Math.round(value * 10) === 0) return "±0";
+  return `${value > 0 ? "+" : "−"}${format(Math.abs(value))}`;
+}
+
+/** Monotone cubic path through the points (no overshoot between years). */
+function smoothPath(points) {
+  if (points.length < 2) return "";
+  const n = points.length;
+  const dx = [];
+  const slope = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    dx.push(points[i + 1][0] - points[i][0]);
+    slope.push((points[i + 1][1] - points[i][1]) / dx[i]);
+  }
+  const tangent = [slope[0]];
+  for (let i = 1; i < n - 1; i += 1) tangent.push(slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2);
+  tangent.push(slope[n - 2]);
+  let d = `M${points[0][0]},${points[0][1]}`;
+  for (let i = 0; i < n - 1; i += 1) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    const h = dx[i] / 3;
+    d += ` C${x0 + h},${y0 + tangent[i] * h} ${x1 - h},${y1 - tangent[i + 1] * h} ${x1},${y1}`;
+  }
+  return d;
+}
+
+function svg(tag, attributes = {}, parent = null) {
+  const element = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  parent?.append(element);
+  return element;
+}
+
+/** Rows {year, draft, value, note} → a line chart: hairline at the first year's value, ringed points, a dashed
+ * segment into the draft year, a crosshair tooltip that snaps to the nearest year, arrow keys on focus. */
+function drawLineChart(container, rows, format, reference) {
+  container.replaceChildren();
+  const width = Math.max(260, container.clientWidth);
+  const height = 190;
+  const pad = { top: 22, right: 22, bottom: 26, left: 22 };
+  const values = rows.map((row) => row.value);
+  let lo = Math.min(...values);
+  let hi = Math.max(...values);
+  const span = hi - lo || Math.abs(hi) * 0.1 || 1;
+  lo -= span * 0.35;
+  hi += span * 0.35;
+  const x = (i) => pad.left + (i / (rows.length - 1)) * (width - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - lo) / (hi - lo)) * (height - pad.top - pad.bottom);
+  const root = svg("svg", { viewBox: `0 0 ${width} ${height}`, width, height, class: "line-chart" }, container);
+  svg("line", { x1: 0, x2: width, y1: y(reference), y2: y(reference), class: "chart-ref" }, root);
+  svg("line", { x1: 0, x2: width, y1: height - pad.bottom, y2: height - pad.bottom, class: "chart-axis" }, root);
+  const points = rows.map((row, i) => [x(i), y(row.value)]);
+  const draft = rows.findIndex((row) => row.draft);
+  const solidEnd = draft === -1 ? points.length : draft;
+  svg("path", { d: smoothPath(points.slice(0, solidEnd)), class: "chart-line", stroke: SERIES_COLOR }, root);
+  if (draft > 0) svg("path", { d: smoothPath(points.slice(draft - 1, draft + 1)), class: "chart-line draft", stroke: SERIES_COLOR }, root);
+  rows.forEach((row, i) => {
+    const anchor = i === 0 ? "start" : i === rows.length - 1 ? "end" : "middle";
+    const label = svg("text", { x: x(i) + (i === 0 ? -pad.left + 4 : i === rows.length - 1 ? pad.right - 4 : 0), y: height - 8, class: "chart-tick", "text-anchor": anchor }, root);
+    label.textContent = row.draft ? `${row.year} draft` : row.year;
+  });
+  const crosshair = svg("line", { y1: pad.top - 10, y2: height - pad.bottom, class: "chart-crosshair", visibility: "hidden" }, root);
+  const dots = rows.map((row, i) =>
+    svg("circle", {
+      cx: points[i][0],
+      cy: points[i][1],
+      r: row.current ? 5.5 : 4,
+      class: "chart-dot",
+      fill: row.draft ? CHART_SURFACE : SERIES_COLOR,
+      stroke: row.draft ? SERIES_COLOR : CHART_SURFACE,
+    }, root),
+  );
+  const tooltip = document.createElement("div");
+  tooltip.className = "chart-tooltip";
+  tooltip.hidden = true;
+  container.append(tooltip);
+  let active = -1;
+  const show = (i) => {
+    active = i;
+    crosshair.setAttribute("x1", points[i][0]);
+    crosshair.setAttribute("x2", points[i][0]);
+    crosshair.setAttribute("visibility", "visible");
+    dots.forEach((dot, k) => dot.classList.toggle("active", k === i));
+    const value = document.createElement("strong");
+    value.textContent = format(rows[i].value);
+    const line = document.createElement("span");
+    line.className = "tooltip-row";
+    const key = document.createElement("span");
+    key.className = "line-key";
+    key.style.background = SERIES_COLOR;
+    const caption = document.createElement("span");
+    caption.textContent = `${rows[i].year}${rows[i].draft ? " (draft)" : ""}${rows[i].note ? ` · ${rows[i].note}` : ""}`;
+    line.append(key, caption);
+    tooltip.replaceChildren(value, line);
+    tooltip.hidden = false;
+    const left = clamp(points[i][0] - tooltip.offsetWidth / 2, 0, width - tooltip.offsetWidth);
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${Math.max(0, points[i][1] - tooltip.offsetHeight - 14)}px`;
+  };
+  const hide = () => {
+    active = -1;
+    crosshair.setAttribute("visibility", "hidden");
+    dots.forEach((dot) => dot.classList.remove("active"));
+    tooltip.hidden = true;
+  };
+  const hit = svg("rect", { x: 0, y: 0, width, height, fill: "transparent" }, root);
+  hit.addEventListener("pointermove", (event) => {
+    const bounds = root.getBoundingClientRect();
+    const px = ((event.clientX - bounds.left) / bounds.width) * width;
+    let nearest = 0;
+    points.forEach(([pointX], i) => {
+      if (Math.abs(pointX - px) < Math.abs(points[nearest][0] - px)) nearest = i;
+    });
+    show(nearest);
+  });
+  hit.addEventListener("pointerleave", hide);
+  container.tabIndex = 0;
+  container.onkeydown = (event) => {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    event.preventDefault();
+    show(clamp((active === -1 ? rows.length - 1 : active) + (event.key === "ArrowRight" ? 1 : -1), 0, rows.length - 1));
+  };
+  container.onblur = hide;
+}
+
+function pageRows(page, metric) {
+  if (page.id === "trip") {
+    return (insights.trip ?? [])
+      .filter((row) => Number.isFinite(row.minutes))
+      .map((row) => ({
+        year: row.year,
+        draft: Boolean(HISTORY.find((h) => h.year === row.year)?.draft),
+        value: Math.round(row.minutes),
+        note: row.lines.map((info) => info.name).join(" → ") || "on foot",
+      }));
+  }
+  if (page.id === "network") return HISTORY.map((row) => ({ year: row.year, draft: row.draft, value: row[metric], note: row.day }));
+  return HISTORY.map((row) => ({ year: row.year, draft: row.draft, value: metricOf(metric, page.limit)(row), note: row.day }));
+}
+
+function showInsightMessage(text) {
+  $("insLede").textContent = text;
+  $("insChart").replaceChildren();
+  for (const id of ["insRef", "insValue", "insDelta", "insVs", "insArrow"]) $(id).textContent = "";
+}
+
+async function renderInsight() {
+  const page = INSIGHT_PAGES[insights.index];
+  insights.page = page;
+  const metric = insights.metric[page.id] ?? page.metrics[0];
+  $("insCount").textContent = `${insights.index + 1}/${INSIGHT_PAGES.length}`;
+  $("insTitle").textContent = page.title(metric);
+  $("insTag").textContent = `${HISTORY[0]?.year} → ${HISTORY[HISTORY.length - 1]?.year}`;
+  const picker = $("insMetric");
+  picker.replaceChildren(
+    ...page.metrics.map((key) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = page.labels?.[key] ?? METRICS[key].label;
+      button.setAttribute("aria-pressed", String(key === metric));
+      button.addEventListener("click", () => {
+        insights.metric[page.id] = key;
+        renderInsight();
+      });
+      return button;
+    }),
+  );
+  picker.hidden = page.metrics.length < 2;
+  if (page.id === "trip") {
+    if (!app.to || !app.from) {
+      showInsightMessage("Click the map to set a destination: this card then follows your trip across the timetable years.");
+      return;
+    }
+    if (app.mode === "bike") {
+      showInsightMessage("The bike network is today's; switch to public transport to compare timetable years.");
+      return;
+    }
+    $("insLede").textContent = "Loading the timetables…";
+    insights.trip = await tripAcrossYears();
+    if (insights.page !== page) return;
+  }
+  const rows = pageRows(page, metric);
+  if (rows.length < 2) {
+    showInsightMessage("Not enough timetable years for a chart.");
+    return;
+  }
+  const format = page.id === "trip" ? (v) => formatMinutes(v) : page.id === "network" ? (v) => String(v) : METRICS[metric].format;
+  // The headline compares the selected (or latest final) timetable with the first year; the draft is plotted but
+  // never headlined. Lower is better for trip times, higher for everything else.
+  const final = rows.filter((row) => !row.draft);
+  const current = final.find((row) => row.year === app.year) ?? final[final.length - 1];
+  current.current = true;
+  const first = rows[0];
+  const delta = current.value - first.value;
+  const good = (change) => (page.id === "trip" ? change < 0 : change > 0);
+  const tone = (change) => (Math.round(change) === 0 ? "" : good(change) ? "good" : "bad");
+  let step = null;
+  for (let i = 1; i < final.length; i += 1) {
+    const change = final[i].value - final[i - 1].value;
+    if (!step || Math.abs(change) > Math.abs(step.change)) step = { change, from: final[i - 1], to: final[i] };
+  }
+  const noun = page.id === "trip" ? "" : ` ${(page.labels?.[metric] ?? METRICS[metric].noun).toLowerCase()}`;
+  const strong = document.createElement("strong");
+  strong.textContent = step.to.year;
+  const amount = document.createElement("span");
+  amount.className = `mono ${tone(step.change)}`;
+  amount.textContent = signed(step.change, format) + noun;
+  $("insLede").replaceChildren("Biggest change in ", strong, " — ", amount, ` against ${step.from.year}.`);
+  $("insArrow").textContent = Math.round(delta) === 0 ? "→" : delta > 0 ? "↑" : "↓";
+  $("insArrow").className = `insight-arrow ${tone(delta)}`;
+  $("insRef").textContent = `${format(first.value)} in ${first.year}`;
+  $("insValue").textContent = format(current.value);
+  $("insDelta").textContent = signed(delta, format);
+  $("insDelta").className = `mono ${tone(delta)}`;
+  $("insVs").textContent = `${current.year} vs ${first.year}`;
+  $("insChart").setAttribute("aria-label", `${page.title(metric)}: ${rows.map((row) => `${row.year} ${format(row.value)}`).join(", ")}`);
+  drawLineChart($("insChart"), rows, format, first.value);
+}
+
+function setupInsights() {
+  if (!$("insights") || HISTORY.length < 2) return;
+  const go = (step) => {
+    insights.index = (insights.index + step + INSIGHT_PAGES.length) % INSIGHT_PAGES.length;
+    renderInsight().catch((error) => console.error(error));
+  };
+  $("insPrev").addEventListener("click", () => go(-1));
+  $("insNext").addEventListener("click", () => go(1));
+  let lastWidth = 0;
+  new ResizeObserver(([entry]) => {
+    const width = Math.round(entry.contentRect.width);
+    if (width !== lastWidth && insights.page) {
+      lastWidth = width;
+      renderInsight().catch(() => {});
+    }
+  }).observe($("insChart"));
+  renderInsight().catch((error) => console.error(error));
 }
 
 /** Public transport or bike: the bike layer ignores the timetable year and the bus toggle. */
@@ -1755,6 +2033,7 @@ async function init() {
       .catch(() => toast("Could not load the cycling layer."));
   });
   $("yearsPanel").addEventListener("toggle", scheduleYears);
+  setupInsights();
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;
     if (year) switchYear(year).catch(() => toast("Could not load that timetable."));

@@ -197,7 +197,7 @@ def city_faq(city: dict) -> list[tuple]:
 
 def history(city: dict) -> tuple[str, str, dict]:
     """One row per timetable year, from sources/<city>-<year>.json, and the year picker's config."""
-    rows, timetables = [], {}
+    rows, timetables, figures = [], {}, []
     for year, timetable in city["timetables"].items():
         path = ROOT / "sources" / f"{city['slug']}-{year}.json"
         if not path.exists():
@@ -210,6 +210,17 @@ def history(city: dict) -> tuple[str, str, dict]:
             "version": short_hash(SITE / "data" / f"{city['slug']}-{year}.json"),
             "label": f"{'Draft ' if timetable.get('draft') else ''}{year} timetable, {long_date(sources['referenceDate'], weekday=True)}",
         }
+        figures.append({
+            "year": year,
+            "draft": bool(timetable.get("draft")),
+            "day": long_date(sources["referenceDate"], weekday=True),
+            "population": stats["population"],
+            "jobs": stats["jobs"],
+            "within15": stats["within15"],
+            "within30": stats["within30"],
+            "railStations": stats["railStations"],
+            "tramLines": len(trams),
+        })
         rows.append(
             f"            <tr><td><strong>{year}</strong>{' (draft)' if timetable.get('draft') else ''}</td>"
             f"<td>{long_date(sources['referenceDate'])}</td><td>{len(trams)}</td><td>{stats['railStations']}</td>"
@@ -222,7 +233,7 @@ def history(city: dict) -> tuple[str, str, dict]:
         "and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer "
         "trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed."
     )
-    return "\n".join(rows), note, timetables
+    return "\n".join(rows), note, timetables, figures
 
 
 def fetched(entry: dict | None) -> str:
@@ -328,7 +339,7 @@ def render_page(template: Template, city: dict) -> str:
         f'<td>{line["stations"]}</td><td>~{num(line["headway"])} min</td></tr>'
         for line in table_lines
     )
-    history_rows, history_note, timetables = history(city)
+    history_rows, history_note, timetables, figures = history(city)
     year_buttons = "\n".join(
         f'              <button type="button" data-year="{year}" aria-pressed="{str(year == city["defaultTimetable"]).lower()}">{year}</button>'
         for year in timetables
@@ -338,6 +349,8 @@ def render_page(template: Template, city: dict) -> str:
         "name": city["name"],
         "timetables": timetables,
         "defaultTimetable": city["defaultTimetable"],
+        "history": figures,
+        "center": stats["center"],
         "bikeVersion": short_hash(SITE / "data" / f"{city['slug']}-bike.json"),
         "defaultFrom": city["defaultFrom"],
         "railNoun": city["railNoun"],

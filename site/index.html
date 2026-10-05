@@ -114,10 +114,10 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=d690f14b" />
+    <link rel="stylesheet" href="./styles.css?v=bbf12a35" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "fc00091c", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "65d9eaf9", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "2254d215", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "6e007548", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "bikeVersion": "dd4b6081", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
+    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "fc00091c", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "65d9eaf9", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "2254d215", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "6e007548", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "history": [{"year": "2022", "draft": false, "day": "Tuesday 25 October 2022", "population": {"total": 717159, "45": 658837, "30": 412707, "15": 62452}, "jobs": {"total": 761616, "45": 734668, "30": 621844, "15": 228917}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14}, {"year": "2024", "draft": false, "day": "Tuesday 22 October 2024", "population": {"total": 717159, "45": 654754, "30": 427870, "15": 79588}, "jobs": {"total": 761616, "45": 729988, "30": 620104, "15": 247340}, "within15": 35, "within30": 87, "railStations": 289, "tramLines": 16}, {"year": "2026", "draft": false, "day": "Tuesday 20 October 2026", "population": {"total": 717159, "45": 642700, "30": 415214, "15": 81684}, "jobs": {"total": 761616, "45": 727559, "30": 612366, "15": 243376}, "within15": 34, "within30": 84, "railStations": 286, "tramLines": 19}, {"year": "2027", "draft": true, "day": "Tuesday 23 November 2027", "population": {"total": 717159, "45": 645495, "30": 426155, "15": 88222}, "jobs": {"total": 761616, "45": 726737, "30": 619363, "15": 242047}, "within15": 34, "within30": 89, "railStations": 280, "tramLines": 16}], "center": "Zürich HB", "bikeVersion": "dd4b6081", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
     <div class="frame">
     <header class="topbar">
       <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
@@ -339,18 +339,49 @@
           <h2 id="history-title">The network over time</h2>
           <span class="block-desc">The same model on each year's official timetable; residents and jobs held at today's numbers.</span>
         </header>
-        <div class="card">
-          <table class="data-table">
-            <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
-            <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
-            <tbody>
+        <div id="insights" class="insights">
+          <div class="insights-head">
+            <h3>Insights <span id="insCount" class="muted"></span></h3>
+            <div class="pager">
+              <button id="insPrev" type="button" class="pager-button" aria-label="Previous insight">‹</button>
+              <button id="insNext" type="button" class="pager-button" aria-label="Next insight">›</button>
+            </div>
+          </div>
+          <p id="insLede" class="insights-lede" aria-live="polite"></p>
+          <div class="insight-card">
+            <div class="insight-title">
+              <span id="insArrow" class="insight-arrow" aria-hidden="true"></span>
+              <strong id="insTitle"></strong>
+              <span id="insTag" class="tag"></span>
+            </div>
+            <div class="chart-panel">
+              <div class="chart-bar">
+                <span id="insRef" class="muted"></span>
+                <div id="insMetric" class="segmented" role="group" aria-label="Measure"></div>
+              </div>
+              <div id="insChart" class="chart" role="img"></div>
+            </div>
+            <div class="insight-foot">
+              <div id="insValue" class="insight-value"></div>
+              <div class="insight-delta"><span id="insDelta"></span> <span id="insVs" class="muted"></span></div>
+            </div>
+          </div>
+          <details class="expander insights-table">
+            <summary>Show as table</summary>
+            <div class="expander-body">
+              <table class="data-table">
+                <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
+                <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+                <tbody>
             <tr><td><strong>2022</strong></td><td>25 October 2022</td><td>14</td><td>265</td><td>93%</td><td>413k</td><td>622k</td></tr>
             <tr><td><strong>2024</strong></td><td>22 October 2024</td><td>16</td><td>289</td><td>87%</td><td>428k</td><td>620k</td></tr>
             <tr><td><strong>2026</strong></td><td>20 October 2026</td><td>19</td><td>286</td><td>84%</td><td>415k</td><td>612k</td></tr>
             <tr><td><strong>2027</strong> (draft)</td><td>23 November 2027</td><td>16</td><td>280</td><td>89%</td><td>426k</td><td>619k</td></tr>
-            </tbody>
-          </table>
-          <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
+                </tbody>
+              </table>
+              <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -414,6 +445,6 @@
     </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=debaf99d"></script>
+    <script type="module" src="./app.js?v=d36082cf"></script>
   </body>
 </html>

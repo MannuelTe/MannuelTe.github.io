@@ -98,10 +98,10 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=598e9a28" />
+    <link rel="stylesheet" href="./styles.css?v=3878de18" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "bdb1fd0d", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "43459b28", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "d608b76f", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "57cf0b32", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
+    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "d13e1f52", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "43459b28", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "d608b76f", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "57cf0b32", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
     <header class="topbar">
       <nav class="topbar-inner" aria-label="Main navigation">
         <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
@@ -291,7 +291,7 @@
             <tr><td><strong>2027</strong> (draft)</td><td>23 November 2027</td><td>16</td><td>280</td><td>96%</td><td>533k</td><td>684k</td></tr>
           </tbody>
         </table>
-        <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: tram diversions for construction work (temporary lines 50 and 51). 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
+        <p class="table-note">2022: before the Limmattalbahn&#x27;s second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer trips than the final one. 2022 and 2024 come from the Mobility Database&#x27;s archive of the Swiss feed.</p>
       </section>
 
       <section class="section" aria-labelledby="faq-title">
@@ -302,6 +302,19 @@
         <details class="faq"><summary>How are travel times computed?</summary><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. No real-time data or disruptions: this is the city « on paper ».</p></details>
         <details class="faq"><summary>Where do the resident and job figures come from?</summary><p>From the Federal Statistical Office&#x27;s hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></details>
         <details class="faq"><summary>Why do some tram lines look unusual?</summary><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></details>
+        <details class="faq sources">
+          <summary>Data sources</summary>
+          <dl>
+          <dt>Timetables (GTFS)</dt><dd>Swiss national timetable, published by <a href="https://opentransportdata.swiss/">opentransportdata.swiss</a> (<a href="https://opentransportdata.swiss/en/terms-of-use/">terms of use</a>); older years from the <a href="https://mobilitydatabase.org/">Mobility Database</a> archive. Clipped to the Zurich area.<ul><li><a href="https://mobilitydatabase.org/feeds/mdb-1092">Swiss timetable 2022, last version archived by the Mobility Database (mdb-1092)</a>, valid 2021-12-12 → 2022-12-14, downloaded 5 October 2026.</li><li><a href="https://mobilitydatabase.org/feeds/mdb-2144">Swiss timetable 2024, last version archived by the Mobility Database (mdb-2144)</a>, valid 2023-12-10 → 2024-12-19, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020">Swiss timetable 2026 (opentransportdata.swiss)</a>, valid 2025-12-14 → 2026-12-12, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020">Swiss timetable 2027, first published version (opentransportdata.swiss)</a>, valid 2026-12-13 → 2027-12-11, downloaded 5 October 2026.</li></ul></dd>
+          <dt>Municipal and district boundaries</dt><dd><a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swissBOUNDARIES3D</a> (swisstopo, via api3.geo.admin.ch) and the 12 Stadtkreise from <a href="https://data.stadt-zuerich.ch/">Stadt Zürich Open Data</a>, downloaded 5 October 2026. Open government data.</dd>
+          <dt>Residents</dt><dd><a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html">STATPOP 2024</a> hectare grid, Federal Statistical Office (BFS), downloaded 5 October 2026.</dd>
+          <dt>Jobs</dt><dd><a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36073031.html">STATENT 2023</a> hectare grid (employees, all sectors), BFS, downloaded 5 October 2026.</dd>
+          <dt>Elevation</dt><dd>swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the <a href="https://api3.geo.admin.ch/services/sdiservices.html#profile">geo.admin.ch profile service</a>, downloaded 5 October 2026.</dd>
+          <dt>Lines, lakes, parks and cycling streets</dt><dd>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API, downloaded 5 October 2026.</dd>
+          <dt>Address search</dt><dd>Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> (swisstopo) from your browser.</dd>
+          <dt>Method</dt><dd>Fork of <a href="https://github.com/camilleroux/montpellier-temps-transport">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, dates) in <a href="https://github.com/MannuelTe/zurich-temps-transport/tree/main/sources">sources/</a>.</dd>
+          </dl>
+        </details>
       </section>
     </main>
 

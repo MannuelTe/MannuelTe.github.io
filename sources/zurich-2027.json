@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:46:25+00:00",
+  "builtAt": "2026-10-05T18:59:20+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -72,6 +72,27 @@
       "bytes": 4242292,
       "sha256": "521248608061ced0e08b427db75234c809a4ed47cc2f3bc3104c52569c4bb243"
     }
+  },
+  "population": {
+    "source": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",
+    "how": "download",
+    "fetchedAt": "2026-10-05T18:37:54+00:00",
+    "bytes": 13156696,
+    "sha256": "af09dda6c013a30b5de1b567298fa7e791ff6fecb8339da1067eada3f217c053"
+  },
+  "jobs": {
+    "source": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36073031/master",
+    "how": "download",
+    "fetchedAt": "2026-10-05T18:37:54+00:00",
+    "bytes": 13614222,
+    "sha256": "768dce5cba6200e4d94dc79080d86b466132da564b379fd627fc03269470a512"
+  },
+  "elevation": {
+    "source": "https://api3.geo.admin.ch/rest/services/profile.json (COMB terrain model), 100 m LV95 grid",
+    "how": "download",
+    "fetchedAt": "2026-10-05T18:43:47+00:00",
+    "bytes": 354764,
+    "sha256": "eba453a4a81e47ef27698f20dcf89a08283f56cdc34407b9ab66b9b7a829e64a"
   },
   "railGeometry": "OpenStreetMap",
   "excludedRoutes": [],

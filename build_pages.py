@@ -202,11 +202,69 @@ def history(city: dict) -> tuple[str, str, dict]:
             f"<td>{stats['within30']}%</td><td>{people(stats['population'].get('30', 0))}</td><td>{people(stats['jobs'].get('30', 0))}</td></tr>"
         )
     note = (
-        "2022: before the Limmattalbahn's second stage (tram 20 to Killwangen, December 2022). 2026: tram diversions "
-        "for construction work (temporary lines 50 and 51). 2027: first published version of the timetable, with fewer "
+        "2022: before the Limmattalbahn's second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and "
+        "S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and "
+        "Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 "
+        "and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer "
         "trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed."
     )
     return "\n".join(rows), note, timetables
+
+
+def fetched(entry: dict | None) -> str:
+    return f", downloaded {long_date(entry['fetchedAt'])}" if entry and entry.get("fetchedAt") else ""
+
+
+def sources_block(city: dict) -> str:
+    """Every input with its link, licence, download date and use: the « Data sources » expander under the map."""
+    main = city["sources"]
+    years = []
+    for year, timetable in city["timetables"].items():
+        path = ROOT / "sources" / f"{city['slug']}-{year}.json"
+        if path.exists():
+            gtfs = json.loads(path.read_text(encoding="utf-8"))["gtfs"]
+            period = gtfs.get("servicePeriod") or ["?", "?"]
+            years.append(
+                f'<li><a href="{esc(timetable["dataset"])}">{esc(timetable.get("note") or year)}</a>, valid '
+                f"{esc(period[0])} → {esc(period[1])}{esc(fetched(gtfs))}.</li>"
+            )
+    osm = main.get("openStreetMap", {})
+    items = [
+        ("Timetables (GTFS)",
+         f'Swiss national timetable, published by <a href="https://opentransportdata.swiss/">opentransportdata.swiss</a> '
+         f'(<a href="{LICENCES["opentransportdata"][1]}">terms of use</a>); older years from the '
+         f'<a href="https://mobilitydatabase.org/">Mobility Database</a> archive. Clipped to the Zurich area.<ul>{"".join(years)}</ul>'),
+        ("Municipal and district boundaries",
+         f'<a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swissBOUNDARIES3D</a> (swisstopo, '
+         f'via api3.geo.admin.ch) and the 12 Stadtkreise from <a href="https://data.stadt-zuerich.ch/">Stadt Zürich Open Data</a>'
+         f'{esc(fetched(main.get("boundaries")))}. Open government data.'),
+        ("Residents",
+         f'<a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html">'
+         f'STATPOP 2024</a> hectare grid, Federal Statistical Office (BFS){esc(fetched(main.get("population")))}.'),
+        ("Jobs",
+         f'<a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36073031.html">'
+         f'STATENT 2023</a> hectare grid (employees, all sectors), BFS{esc(fetched(main.get("jobs")))}.'),
+        ("Elevation",
+         f'swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the '
+         f'<a href="https://api3.geo.admin.ch/services/sdiservices.html#profile">geo.admin.ch profile service</a>'
+         f'{esc(fetched(main.get("elevation")))}.'),
+        ("Lines, lakes, parks and cycling streets",
+         f'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API'
+         f'{esc(fetched(osm.get("osm_water_parks")))}.'),
+        ("Address search",
+         'Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> '
+         "(swisstopo) from your browser."),
+        ("Method",
+         f'Fork of <a href="{UPSTREAM_URL}">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, '
+         f'dates) in <a href="{GITHUB_URL}/tree/main/sources">sources/</a>.'),
+    ]
+    rows = "\n".join(f"          <dt>{esc(title)}</dt><dd>{body}</dd>" for title, body in items)
+    return f"""        <details class="faq sources">
+          <summary>Data sources</summary>
+          <dl>
+{rows}
+          </dl>
+        </details>"""
 
 
 def render_page(template: Template, city: dict) -> str:
@@ -289,7 +347,7 @@ def render_page(template: Template, city: dict) -> str:
         "history_rows": history_rows,
         "history_note": esc(history_note),
         "center": esc(stats["center"]),
-        "faq_html": faq_block(faq),
+        "faq_html": faq_block(faq) + "\n" + sources_block(city),
         "styles_version": short_hash(SITE / "styles.css"),
         "app_version": short_hash(SITE / "app.js"),
     }

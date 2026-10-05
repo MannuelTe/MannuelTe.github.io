@@ -304,6 +304,24 @@ def fetch_elevation(city: dict, out: Path) -> None:
     record(out, "elevation.json", f"{PROFILE_URL} (COMB terrain model), {step} m LV95 grid")
 
 
+# Streets cyclists may use, as in the GIS_playground_ZH cycling model (osmnx "bike" filter minus footways, plus
+# footways and paths where cycling is explicitly allowed).
+BIKE_FILTERS = [
+    '["highway"]["area"!~"yes"]["highway"!~"abandoned|bus_guideway|construction|corridor|elevator|escalator|footway|'
+    'motor|no|planned|platform|proposed|raceway|razed|steps|pedestrian|bridleway"]'
+    '["bicycle"!~"no"]["service"!~"private"]["access"!~"private|no"]',
+    '["highway"~"footway|pedestrian|bridleway|path"]["bicycle"~"yes|designated|permissive"]',
+]
+
+
+def fetch_bike_network(city: dict, out: Path) -> None:
+    print("Cycling network (OSM)…")
+    area = bbox(city["gtfsClipBbox"])
+    query = "[out:json][timeout:300];(" + "".join(f"way{f}({area});" for f in BIKE_FILTERS) + ");out body;>;out skel qt;"
+    (out / "osm_bike.json").write_bytes(overpass(query))
+    record(out, "osm_bike.json", f"Overpass API: {query}")
+
+
 def fetch_bfs(out: Path) -> None:
     for name, url in BFS_ASSETS.items():
         print(f"BFS hectare grid {name}…")
@@ -327,6 +345,7 @@ def main() -> None:
     fetch_osm(city, out)
     fetch_bfs(out)
     fetch_elevation(city, out)
+    fetch_bike_network(city, out)
 
 
 if __name__ == "__main__":

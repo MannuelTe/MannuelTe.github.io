@@ -1111,8 +1111,11 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
         "boundaries": {"municipalities": city["municipalities"], **manifest.get("communes.geojson", {})},
         "openStreetMap": {
             "licence": "ODbL, © OpenStreetMap contributors",
-            **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json") if name in manifest},
+            **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json", "osm_bike.json") if name in manifest},
         },
+        "population": manifest.get("statpop.zip"),
+        "jobs": manifest.get("statent.zip"),
+        "elevation": manifest.get("elevation.json"),
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
         "excludedRoutes": city.get("excludeRoutes", []),
         "network": {

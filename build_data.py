@@ -72,7 +72,8 @@ MODE_ACCESS_MINUTES = {"metro": 1.0, "sbahn": 1.5, "train": 1.5, "funicular": 1.
 MODE_COLORS = {"tram": "#1d4f91", "sbahn": "#2b74c7", "train": "#c7202f", "funicular": "#6b4c9a", "cable": "#6b4c9a",
                "ferry": "#1f8fbf", "bus": "#888888"}
 # Modes whose lines share the wait towards a common next stop.
-WAIT_GROUPS = {"sbahn": "rail", "train": "rail", "tram": "tram", "bus": "bus", "busway": "bus"}
+WAIT_GROUPS = {"sbahn": "rail", "train": "rail", "tram": "tram", "bus": "bus", "busway": "bus",
+               "funicular": "funicular", "cable": "cable", "ferry": "ferry"}
 # Lines of these modes are listed in the page's table (long-distance trains would swamp it).
 TABLE_MODES = ("tram", "sbahn", "funicular", "cable")
 # Communes kept when a city config says "communes": "served": enough stops, and not too far from tram/metro.
@@ -718,7 +719,10 @@ def extract_network(data_dir: Path, city: dict):
     departures: Dict[Tuple[int, str], Counter] = defaultdict(Counter)
     # Departures towards each next stop, all lines of a mode group together (see waits below).
     toward: Counter = Counter()
-    group_of = {route_id: WAIT_GROUPS.get(route_mode(row.get("route_type", "3")), "bus") for route_id, row in routes.items()}
+    group_of = {
+        route_id: WAIT_GROUPS.get(mode_overrides.get(row.get("route_short_name", ""), route_mode(row.get("route_type", "3"))), "bus")
+        for route_id, row in routes.items()
+    }
     window_start, window_end = SERVICE_WINDOW
     for trip_id, sequence in stop_times.items():
         trip = trips[trip_id]

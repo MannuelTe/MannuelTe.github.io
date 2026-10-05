@@ -863,11 +863,19 @@ function drawIsochrones() {
 function drawStops() {
   const { stations } = app.data;
   if (app.includeBus) {
-    ctx.fillStyle = "rgba(60, 60, 60, 0.45)";
+    // Bus stops: small white dots with a grey ring, a step below the rail stops.
+    const busRadius = app.view.scale > STOP_LABEL_SCALE ? 2.4 : 1.6;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(60, 64, 75, 0.75)";
+    ctx.fillStyle = "#fff";
     for (const station of stations) {
       if (station.rail) continue;
       const [x, y] = project(station.point);
-      ctx.fillRect(x - 1, y - 1, 2, 2);
+      if (x < -5 || y < -5 || x > app.size.width + 5 || y > app.size.height + 5) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, busRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
   }
   const radius = app.view.scale > STOP_LABEL_SCALE ? 3.2 : 2.2;
@@ -967,6 +975,50 @@ async function loadStreets() {
   requestRender();
 }
 
+// Bus and trolleybus lines (OSM route relations, data/<city>-buses.json), drawn thin under the rail lines when
+// buses are on; only the lines that run in the selected timetable year.
+async function loadBusLines() {
+  const payload = await (await fetch(new URL(`./data/${CITY.slug}-buses.json?v=${CITY.busesVersion}`, import.meta.url))).json();
+  const [ox0, oy0] = payload.origin;
+  app.busLines = Object.entries(payload.lines).map(([ref, line]) => {
+    const path = new Path2D();
+    for (const flat of line.ways) {
+      let x = ox0;
+      let y = oy0;
+      for (let i = 0; i < flat.length; i += 2) {
+        x += flat[i];
+        y += flat[i + 1];
+        if (i === 0) path.moveTo(x - app.offset[0], y - app.offset[1]);
+        else path.lineTo(x - app.offset[0], y - app.offset[1]);
+      }
+    }
+    return { ref, color: line.color, path };
+  });
+  requestRender();
+}
+
+function drawBusLines() {
+  if (!app.includeBus || !app.busLines) return;
+  const running = new Set(
+    Object.values(app.data.routeInfo)
+      .filter((info) => !info.rail && !info.trunkOf)
+      .map((info) => info.name),
+  );
+  const px = 1 / app.view.scale;
+  const zoom = app.view.scale / app.view.fitScale;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.globalAlpha = 0.75;
+  ctx.lineWidth = (zoom > 3 ? 2 : 1.4) * px;
+  for (const line of app.busLines) {
+    if (!running.has(line.ref)) continue;
+    ctx.strokeStyle = line.color;
+    ctx.stroke(line.path);
+  }
+  ctx.restore();
+}
+
 function drawStreets() {
   if (!app.basemap || !app.streets) return;
   const zoom = app.view.scale / app.view.fitScale;
@@ -1031,6 +1083,7 @@ function render() {
   ctx.fillStyle = COLORS.water;
   for (const water of app.paths.water) ctx.fill(water, "evenodd");
 
+  drawBusLines();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   for (const route of app.paths.routes) {
@@ -2089,6 +2142,7 @@ async function init() {
   if (new URLSearchParams(location.search).get("mode") === "bike") await setMode("bike").catch(() => toast("Could not load the cycling layer."));
   restoreFromUrl();
   loadStreets().catch((error) => console.error("streets", error));
+  loadBusLines().catch((error) => console.error("bus lines", error));
   new ResizeObserver(resize).observe(canvas);
   $("modePicker").addEventListener("click", (event) => {
     const mode = event.target.closest("button")?.dataset.mode;

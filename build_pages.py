@@ -280,6 +280,9 @@ def sources_block(city: dict) -> str:
          'Faint street layer drawn from the same OpenStreetMap network as the bike layer (major roads, streets and '
          'paths; service roads left out), © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap '
          'contributors</a>. Untick « Streets » to hide it.'),
+        ("Bus lines",
+         'Drawn from OpenStreetMap bus and trolleybus route relations, matched to the timetable by line number (the Swiss '
+         'GTFS has no line shapes); shown with « Bus and boat ».'),
         ("Address search",
          'Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> '
          "(swisstopo) from your browser."),
@@ -357,6 +360,7 @@ def render_page(template: Template, city: dict) -> str:
         "center": stats["center"],
         "bikeVersion": short_hash(SITE / "data" / f"{city['slug']}-bike.json"),
         "streetsVersion": short_hash(SITE / "data" / f"{city['slug']}-streets.json"),
+        "busesVersion": short_hash(SITE / "data" / f"{city['slug']}-buses.json"),
         "defaultFrom": city["defaultFrom"],
         "railNoun": city["railNoun"],
         "railStations": city["railStations"],

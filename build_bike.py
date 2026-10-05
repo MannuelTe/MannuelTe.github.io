@@ -255,6 +255,65 @@ def write_streets(city: dict, meta: dict) -> None:
     print(f"Wrote {path.relative_to(ROOT)} ({path.stat().st_size / 1e6:.2f} MB, {counts}, {total} points)")
 
 
+BUS_TOLERANCE_METERS = 5.0
+BUS_FALLBACK_COLOR = "#8a8d96"
+
+
+def too_light(colour: str) -> bool:
+    """White or near-white route colours (some OSM bus relations) vanish on the map: use the fallback grey."""
+    r, g, b = (int(colour[i:i + 2], 16) for i in (1, 3, 5))
+    return 0.299 * r + 0.587 * g + 0.114 * b > 215
+
+
+def write_bus_lines(city: dict, meta: dict) -> None:
+    """Bus and trolleybus line geometry from OSM route relations (data/<city>/osm_bus.json), keyed by line number:
+    the Swiss GTFS has no shapes. Year-independent; the page draws the lines that run in the selected timetable."""
+    source = ROOT / "data" / city["slug"] / "osm_bus.json"
+    if not source.exists():
+        print("  osm_bus.json missing: no bus lines on the map")
+        return
+    min_x, min_y, max_x, max_y = meta["bounds"]
+    ox, oy = round(min_x), round(min_y)
+    by_ref: dict = {}
+    seen = defaultdict(set)
+    colours = defaultdict(lambda: defaultdict(int))
+    for relation in bd.load_json(source)["elements"]:
+        tags = relation.get("tags", {})
+        ref = tags.get("ref", "").strip()
+        if relation["type"] != "relation" or not ref:
+            continue
+        colour = tags.get("colour", "")
+        for member in relation.get("members", []):
+            if member["type"] != "way" or member.get("role") not in ("", None, "forward", "backward") or member["ref"] in seen[ref]:
+                continue
+            seen[ref].add(member["ref"])
+            runs = [[]]
+            for node in member.get("geometry", []):
+                x, y = bd.lonlat_to_xy(node["lon"], node["lat"])
+                if min_x <= x <= max_x and min_y <= y <= max_y:
+                    runs[-1].append((x, y))
+                elif runs[-1]:
+                    runs.append([])
+            for run in runs:
+                if len(run) < 2:
+                    continue
+                flat, px, py = [], ox, oy
+                for x, y in douglas_peucker(run, BUS_TOLERANCE_METERS):
+                    ix, iy = round(x), round(y)
+                    flat += [ix - px, iy - py]
+                    px, py = ix, iy
+                by_ref.setdefault(ref, []).append(flat)
+                if colour.startswith("#") and len(colour) == 7 and not too_light(colour):
+                    colours[ref][colour.upper()] += 1
+    lines = {
+        ref: {"color": max(colours[ref].items(), key=lambda item: item[1])[0] if colours[ref] else BUS_FALLBACK_COLOR, "ways": ways}
+        for ref, ways in sorted(by_ref.items())
+    }
+    path = ROOT / "site" / "data" / f"{city['slug']}-buses.json"
+    path.write_text(json.dumps({"origin": [ox, oy], "lines": lines}, separators=(",", ":")), encoding="utf-8")
+    print(f"Wrote {path.relative_to(ROOT)} ({path.stat().st_size / 1e6:.2f} MB, {len(lines)} lines)")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -331,6 +390,7 @@ def main() -> None:
         "adjacency": adjacency,
     }
     write_streets(city, meta)
+    write_bus_lines(city, meta)
     path = ROOT / "site" / "data" / f"{city['slug']}-bike.json"
     path.write_text(json.dumps(output, separators=(",", ":")), encoding="utf-8")
     edge_count = sum(len(e) for e in adjacency)

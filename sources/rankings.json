@@ -1,0 +1,1760 @@
+{
+  "montpellier": {
+    "city": "Montpellier",
+    "slug": "montpellier",
+    "path": "montpellier/",
+    "externalUrl": null,
+    "network": "TaM",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tam",
+      "licence": "odbl",
+      "fetchedAt": "2026-10-03"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Comédie",
+      "firstWeekday": {
+        "time": "04:54",
+        "seconds": 17640,
+        "line": "2"
+      },
+      "lastWeekday": {
+        "time": "01:28 (+1)",
+        "seconds": 91680,
+        "line": "2"
+      },
+      "lastSaturday": {
+        "time": "02:26 (+1)",
+        "seconds": 95160,
+        "line": "2"
+      }
+    },
+    "busiestStation": {
+      "station": "Corum",
+      "tied": [],
+      "passages": 942
+    },
+    "lines": {
+      "1": {
+        "mode": "tram",
+        "color": "#005CA9",
+        "peakPassages": 16,
+        "peakHeadway": 3.8,
+        "endToEndMinutes": 59,
+        "endToEnd": "Gare Sud de France → Mosson"
+      },
+      "2": {
+        "mode": "tram",
+        "color": "#EF7D00",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 41,
+        "endToEnd": "Notre-Dame de Sablassou → Saint-Jean de Védas Centre"
+      },
+      "3": {
+        "mode": "tram",
+        "color": "#C8D400",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 47,
+        "endToEnd": "Mosson → Pérols Étang de l'Or"
+      },
+      "4": {
+        "mode": "tram",
+        "color": "#4B2A0E",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 35,
+        "endToEnd": "Garcia Lorca → Garcia Lorca"
+      },
+      "5": {
+        "mode": "tram",
+        "color": "#287431",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 50,
+        "endToEnd": "Clapiers → Grés de Montpellier"
+      }
+    },
+    "weekdayTrips": 1491
+  },
+  "bordeaux": {
+    "city": "Bordeaux",
+    "slug": "bordeaux",
+    "path": "bordeaux/",
+    "externalUrl": null,
+    "network": "TBM",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-et-scolaire-tbm",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-05",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Quinconces",
+      "firstWeekday": {
+        "time": "04:12",
+        "seconds": 15154,
+        "line": "D"
+      },
+      "lastWeekday": {
+        "time": "02:33 (+1)",
+        "seconds": 95580,
+        "line": "C"
+      },
+      "lastSaturday": {
+        "time": "02:27 (+1)",
+        "seconds": 95264,
+        "line": "D"
+      }
+    },
+    "busiestStation": {
+      "station": "Porte de Bourgogne",
+      "tied": [],
+      "passages": 1362
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#831F82",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 69,
+        "endToEnd": "Le Haillan Rostand → La Gardette - Bassens - Carbon-Blanc"
+      },
+      "B": {
+        "mode": "tram",
+        "color": "#E50040",
+        "peakPassages": 18,
+        "peakHeadway": 3.3,
+        "endToEndMinutes": 54,
+        "endToEnd": "Berges de la Garonne → Pessac Centre"
+      },
+      "C": {
+        "mode": "tram",
+        "color": "#D35098",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 53,
+        "endToEnd": "Villenave Pyrénées → Parc des Expositions"
+      },
+      "D": {
+        "mode": "tram",
+        "color": "#9262A3",
+        "peakPassages": 8,
+        "peakHeadway": 7.5,
+        "endToEndMinutes": 47,
+        "endToEnd": "Carle Vernet → Cantinolle"
+      },
+      "E": {
+        "mode": "tram",
+        "color": "#967651",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 56,
+        "endToEnd": "Floirac Dravemont → Gare de Blanquefort"
+      },
+      "F": {
+        "mode": "tram",
+        "color": "#F08700",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 61,
+        "endToEnd": "Gare de bègles → Aéroport"
+      }
+    },
+    "weekdayTrips": 1917
+  },
+  "lyon": {
+    "city": "Lyon",
+    "slug": "lyon",
+    "path": "lyon/",
+    "externalUrl": null,
+    "network": "TCL",
+    "source": {
+      "dataset": "https://data.grandlyon.com/portail/fr/jeux-de-donnees/horaires-theoriques-du-reseau-transports-en-commun-lyonnais/info",
+      "licence": "mobilites",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Bellecour",
+      "firstWeekday": {
+        "time": "04:52",
+        "seconds": 17523,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "00:31 (+1)",
+        "seconds": 88261,
+        "line": "D"
+      },
+      "lastSaturday": {
+        "time": "02:11 (+1)",
+        "seconds": 94260,
+        "line": "D"
+      }
+    },
+    "busiestStation": {
+      "station": "Saxe - Gambetta",
+      "tied": [],
+      "passages": 1716
+    },
+    "lines": {
+      "A": {
+        "mode": "metro",
+        "color": "#E8308A",
+        "peakPassages": 21,
+        "peakHeadway": 2.9,
+        "endToEndMinutes": 19,
+        "endToEnd": "Vaulx-en-Velin La Soie → Perrache"
+      },
+      "B": {
+        "mode": "metro",
+        "color": "#0075BF",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 20,
+        "endToEnd": "Charpennes Charles Hernu → St-Genis-Laval Hôp. Sud"
+      },
+      "C": {
+        "mode": "metro",
+        "color": "#EC6608",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 8,
+        "endToEnd": "Hôtel de Ville L. Pradel → Cuire"
+      },
+      "D": {
+        "mode": "metro",
+        "color": "#009E3D",
+        "peakPassages": 34,
+        "peakHeadway": 1.8,
+        "endToEndMinutes": 24,
+        "endToEnd": "Gare de Vaise-G.Collomb → Gare de Vénissieux"
+      },
+      "T1": {
+        "mode": "tram",
+        "color": "#004F9F",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 47,
+        "endToEnd": "IUT Feyssine → Debourg"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#6BA230",
+        "peakPassages": 14,
+        "peakHeadway": 4.3,
+        "endToEndMinutes": 54,
+        "endToEnd": "Hôtel Région Montrochet → Saint-Priest Bel Air"
+      },
+      "T3": {
+        "mode": "tram",
+        "color": "#00A3A6",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 30,
+        "endToEnd": "Gare Part-Dieu Villette → Meyzieu les Panettes"
+      },
+      "T4": {
+        "mode": "tram",
+        "color": "#662483",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 53,
+        "endToEnd": "IUT Feyssine → Hôp. Feyzin Vénissieux"
+      },
+      "T5": {
+        "mode": "tram",
+        "color": "#EC6608",
+        "peakPassages": 5,
+        "peakHeadway": 12.0,
+        "endToEndMinutes": 20,
+        "endToEnd": "Grange Blanche → Eurexpo Entrée Princ."
+      },
+      "T6": {
+        "mode": "tram",
+        "color": "#F191A3",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 45,
+        "endToEnd": "Debourg → La Doua - Gaston Berger"
+      },
+      "T7": {
+        "mode": "tram",
+        "color": "#992358",
+        "peakPassages": 4,
+        "peakHeadway": 15.0,
+        "endToEndMinutes": 11,
+        "endToEnd": "Décines OL Vallée → Vaulx-en-Velin La Soie"
+      }
+    },
+    "weekdayTrips": 4612
+  },
+  "toulouse": {
+    "city": "Toulouse",
+    "slug": "toulouse",
+    "path": "toulouse/",
+    "externalUrl": null,
+    "network": "Tisséo",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tisseo",
+      "licence": "odbl",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Capitole",
+      "firstWeekday": {
+        "time": "05:23",
+        "seconds": 19413,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "00:14 (+1)",
+        "seconds": 87286,
+        "line": "A"
+      },
+      "lastSaturday": {
+        "time": "03:14 (+1)",
+        "seconds": 98086,
+        "line": "A"
+      }
+    },
+    "busiestStation": {
+      "station": "Jean Jaurès",
+      "tied": [],
+      "passages": 1874
+    },
+    "lines": {
+      "A": {
+        "mode": "metro",
+        "color": "#db001b",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 23,
+        "endToEnd": "Basso Cambo → Balma-Gramont"
+      },
+      "B": {
+        "mode": "metro",
+        "color": "#ffdd00",
+        "peakPassages": 48,
+        "peakHeadway": 1.2,
+        "endToEndMinutes": 27,
+        "endToEnd": "Ramonville → Borderouge"
+      },
+      "T1": {
+        "mode": "tram",
+        "color": "#004687",
+        "peakPassages": 14,
+        "peakHeadway": 4.3,
+        "endToEndMinutes": 46,
+        "endToEnd": "Palais de Justice → MEETT"
+      }
+    },
+    "weekdayTrips": 2264
+  },
+  "marseille": {
+    "city": "Marseille",
+    "slug": "marseille",
+    "path": "marseille/",
+    "externalUrl": null,
+    "network": "RTM",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseaux-urbains-de-la-metropole-aix-marseille-provence",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Vieux-Port",
+      "firstWeekday": {
+        "time": "05:10",
+        "seconds": 18659,
+        "line": "M1"
+      },
+      "lastWeekday": {
+        "time": "21:42",
+        "seconds": 78179,
+        "line": "M1"
+      },
+      "lastSaturday": {
+        "time": "00:44 (+1)",
+        "seconds": 89079,
+        "line": "M1"
+      }
+    },
+    "busiestStation": {
+      "station": "Castellane",
+      "tied": [],
+      "passages": 1176
+    },
+    "lines": {
+      "M1": {
+        "mode": "metro",
+        "color": "#009FE3",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 24,
+        "endToEnd": "La Rose → La Fourragère"
+      },
+      "M2": {
+        "mode": "metro",
+        "color": "#E30613",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 17,
+        "endToEnd": "Gèze → Sainte-Marguerite Dromel"
+      },
+      "T1": {
+        "mode": "tram",
+        "color": "#F28C00",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 22,
+        "endToEnd": "Noailles → Les Caillols"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#F4E718",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 22,
+        "endToEnd": "La Blancarde → Arenc Euroméditerranée"
+      },
+      "T3": {
+        "mode": "tram",
+        "color": "#95C11F",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 41,
+        "endToEnd": "Gèze → La Gaye"
+      }
+    },
+    "weekdayTrips": 1872
+  },
+  "lille": {
+    "city": "Lille",
+    "slug": "lille",
+    "path": "lille/",
+    "externalUrl": null,
+    "network": "Ilévia",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/ilevia-localisation-des-arrets-bus-metro-et-tram-gtfs",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Rihour",
+      "firstWeekday": {
+        "time": "05:08",
+        "seconds": 18490,
+        "line": "M1"
+      },
+      "lastWeekday": {
+        "time": "00:31 (+1)",
+        "seconds": 88299,
+        "line": "M1"
+      },
+      "lastSaturday": {
+        "time": "01:31 (+1)",
+        "seconds": 91899,
+        "line": "M1"
+      }
+    },
+    "busiestStation": {
+      "station": "Gare Lille Flandres",
+      "tied": [],
+      "passages": 2445
+    },
+    "lines": {
+      "M1": {
+        "mode": "metro",
+        "color": "#FDC41F",
+        "peakPassages": 40,
+        "peakHeadway": 1.5,
+        "endToEndMinutes": 24,
+        "endToEnd": "Chu - Eurasanté → 4 Cantons Stade P. Mauroy"
+      },
+      "M2": {
+        "mode": "metro",
+        "color": "#E30613",
+        "peakPassages": 45,
+        "peakHeadway": 1.3,
+        "endToEndMinutes": 55,
+        "endToEnd": "Saint Philibert → C.H. Dron"
+      },
+      "TRAM": {
+        "mode": "tram",
+        "color": "#009FE3",
+        "peakPassages": 16,
+        "peakHeadway": 3.8,
+        "endToEndMinutes": 31,
+        "endToEnd": "Gare Lille Flandres → Eurotéléport"
+      }
+    },
+    "weekdayTrips": 2268
+  },
+  "nantes": {
+    "city": "Nantes",
+    "slug": "nantes",
+    "path": "nantes/",
+    "externalUrl": null,
+    "network": "Naolib",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Commerce",
+      "firstWeekday": {
+        "time": "04:10",
+        "seconds": 15000,
+        "line": "1"
+      },
+      "lastWeekday": {
+        "time": "01:00 (+1)",
+        "seconds": 90000,
+        "line": "1"
+      },
+      "lastSaturday": {
+        "time": "03:00 (+1)",
+        "seconds": 97200,
+        "line": "1"
+      }
+    },
+    "busiestStation": {
+      "station": "Commerce",
+      "tied": [],
+      "passages": 1346
+    },
+    "lines": {
+      "1": {
+        "mode": "tram",
+        "color": "#007a45",
+        "peakPassages": 20,
+        "peakHeadway": 3.0,
+        "endToEndMinutes": 49,
+        "endToEnd": "François Mitterrand → Beaujoire"
+      },
+      "2": {
+        "mode": "tram",
+        "color": "#e53138",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 41,
+        "endToEnd": "Gare de Pont Rousseau → Orvault Grand Val"
+      },
+      "3": {
+        "mode": "tram",
+        "color": "#0079bc",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 47,
+        "endToEnd": "Marcel Paul → Neustrie"
+      }
+    },
+    "weekdayTrips": 1364
+  },
+  "strasbourg": {
+    "city": "Strasbourg",
+    "slug": "strasbourg",
+    "path": "strasbourg/",
+    "externalUrl": null,
+    "network": "CTS",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/donnees-theoriques-gtfs-et-temps-reel-siri-lite-du-reseau-cts",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Homme de Fer",
+      "firstWeekday": {
+        "time": "04:16",
+        "seconds": 15360,
+        "line": "F"
+      },
+      "lastWeekday": {
+        "time": "00:47 (+1)",
+        "seconds": 89220,
+        "line": "C"
+      },
+      "lastSaturday": {
+        "time": "00:47 (+1)",
+        "seconds": 89220,
+        "line": "C"
+      }
+    },
+    "busiestStation": {
+      "station": "Homme de Fer",
+      "tied": [],
+      "passages": 1404
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#E10D19",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 48,
+        "endToEnd": "Graffenstaden → Parc des Sports Zénith"
+      },
+      "B": {
+        "mode": "tram",
+        "color": "#009EE0",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 48,
+        "endToEnd": "Hoenheim Gare → Lingolsheim Tiergaertel"
+      },
+      "C": {
+        "mode": "tram",
+        "color": "#F29400",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 31,
+        "endToEnd": "Gare Centrale → Neuhof Rodolphe Reuss"
+      },
+      "D": {
+        "mode": "tram",
+        "color": "#009933",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 43,
+        "endToEnd": "Poteries → Kehl Rathaus"
+      },
+      "E": {
+        "mode": "tram",
+        "color": "#9085BA",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 43,
+        "endToEnd": "Robertsau L'Escale → Campus d'Illkirch"
+      },
+      "F": {
+        "mode": "tram",
+        "color": "#97BF0D",
+        "peakPassages": 9,
+        "peakHeadway": 6.7,
+        "endToEndMinutes": 35,
+        "endToEnd": "Place d'Islande → Wolfisheim Henri Rendu"
+      }
+    },
+    "weekdayTrips": 1746
+  },
+  "rennes": {
+    "city": "Rennes",
+    "slug": "rennes",
+    "path": "rennes/",
+    "externalUrl": null,
+    "network": "STAR",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-star",
+      "licence": "odbl",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "République",
+      "firstWeekday": {
+        "time": "05:23",
+        "seconds": 19400,
+        "line": "a"
+      },
+      "lastWeekday": {
+        "time": "00:39 (+1)",
+        "seconds": 88783,
+        "line": "a"
+      },
+      "lastSaturday": {
+        "time": "01:39 (+1)",
+        "seconds": 92383,
+        "line": "a"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Sainte-Anne",
+        "Gares"
+      ],
+      "passages": 1698
+    },
+    "lines": {
+      "a": {
+        "mode": "metro",
+        "color": "#EE1D23",
+        "peakPassages": 44,
+        "peakHeadway": 1.4,
+        "endToEndMinutes": 17,
+        "endToEnd": "J.F. Kennedy → La Poterie"
+      },
+      "b": {
+        "mode": "metro",
+        "color": "#00893E",
+        "peakPassages": 29,
+        "peakHeadway": 2.1,
+        "endToEndMinutes": 21,
+        "endToEnd": "Cesson - Viasilva → Saint-Jacques - Gaîté"
+      }
+    },
+    "weekdayTrips": 1698
+  },
+  "grenoble": {
+    "city": "Grenoble",
+    "slug": "grenoble",
+    "path": "grenoble/",
+    "externalUrl": null,
+    "network": "M réso",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-tag",
+      "licence": "odbl",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Grenoble, Victor Hugo",
+      "firstWeekday": {
+        "time": "04:53",
+        "seconds": 17580,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "01:28 (+1)",
+        "seconds": 91680,
+        "line": "A"
+      },
+      "lastSaturday": {
+        "time": "01:28 (+1)",
+        "seconds": 91680,
+        "line": "A"
+      }
+    },
+    "busiestStation": {
+      "station": "Grenoble, Alsace-Lorraine",
+      "tied": [],
+      "passages": 1183
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#3376B8",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 50,
+        "endToEnd": "Le Pont-de-Claix, L'Étoile → Fontaine, La Poya"
+      },
+      "B": {
+        "mode": "tram",
+        "color": "#479A45",
+        "peakPassages": 13,
+        "peakHeadway": 4.6,
+        "endToEndMinutes": 38,
+        "endToEnd": "Gières, Plaine des Sports → Grenoble, Oxford"
+      },
+      "C": {
+        "mode": "tram",
+        "color": "#C20078",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 31,
+        "endToEnd": "Seyssins, Le Prisme → Saint-Martin-d'Hères, Université – Condillac"
+      },
+      "D": {
+        "mode": "tram",
+        "color": "#DE9917",
+        "peakPassages": 5,
+        "peakHeadway": 12.0,
+        "endToEndMinutes": 27,
+        "endToEnd": "Grenoble, Gares → Saint-Martin-d'Hères, Étienne Grappe"
+      },
+      "E": {
+        "mode": "tram",
+        "color": "#533786",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 29,
+        "endToEnd": "Fontanil-Cornillon, Palluel → Grenoble, Louise Michel"
+      }
+    },
+    "weekdayTrips": 1578
+  },
+  "nice": {
+    "city": "Nice",
+    "slug": "nice",
+    "path": "nice/",
+    "externalUrl": null,
+    "network": "Lignes d'Azur",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/donnees-statiques-et-dynamiques-du-reseau-de-transport-lignes-dazur",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Masséna",
+      "firstWeekday": {
+        "time": "04:41",
+        "seconds": 16860,
+        "line": "L1"
+      },
+      "lastWeekday": {
+        "time": "01:05 (+1)",
+        "seconds": 90300,
+        "line": "L1"
+      },
+      "lastSaturday": {
+        "time": "01:55 (+1)",
+        "seconds": 93300,
+        "line": "L1"
+      }
+    },
+    "busiestStation": {
+      "station": "Jean Médecin",
+      "tied": [],
+      "passages": 982
+    },
+    "lines": {
+      "B": {
+        "mode": "tram",
+        "color": "#FFDD00",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 14,
+        "endToEnd": "Aéroport Terminal 2 → CADAM / Centre Administratif"
+      },
+      "L1": {
+        "mode": "tram",
+        "color": "#D20A11",
+        "peakPassages": 16,
+        "peakHeadway": 3.8,
+        "endToEndMinutes": 40,
+        "endToEnd": "Henri Sappia → Hôpital Pasteur"
+      },
+      "L2": {
+        "mode": "tram",
+        "color": "#1F488F",
+        "peakPassages": 8,
+        "peakHeadway": 7.5,
+        "endToEndMinutes": 37,
+        "endToEnd": "Aéroport Terminal 2 → Port Lympia"
+      },
+      "L3": {
+        "mode": "tram",
+        "color": "#00853E",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 45,
+        "endToEnd": "Saint-Isidore → Port Lympia"
+      }
+    },
+    "weekdayTrips": 1208
+  },
+  "angers": {
+    "city": "Angers",
+    "slug": "angers",
+    "path": "angers/",
+    "externalUrl": null,
+    "network": "Irigo",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/angers-loire-metropole-reseau-irigo-gtfs-gtfs-rt-siri",
+      "licence": "odbl",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-11-03",
+    "saturday": "2026-11-07",
+    "centre": {
+      "station": "Ralliement",
+      "firstWeekday": {
+        "time": "06:00",
+        "seconds": 21640,
+        "line": "C"
+      },
+      "lastWeekday": {
+        "time": "00:59 (+1)",
+        "seconds": 89980,
+        "line": "C"
+      },
+      "lastSaturday": {
+        "time": "01:00 (+1)",
+        "seconds": 90010,
+        "line": "C"
+      }
+    },
+    "busiestStation": {
+      "station": "Centre de Congrès",
+      "tied": [],
+      "passages": 377
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#E30613",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 41,
+        "endToEnd": "Roseraie → Avrillé-Ardenne"
+      },
+      "B": {
+        "mode": "tram",
+        "color": "#00569D",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 32,
+        "endToEnd": "Monplaisir → Belle-Beille Campus"
+      },
+      "C": {
+        "mode": "tram",
+        "color": "#379E32",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 33,
+        "endToEnd": "Roseraie → Belle-Beille Campus"
+      }
+    },
+    "weekdayTrips": 570
+  },
+  "tours": {
+    "city": "Tours",
+    "slug": "tours",
+    "path": "tours/",
+    "externalUrl": null,
+    "network": "Fil Bleu",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/fil-bleu-syndicat-des-mobilites-gtfs-gtfs-rt",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Jean Jaurès 1",
+      "firstWeekday": {
+        "time": "04:59",
+        "seconds": 17948,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "00:01 (+1)",
+        "seconds": 86478,
+        "line": "A"
+      },
+      "lastSaturday": {
+        "time": "00:01 (+1)",
+        "seconds": 86476,
+        "line": "A"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Monconseil",
+        "Marne",
+        "Coppée",
+        "Beffroi",
+        "Trois Rivières",
+        "Christ Roi",
+        "Tranchée",
+        "Charles Barrier",
+        "Place Choiseul",
+        "Porte de Loire",
+        "Nationale",
+        "Palais Sports",
+        "Saint Paul",
+        "Liberté",
+        "Charcot",
+        "Verdun",
+        "Suzanne Valadon",
+        "Fac 2 Lions",
+        "Heure Tranquille",
+        "Pont Volant",
+        "République",
+        "Joué H. de Ville",
+        "Rotière",
+        "Rabière",
+        "Bulle D'o"
+      ],
+      "passages": 294
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#bd074e",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 48,
+        "endToEnd": "Vaucanson → Lycée J. Monnet"
+      }
+    },
+    "weekdayTrips": 294
+  },
+  "dijon": {
+    "city": "Dijon",
+    "slug": "dijon",
+    "path": "dijon/",
+    "externalUrl": null,
+    "network": "Divia",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/gtfs-diviamobilites",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Darcy",
+      "firstWeekday": {
+        "time": "04:36",
+        "seconds": 16608,
+        "line": "T2"
+      },
+      "lastWeekday": {
+        "time": "01:13 (+1)",
+        "seconds": 90786,
+        "line": "T1"
+      },
+      "lastSaturday": {
+        "time": "01:12 (+1)",
+        "seconds": 90767,
+        "line": "T1"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Darcy",
+        "Godrans Les Halles",
+        "République"
+      ],
+      "passages": 662
+    },
+    "lines": {
+      "T1": {
+        "mode": "tram",
+        "color": "#AB0672",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 27,
+        "endToEnd": "DIJON Gare → QUETIGNY Centre La Parenthèse"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#AB0672",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 38,
+        "endToEnd": "DIJON Valmy → CHENÔVE Centre"
+      }
+    },
+    "weekdayTrips": 670
+  },
+  "reims": {
+    "city": "Reims",
+    "slug": "reims",
+    "path": "reims/",
+    "externalUrl": null,
+    "network": "Citura",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/offre-de-transport-du-reseau-grand-reims-mobilites-communaute-urbaine-du-grand-reims",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Langlet",
+      "firstWeekday": {
+        "time": "05:22",
+        "seconds": 19320,
+        "line": "TRAM"
+      },
+      "lastWeekday": {
+        "time": "23:49",
+        "seconds": 85740,
+        "line": "TRAM"
+      },
+      "lastSaturday": {
+        "time": "00:49 (+1)",
+        "seconds": 89340,
+        "line": "TRAM"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Georges Hebert",
+        "De Fermat",
+        "Jean Mace",
+        "Belges",
+        "Danton-Rauseo",
+        "St Thomas",
+        "Schneiter",
+        "Gare Centre",
+        "Langlet",
+        "Opera-Cathedrale",
+        "Vesle",
+        "Comedie",
+        "Courlancy",
+        "Franchet Esperey",
+        "Saint John Perse",
+        "Campus Crx Rouge",
+        "Kennedy",
+        "Arago"
+      ],
+      "passages": 343
+    },
+    "lines": {
+      "TRAM": {
+        "mode": "tram",
+        "color": "#E0001B",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 33,
+        "endToEnd": "Neufchatel → Hopital Debre"
+      }
+    },
+    "weekdayTrips": 343
+  },
+  "le-mans": {
+    "city": "Le Mans",
+    "slug": "le-mans",
+    "path": "le-mans/",
+    "externalUrl": null,
+    "network": "SETRAM",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/gtfs-du-reseau-des-transports-bus-et-tramway-setram-circulant-sur-le-territoire-le-mans-metropole",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "République",
+      "firstWeekday": {
+        "time": "05:21",
+        "seconds": 19300,
+        "line": "T1"
+      },
+      "lastWeekday": {
+        "time": "01:21 (+1)",
+        "seconds": 91294,
+        "line": "T1"
+      },
+      "lastSaturday": {
+        "time": "01:21 (+1)",
+        "seconds": 91294,
+        "line": "T1"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "St-Martin",
+        "Jaurès-Pavillon",
+        "Viaducs",
+        "Zola",
+        "Gares",
+        "Leclerc-Fleurus",
+        "Préfecture"
+      ],
+      "passages": 564
+    },
+    "lines": {
+      "T1": {
+        "mode": "tram",
+        "color": "#E4151E",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 39,
+        "endToEnd": "Antarès-Stade Marie Marvingt → Université"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#0D65AE",
+        "peakPassages": 8,
+        "peakHeadway": 7.5,
+        "endToEndMinutes": 29,
+        "endToEnd": "Espal-Arche de la Nature → Bellevue-Hauts de Coulaines"
+      }
+    },
+    "weekdayTrips": 564
+  },
+  "brest": {
+    "city": "Brest",
+    "slug": "brest",
+    "path": "brest/",
+    "externalUrl": null,
+    "network": "Bibus",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/horaires-theoriques-et-temps-reel-des-bus-et-tramways-circulant-sur-le-territoire-de-brest-metropole",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-13",
+    "saturday": "2026-10-17",
+    "centre": {
+      "station": "Liberté",
+      "firstWeekday": {
+        "time": "05:05",
+        "seconds": 18300,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "00:42 (+1)",
+        "seconds": 88920,
+        "line": "A"
+      },
+      "lastSaturday": {
+        "time": "01:30 (+1)",
+        "seconds": 91800,
+        "line": "A"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Fort Montbarey",
+        "Keranroux",
+        "Coat Tan",
+        "Vali Hir",
+        "Polygone Arena",
+        "Dupuy de Lôme",
+        "Les Capucins",
+        "Saint-Exupéry",
+        "Mac Orlan",
+        "Recouvrance",
+        "Château",
+        "Siam"
+      ],
+      "passages": 300
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#de007e",
+        "peakPassages": 11,
+        "peakHeadway": 5.5,
+        "endToEndMinutes": 41,
+        "endToEnd": "Porte de Plouzané → Porte de Gouesnou"
+      },
+      "B": {
+        "mode": "tram",
+        "color": "#004f9e",
+        "peakPassages": 8,
+        "peakHeadway": 7.5,
+        "endToEndMinutes": 19,
+        "endToEnd": "Gares → CHU La Cavale"
+      }
+    },
+    "weekdayTrips": 534
+  },
+  "clermont-ferrand": {
+    "city": "Clermont-Ferrand",
+    "slug": "clermont-ferrand",
+    "path": "clermont-ferrand/",
+    "externalUrl": null,
+    "network": "T2C",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/syndicat-mixte-des-transports-en-commun-de-lagglomeration-clermontoise-smtc-ac-reseau-t2c-gtfs-gtfs-rt",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Jaude",
+      "firstWeekday": {
+        "time": "04:41",
+        "seconds": 16860,
+        "line": "A"
+      },
+      "lastWeekday": {
+        "time": "01:00 (+1)",
+        "seconds": 90000,
+        "line": "A"
+      },
+      "lastSaturday": {
+        "time": "01:00 (+1)",
+        "seconds": 90000,
+        "line": "A"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Champratel",
+        "Croix de Neyrat",
+        "Hauts de Chanturgue",
+        "Collège A. Camus",
+        "Les Vignes",
+        "Lycée A. Brugière",
+        "Les Pistes",
+        "Musée d'Art Roger Quilliot",
+        "Montferrand La Fontaine",
+        "Gravière",
+        "Stade M. Michelin",
+        "1er Mai",
+        "Les Carmes",
+        "Delille Montlosier",
+        "Hôtel de Ville",
+        "Gaillard",
+        "Jaude",
+        "Bibliothèque de l'Hôtel-Dieu",
+        "Maison de la Culture",
+        "UCA - Campus Centre",
+        "St Jacques Dolet",
+        "CHU G. Montpied",
+        "St Jacques Loucheur",
+        "Léon Blum",
+        "La Chaux",
+        "Cézeaux Pellez",
+        "UCA - Campus Cézeaux",
+        "Margeride",
+        "Fontaine du Bac",
+        "Lycée La Fayette"
+      ],
+      "passages": 314
+    },
+    "lines": {
+      "A": {
+        "mode": "tram",
+        "color": "#a81815",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 53,
+        "endToEnd": "La Pardieu Gare → Les Vergnes"
+      }
+    },
+    "weekdayTrips": 324
+  },
+  "saint-etienne": {
+    "city": "Saint-Étienne",
+    "slug": "saint-etienne",
+    "path": "saint-etienne/",
+    "externalUrl": null,
+    "network": "STAS",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/horaires-du-reseau-stas",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Hotel de Ville",
+      "firstWeekday": {
+        "time": "04:17",
+        "seconds": 15420,
+        "line": "T1"
+      },
+      "lastWeekday": {
+        "time": "00:40 (+1)",
+        "seconds": 88800,
+        "line": "T1"
+      },
+      "lastSaturday": {
+        "time": "01:20 (+1)",
+        "seconds": 91200,
+        "line": "T1"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Quartier Grouchy",
+        "Roger Rocher",
+        "Anatole France",
+        "Camp. Trefilerie",
+        "Centre Deux",
+        "Bicentenaire"
+      ],
+      "passages": 582
+    },
+    "lines": {
+      "T1": {
+        "mode": "tram",
+        "color": "#E30613",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 34,
+        "endToEnd": "Hopital Nord → Solaure"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#02509E",
+        "peakPassages": 5,
+        "peakHeadway": 12.0,
+        "endToEndMinutes": 15,
+        "endToEnd": "Cite du Design → Chateaucreux"
+      },
+      "T3": {
+        "mode": "tram",
+        "color": "#009640",
+        "peakPassages": 7,
+        "peakHeadway": 8.6,
+        "endToEndMinutes": 33,
+        "endToEnd": "Terrasse → Bellevue"
+      }
+    },
+    "weekdayTrips": 743
+  },
+  "rouen": {
+    "city": "Rouen",
+    "slug": "rouen",
+    "path": "rouen/",
+    "externalUrl": null,
+    "network": "Astuce",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/donnees-statiques-et-temps-reel-du-reseau-astuce-metropole-rouen-normandie",
+      "licence": "lo",
+      "fetchedAt": "2026-10-04"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Palais de Justice - Gisèle Halimi",
+      "firstWeekday": {
+        "time": "04:43",
+        "seconds": 16980,
+        "line": "Métro"
+      },
+      "lastWeekday": {
+        "time": "00:24 (+1)",
+        "seconds": 87840,
+        "line": "Métro"
+      },
+      "lastSaturday": {
+        "time": "00:23 (+1)",
+        "seconds": 87780,
+        "line": "Métro"
+      }
+    },
+    "busiestStation": {
+      "station": null,
+      "tied": [
+        "Beauvoisine",
+        "Gare-Rue Verte",
+        "Palais de Justice - Gisèle Halimi",
+        "Théâtre des Arts",
+        "Joffre-Mutualité",
+        "Saint-Sever"
+      ],
+      "passages": 522
+    },
+    "lines": {
+      "Métro": {
+        "mode": "metro",
+        "color": "#123E8B",
+        "peakPassages": 18,
+        "peakHeadway": 3.3,
+        "endToEndMinutes": 32,
+        "endToEnd": "Technopôle → Boulingrin"
+      }
+    },
+    "weekdayTrips": 532
+  },
+  "paris": {
+    "city": "Paris",
+    "slug": "paris",
+    "path": "paris/",
+    "externalUrl": "https://julesgrandin.github.io/paris-temps-transport/",
+    "network": "Île-de-France Mobilités",
+    "source": {
+      "dataset": "https://transport.data.gouv.fr/datasets/reseau-urbain-et-interurbain-dile-de-france-mobilites",
+      "licence": "mobilites",
+      "fetchedAt": "2026-10-05"
+    },
+    "weekday": "2026-10-06",
+    "saturday": "2026-10-10",
+    "centre": {
+      "station": "Châtelet",
+      "firstWeekday": {
+        "time": "05:30",
+        "seconds": 19800,
+        "line": "11"
+      },
+      "lastWeekday": {
+        "time": "01:01 (+1)",
+        "seconds": 90103,
+        "line": "14"
+      },
+      "lastSaturday": {
+        "time": "02:02 (+1)",
+        "seconds": 93728,
+        "line": "14"
+      }
+    },
+    "busiestStation": {
+      "station": "Châtelet",
+      "tied": [],
+      "passages": 3803
+    },
+    "lines": {
+      "1": {
+        "mode": "metro",
+        "color": "#FFBE00",
+        "peakPassages": 38,
+        "peakHeadway": 1.6,
+        "endToEndMinutes": 36,
+        "endToEnd": "La Défense → Château de Vincennes"
+      },
+      "10": {
+        "mode": "metro",
+        "color": "#DC9600",
+        "peakPassages": 20,
+        "peakHeadway": 3.0,
+        "endToEndMinutes": 29,
+        "endToEnd": "Gare d'Austerlitz → Boulogne Pont de Saint-Cloud"
+      },
+      "11": {
+        "mode": "metro",
+        "color": "#6E491E",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 24,
+        "endToEnd": "Châtelet → Rosny-Bois-Perrier"
+      },
+      "12": {
+        "mode": "metro",
+        "color": "#00643C",
+        "peakPassages": 28,
+        "peakHeadway": 2.1,
+        "endToEndMinutes": 43,
+        "endToEnd": "Mairie d'Aubervilliers → Mairie d'Issy"
+      },
+      "13": {
+        "mode": "metro",
+        "color": "#82C8E6",
+        "peakPassages": 37,
+        "peakHeadway": 1.6,
+        "endToEndMinutes": 37,
+        "endToEnd": "Asnières - Gennevilliers - Les Courtilles → Châtillon - Montrouge"
+      },
+      "14": {
+        "mode": "metro",
+        "color": "#640082",
+        "peakPassages": 40,
+        "peakHeadway": 1.5,
+        "endToEndMinutes": 40,
+        "endToEnd": "Aéroport d'Orly → Saint-Denis - Pleyel"
+      },
+      "2": {
+        "mode": "metro",
+        "color": "#0055C8",
+        "peakPassages": 32,
+        "peakHeadway": 1.9,
+        "endToEndMinutes": 33,
+        "endToEnd": "Porte Dauphine → Nation"
+      },
+      "3": {
+        "mode": "metro",
+        "color": "#6E6E00",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 32,
+        "endToEnd": "Gallieni → Pont de Levallois - Bécon"
+      },
+      "3B": {
+        "mode": "metro",
+        "color": "#82C8E6",
+        "peakPassages": 19,
+        "peakHeadway": 3.2,
+        "endToEndMinutes": 3,
+        "endToEnd": "Porte des Lilas → Gambetta"
+      },
+      "4": {
+        "mode": "metro",
+        "color": "#A0006E",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 37,
+        "endToEnd": "Porte de Clignancourt → Bagneux - Lucie Aubrac"
+      },
+      "5": {
+        "mode": "metro",
+        "color": "#FF5A00",
+        "peakPassages": 33,
+        "peakHeadway": 1.8,
+        "endToEndMinutes": 34,
+        "endToEnd": "Place d'Italie → Bobigny - Pablo Picasso"
+      },
+      "6": {
+        "mode": "metro",
+        "color": "#82DC73",
+        "peakPassages": 30,
+        "peakHeadway": 2.0,
+        "endToEndMinutes": 35,
+        "endToEnd": "Nation → Charles de Gaulle - Étoile"
+      },
+      "7": {
+        "mode": "metro",
+        "color": "#FF82B4",
+        "peakPassages": 35,
+        "peakHeadway": 1.7,
+        "endToEndMinutes": 48,
+        "endToEnd": "Villejuif - Louis Aragon → La Courneuve - 8 Mai 1945"
+      },
+      "7B": {
+        "mode": "metro",
+        "color": "#82DC73",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 8,
+        "endToEnd": "Louis Blanc → Pré-Saint-Gervais"
+      },
+      "8": {
+        "mode": "metro",
+        "color": "#D282BE",
+        "peakPassages": 25,
+        "peakHeadway": 2.4,
+        "endToEndMinutes": 52,
+        "endToEnd": "Pointe du Lac → Balard"
+      },
+      "9": {
+        "mode": "metro",
+        "color": "#D2D200",
+        "peakPassages": 33,
+        "peakHeadway": 1.8,
+        "endToEndMinutes": 50,
+        "endToEnd": "Mairie de Montreuil → Pont de Sèvres"
+      },
+      "T1": {
+        "mode": "tram",
+        "color": "#0055C8",
+        "peakPassages": 13,
+        "peakHeadway": 4.6,
+        "endToEndMinutes": 73,
+        "endToEnd": "Asnières - Quatre Routes → Gare de Noisy-le-Sec"
+      },
+      "T10": {
+        "mode": "tram",
+        "color": "#6E6E00",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 21,
+        "endToEnd": "Jardin Parisien → La Croix de Berny"
+      },
+      "T11": {
+        "mode": "tram",
+        "color": "#FF5A00",
+        "peakPassages": 12,
+        "peakHeadway": 5.0,
+        "endToEndMinutes": 14,
+        "endToEnd": "Le Bourget → Épinay-sur-Seine"
+      },
+      "T12": {
+        "mode": "tram",
+        "color": "#A50034",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 42,
+        "endToEnd": "Évry - Courcouronnes → Massy - Palaiseau"
+      },
+      "T13": {
+        "mode": "tram",
+        "color": "#8D653D",
+        "peakPassages": 6,
+        "peakHeadway": 10.0,
+        "endToEndMinutes": 32,
+        "endToEnd": "Saint-Germain-en-Laye → Saint-Cyr"
+      },
+      "T14": {
+        "mode": "tram",
+        "color": "#00A092",
+        "peakPassages": 2,
+        "peakHeadway": 30.0,
+        "endToEndMinutes": 11,
+        "endToEnd": "Crécy-la-Chapelle → Esbly"
+      },
+      "T2": {
+        "mode": "tram",
+        "color": "#A0006E",
+        "peakPassages": 18,
+        "peakHeadway": 3.3,
+        "endToEndMinutes": 44,
+        "endToEnd": "Pont de Bezons → Porte de Versailles"
+      },
+      "T3a": {
+        "mode": "tram",
+        "color": "#FF5A00",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 46,
+        "endToEnd": "Porte de Vincennes → Pont du Garigliano"
+      },
+      "T3b": {
+        "mode": "tram",
+        "color": "#00643C",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 66,
+        "endToEnd": "Porte Dauphine (Avenue Foch) → Porte de Vincennes"
+      },
+      "T4": {
+        "mode": "tram",
+        "color": "#DC9600",
+        "peakPassages": 17,
+        "peakHeadway": 3.5,
+        "endToEndMinutes": 20,
+        "endToEnd": "Aulnay-sous-Bois → Bondy"
+      },
+      "T5": {
+        "mode": "tram",
+        "color": "#640082",
+        "peakPassages": 13,
+        "peakHeadway": 4.6,
+        "endToEndMinutes": 25,
+        "endToEnd": "Marché de Saint-Denis → Garges - Sarcelles"
+      },
+      "T6": {
+        "mode": "tram",
+        "color": "#FF0000",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 42,
+        "endToEnd": "Châtillon - Montrouge → Viroflay - Rive Droite"
+      },
+      "T7": {
+        "mode": "tram",
+        "color": "#6E491E",
+        "peakPassages": 10,
+        "peakHeadway": 6.0,
+        "endToEndMinutes": 33,
+        "endToEnd": "Villejuif - Louis Aragon → Porte de l'Essonne"
+      },
+      "T8": {
+        "mode": "tram",
+        "color": "#6E6E00",
+        "peakPassages": 16,
+        "peakHeadway": 3.8,
+        "endToEndMinutes": 16,
+        "endToEnd": "Villetaneuse - Université → Saint-Denis - Porte de Paris"
+      },
+      "T9": {
+        "mode": "tram",
+        "color": "#3C91DC",
+        "peakPassages": 15,
+        "peakHeadway": 4.0,
+        "endToEndMinutes": 30,
+        "endToEnd": "Porte de Choisy → Orly - Gaston Viens"
+      }
+    },
+    "weekdayTrips": 17354
+  }
+}

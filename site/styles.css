@@ -82,12 +82,6 @@ a {
   gap: 16px;
 }
 
-.icon-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .topbar-link {
   color: var(--ink-soft);
   font-weight: 500;
@@ -869,11 +863,222 @@ output {
   margin-right: 6px;
   padding: 2px 6px;
   border-radius: 6px;
-  color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
   text-align: center;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.ranking-table td:first-child,
+.ranking-table th:first-child {
+  width: 2.5em;
+  color: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.ranking-highlights {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  width: 100%;
+  margin-top: 28px;
+  text-align: left;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.section-link {
+  margin: 14px 0 0;
+  font-weight: 600;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  width: min(760px, 100%);
+  margin-top: 28px;
+}
+
+.podium-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 18px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.podium-step.step-1 {
+  order: 2;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.podium-step.step-2 {
+  order: 1;
+}
+
+.podium-step.step-3 {
+  order: 3;
+}
+
+.podium-step .medal {
+  font-size: 1.8rem;
+}
+
+.podium-step strong {
+  color: var(--ink);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.podium-step span:not(.medal) {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.podium-step small {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ranking-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.ranking-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ranking-card:hover {
+  border-color: var(--green);
+  box-shadow: var(--shadow);
+}
+
+.ranking-card-question {
+  color: var(--ink);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ranking-card ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.92rem;
+  line-height: 1.8;
+}
+
+.ranking-card strong {
+  color: var(--ink);
+}
+
+.ranking-card-link {
+  margin-top: auto;
+  color: var(--green-strong);
+  font-weight: 600;
+}
+
+.bar-cell {
+  position: relative;
+  min-width: 120px;
+}
+
+.bar {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 0;
+  border-radius: 4px;
+  background: var(--green-soft);
+}
+
+.bar-value {
+  position: relative;
+  padding-left: 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-table tr:target td {
+  background: #fff7d6;
+}
+
+.ranking-table tr {
+  scroll-margin-top: 80px;
+}
+
+.mode-filter {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 6px;
+}
+
+.share {
+  margin: 18px 0 0;
+  color: var(--muted);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--green-strong);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ranking-positions-title {
+  margin: 28px 0 8px;
+  font-size: 1.1rem;
+}
+
+.ranking-positions {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.8;
+}
+
+.ranking-positions a {
+  color: var(--ink-soft);
+}
+
+.ranking-teaser {
+  padding: 20px 24px;
+  border: 1px solid var(--green);
+  border-radius: 16px;
+  background: var(--green-soft);
+}
+
+.ranking-teaser h2 {
+  margin-bottom: 6px;
+}
+
+.ranking-teaser p {
+  margin: 0;
 }
 
 .faq {
@@ -987,10 +1192,6 @@ output {
   /* Sur mobile, la barre défile avec la page pour ne pas masquer le haut de la carte. */
   .topbar {
     position: static;
-  }
-
-  .icon-link span {
-    display: none;
   }
 
   .steps,

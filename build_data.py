@@ -543,6 +543,8 @@ def route_excluded(row: dict, city: dict) -> bool:
     agencies = city.get("agencies")
     return (
         row.get("route_type") in ("712", "713")
+        or row.get("route_type") in city.get("excludeRouteTypes", [])
+        or row.get("route_short_name") in city.get("excludeRouteNames", [])
         or row["route_id"] in city.get("excludeRoutes", [])
         or bool(agencies and row.get("agency_id") not in agencies)
     )

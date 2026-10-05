@@ -25,7 +25,10 @@ Puis ouvrir [http://localhost:8000](http://localhost:8000). `build.py` affiche �
 (jour de référence, poids, part du réseau à moins de 30 min, station la plus éloignée, fréquences).
 
 Étapes séparées si besoin : `fetch_data.py <ville>`, `build_data.py <ville>`, `build_pages.py`,
-`tools/render_og.py <ville>|home|all` (Chrome et ImageMagick requis). `node tools/check_trips.mjs <ville>` sonde les
+`tools/render_og.py <ville>|home|classements|all` (Chrome et ImageMagick requis), `tools/rankings.py` (classements
+lus directement dans les horaires : dernier tram du samedi soir au centre, fréquence à l'heure de pointe, station la plus desservie, ligne la plus longue,
+trajets par jour ; écrit `sources/rankings.json`, publié sur `/classements/` avec une page par classement). Une ville avec `"rankingsOnly": true` (Paris, dont la
+carte est celle de Jules Grandin, `externalUrl`) figure dans les classements sans avoir de carte ici. `node tools/check_trips.mjs <ville>` sonde les
 trajets depuis le centre jusqu'aux terminus et aux gares, et signale les vitesses anormales.
 
 Les sources brutes (`data/<ville>/` : GTFS, communes, OSM) ne sont pas versionnées : elles restent en local et

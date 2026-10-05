@@ -12,6 +12,7 @@ import json
 from datetime import date
 from pathlib import Path
 from string import Template
+from urllib.parse import quote
 
 from cities import load_cities
 
@@ -38,6 +39,22 @@ MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "ao�
 WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 esc = html.escape
+
+
+def text_color(background: str) -> str:
+    """Black or white text, whichever reads best on a line colour (yellow lines need black)."""
+    value = int(background.lstrip("#")[:6] or "888888", 16)
+    luminance = 0.299 * (value >> 16) + 0.587 * ((value >> 8) & 255) + 0.114 * (value & 255)
+    return "#111" if luminance > 150 else "#fff"
+
+
+def line_badge(color: str, name: str) -> str:
+    return f'<span class="line-badge" style="background:{color};color:{text_color(color)}">{esc(name)}</span>'
+
+
+def thousands(value: int) -> str:
+    """French thousands separator: 2445 → « 2 445 » (narrow no-break space)."""
+    return f"{value:,}".replace(",", "\u202f")
 
 
 def num(value: float) -> str:
@@ -120,22 +137,12 @@ def head(*, title: str, description: str, url: str, base: str, image: str, image
     )
 
 
-GITHUB_ICON = (
-    '<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 '
-    "3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15"
-    "-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59"
-    ".82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1"
-    ".16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55"
-    '.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>'
-)
-
-
 def header(base: str) -> str:
     return f"""    <header class="topbar">
       <nav class="topbar-inner" aria-label="Navigation principale">
         <a class="brand" href="{base}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {SITE_NAME}</a>
         <div class="topbar-links">
-          <a class="topbar-link icon-link" href="{GITHUB_URL}" rel="noopener" aria-label="Code source sur GitHub">{GITHUB_ICON}<span>GitHub</span></a>
+          <a class="topbar-link" href="{base}{RANKINGS_DIR}/">🏆 Classements</a>
           <a class="topbar-link" href="{AUTHOR_URL}" rel="author">camilleroux.com</a>
         </div>
       </nav>
@@ -156,6 +163,7 @@ def footer(cities: list[dict], base: str, data_credit: str) -> str:
         <p class="footer-links">
           <a href="{GITHUB_URL}" rel="noopener">Code source sur GitHub</a> ·
           <a href="{GITHUB_URL}/issues" rel="noopener">Proposer une ville ou signaler une erreur</a> ·
+          <a href="{base}classements/">Classements</a> ·
           <a href="{base}mentions-legales/">Mentions légales et licences</a>
         </p>
         <p class="footer-credits">
@@ -279,6 +287,18 @@ def city_faq(city: dict) -> list[tuple]:
     ]
 
 
+def ranking_positions_block(cities: list[dict], city: dict) -> str:
+    items = city_positions(cities, city["slug"], "../")
+    if not items:
+        return ""
+    lines = "\n".join(f"          {item}" for item in items)
+    return f"""        <h3 class="ranking-positions-title">🏆 {esc(city["name"])} dans les classements</h3>
+        <ul class="ranking-positions">
+{lines}
+        </ul>
+        <p class="section-link"><a href="../{RANKINGS_DIR}/">Tous les classements des trams et métros de France →</a></p>"""
+
+
 def render_city(template: Template, cities: list[dict], city: dict) -> str:
     url = SITE_URL + city["path"]
     base = "../"
@@ -325,7 +345,7 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
     ]
     stat_tiles = "\n".join(f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles)
     line_rows = "\n".join(
-        f'            <tr><td><span class="line-badge" style="background:{line["color"]}">{esc(line["name"])}</span> '
+        f'            <tr><td>{line_badge(line["color"], line["name"])} '
         f'{esc(MODE_NAMES.get(line["mode"], ""))}</td><td>{line["stations"]}</td><td>~{num(line["headway"])} min</td></tr>'
         for line in stats["lines"]
     )
@@ -381,6 +401,7 @@ def render_city(template: Template, cities: list[dict], city: dict) -> str:
         "search_example": esc(city["searchExample"]),
         "network": esc(city["network"]),
         "stat_tiles": stat_tiles,
+        "ranking_positions": ranking_positions_block(cities, city),
         "line_rows": line_rows,
         "faq_html": faq_block(faq),
         "other_cities": "\n".join(city_card(other, base) for other in cities if other["slug"] != city["slug"]),
@@ -469,6 +490,13 @@ def render_legal(cities: list[dict]) -> str:
         f'<td>{french_date(city["sources"]["gtfs"]["fetchedAt"]) if city["sources"]["gtfs"].get("fetchedAt") else "—"}</td></tr>'
         for city in sorted(cities, key=lambda item: item["name"])
     )
+    rows += "".join(
+        f'\n          <tr><td>{esc(city["city"])} (classements)</td><td><a href="{esc(city["source"]["dataset"])}">GTFS {esc(city["network"])}</a></td>'
+        f'<td><a href="{LICENCES[city["source"]["licence"]][1]}">{LICENCES[city["source"]["licence"]][0]}</a></td>'
+        f'<td>{french_date(city["source"]["fetchedAt"])}</td></tr>'
+        for city in load_rankings(cities)
+        if city.get("externalUrl")
+    )
     graph = [author_schema()]
     return f"""<!doctype html>
 <html lang="fr">
@@ -535,6 +563,470 @@ def write_sources_readme(cities: list[dict]) -> None:
     (ROOT / "sources" / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+RANKINGS_DIR = "classements"
+MEDALS = ["🥇", "🥈", "🥉"]
+
+
+def load_rankings(cities: list[dict]) -> list[dict]:
+    """Figures read straight from the timetables (sources/rankings.json, written by tools/rankings.py).
+
+    Cities with a map here, plus the ones that only take part in the rankings (Paris, whose map is Jules Grandin's).
+    """
+    path = ROOT / "sources" / "rankings.json"
+    if not path.exists():
+        return []
+    published = {city["slug"] for city in cities}
+    entries = json.loads(path.read_text(encoding="utf-8")).values()
+    return [city for city in entries if city["slug"] in published or city.get("externalUrl")]
+
+
+def ordinal(rank: int) -> str:
+    return "1<sup>re</sup>" if rank == 1 else f"{rank}<sup>e</sup>"
+
+
+def clock(seconds: int) -> str:
+    """Time of night in French: 26:27 → « 2 h 27 »."""
+    hours, minutes = divmod(seconds // 60, 60)
+    return f"{hours % 24}&nbsp;h&nbsp;{minutes:02d}"
+
+
+def competition_ranks(values: list[float]) -> list[int]:
+    """Rank of each value (sorted, best first); equal values share a rank: 1, 2, 2, 4."""
+    return [1 + sum(1 for other in values if other > value) for value in values]
+
+
+def ranking_definitions(data: list[dict], base: str) -> list[dict]:
+    """The four published rankings. Each row: its cells, the value it is ranked on, its city and mode."""
+
+    def city_link(city: dict) -> str:
+        if city.get("externalUrl"):
+            return f'<a href="{esc(city["externalUrl"])}" rel="noopener" title="La carte de Jules Grandin">{esc(city["city"])}</a>'
+        return f'<a href="{base}{city["path"]}">{esc(city["city"])}</a>'
+
+    def line_label(line: dict, name: str) -> str:
+        return f'{line_badge(line["color"], name)} {esc(MODE_NAMES[line["mode"]])}'
+
+    lines = [(city, name, line) for city in data for name, line in city["lines"].items() if line["peakPassages"]]
+    frequent = sorted(lines, key=lambda item: (-item[2]["peakPassages"], item[0]["city"], item[1]))
+    stations = sorted(data, key=lambda city: (-city["busiestStation"]["passages"], city["city"]))
+    longest = sorted(lines, key=lambda item: (-item[2]["endToEndMinutes"], item[0]["city"], item[1]))
+    trips = sorted(data, key=lambda city: (-city["weekdayTrips"], city["city"]))
+    night = sorted(
+        (city for city in data if city.get("centre", {}).get("lastSaturday")),
+        key=lambda city: (-city["centre"]["lastSaturday"]["seconds"], city["city"]),
+    )
+
+    def night_line(city: dict) -> str:
+        last = city["centre"]["lastSaturday"]
+        line = city["lines"].get(last["line"])
+        return line_label(line, last["line"]) if line else esc(last["line"])
+
+    def station_cell(city: dict) -> str:
+        best = city["busiestStation"]
+        if best["station"]:
+            return esc(best["station"])
+        tied = [esc(name) for name in best["tied"]]
+        if len(tied) > 3:
+            return f'<span class="muted">Égalité entre {len(tied)} stations</span>'
+        return f'<span class="muted">Ex aequo : {", ".join(tied[:-1])} et {tied[-1]}</span>'
+
+    def line_rows(items: list, value, cells) -> list[dict]:
+        return [
+            {"city": city["slug"], "line": name, "mode": line["mode"], "value": value(line), "cells": cells(city, name, line)}
+            for city, name, line in items
+        ]
+
+    return [
+        {
+            "slug": "dernier-tram-samedi-soir",
+            "short": "Le dernier tram du samedi",
+            "title": "Le dernier tram et le dernier métro du samedi soir, ville par ville",
+            "question": "Où rentre-t-on le plus tard en tram ou en métro le samedi soir ?",
+            "intro": "Après le concert, le bar ou le restaurant : jusqu'à quelle heure peut-on encore attraper un tram ou un "
+            "métro en plein centre-ville, la nuit du samedi au dimanche ?",
+            "method": "Dernier passage d'un tram ou d'un métro à la station du centre-ville (celle de la place centrale de "
+            "chaque carte), la nuit du samedi au dimanche, d'après les horaires théoriques d'un samedi ordinaire. "
+            "Les bus de nuit ne sont pas comptés.",
+            "headers": ["Ville", "Station du centre", "Ligne", "Dernier passage"],
+            "valueCol": 3,
+            "rows": [
+                {"city": city["slug"], "mode": None, "value": city["centre"]["lastSaturday"]["seconds"],
+                 "cells": [city_link(city), esc(city["centre"]["station"]), night_line(city), clock(city["centre"]["lastSaturday"]["seconds"])]}
+                for city in night
+            ],
+            "podium": [(clock(city["centre"]["lastSaturday"]["seconds"]), esc(city["centre"]["station"]), esc(city["city"])) for city in night[:3]],
+            "highlight": (
+                clock(night[0]["centre"]["lastSaturday"]["seconds"]),
+                f'dernier passage du samedi soir à la station {esc(night[0]["centre"]["station"])} ({esc(night[0]["city"])})',
+            ),
+            "position": lambda rank, total, city: (
+                f'{ordinal(rank)} sur {total} pour le dernier tram du samedi soir&nbsp;: '
+                f'{clock(city["centre"]["lastSaturday"]["seconds"])} à la station {esc(city["centre"]["station"])}'
+            ),
+        },
+        {
+            "slug": "metro-tram-le-plus-frequent",
+            "short": "Le plus fréquent",
+            "title": "Le métro et le tram les plus fréquents de France",
+            "question": "Un métro ou un tram toutes les combien ?",
+            "intro": "À l'heure de pointe, certaines lignes passent toutes les minutes, d'autres toutes les dix minutes. "
+            "Voici les lignes de tram et de métro où l'on attend le moins.",
+            "method": "Nombre de passages entre 8 h et 9 h un jour de semaine, à la station et dans le sens les plus "
+            "desservis de chaque ligne.",
+            "headers": ["Ville", "Ligne", "Passages 8 h – 9 h", "Un passage toutes les"],
+            "valueCol": 2,
+            "byMode": True,
+            "rows": line_rows(
+                frequent,
+                lambda line: line["peakPassages"],
+                lambda city, name, line: [city_link(city), line_label(line, name), str(line["peakPassages"]), f'{num(line["peakHeadway"])} min'],
+            ),
+            "podium": [
+                (f'{num(line["peakHeadway"])} min', f'{esc(MODE_NAMES[line["mode"]])} {esc(name)}', esc(city["city"]))
+                for city, name, line in frequent[:3]
+            ],
+            "highlight": (
+                f'{num(frequent[0][2]["peakHeadway"])} min',
+                f'entre deux rames du {MODE_NAMES[frequent[0][2]["mode"]].lower()} {esc(frequent[0][1])} à {esc(frequent[0][0]["city"])}',
+            ),
+            "position": lambda rank, total, city, name, line: (
+                f'{ordinal(rank)} {MODE_NAMES[line["mode"]].lower()} le plus fréquent sur {total}&nbsp;: ligne {esc(name)}, '
+                f'un passage toutes les {num(line["peakHeadway"])} min à l\'heure de pointe'
+            ),
+        },
+        {
+            "slug": "station-la-plus-desservie",
+            "short": "La station la plus desservie",
+            "title": "La station de tram ou de métro la plus desservie de chaque ville",
+            "question": "Quelle station voit passer le plus de rames ?",
+            "intro": "Le nœud du réseau, là où se croisent les lignes : la station de chaque ville où passent le plus de "
+            "trams et de métros dans la journée.",
+            "method": "Passages de tram et de métro (toutes lignes, les deux sens) un jour de semaine, les quais d'un même "
+            "nom regroupés. Quand plusieurs stations d'un même tronc commun sont à égalité, aucune n'est désignée.",
+            "headers": ["Ville", "Station", "Passages par jour"],
+            "valueCol": 2,
+            "rows": [
+                {"city": city["slug"], "mode": None, "value": city["busiestStation"]["passages"],
+                 "cells": [city_link(city), station_cell(city), thousands(city["busiestStation"]["passages"])]}
+                for city in stations
+            ],
+            "podium": [
+                (thousands(city["busiestStation"]["passages"]), esc(city["busiestStation"]["station"] or "—"), esc(city["city"]))
+                for city in stations[:3]
+            ],
+            "highlight": (
+                thousands(stations[0]["busiestStation"]["passages"]),
+                f'passages par jour à {esc(stations[0]["busiestStation"]["station"] or "")} ({esc(stations[0]["city"])})',
+            ),
+            "position": lambda rank, total, city: (
+                f'{ordinal(rank)} sur {total} pour la station la plus desservie&nbsp;: '
+                + (esc(city["busiestStation"]["station"]) + ", " if city["busiestStation"]["station"] else "")
+                + f'{thousands(city["busiestStation"]["passages"])} passages par jour'
+            ),
+        },
+        {
+            "slug": "ligne-la-plus-longue",
+            "short": "La ligne la plus longue",
+            "title": "Les lignes de tram et de métro les plus longues à parcourir",
+            "question": "Combien de temps pour aller d'un terminus à l'autre ?",
+            "intro": "Certaines lignes traversent toute l'agglomération : voici celles qu'il faut le plus de temps pour "
+            "parcourir de bout en bout.",
+            "method": "Durée prévue d'un terminus à l'autre, sur le trajet le plus courant de la ligne, un jour de semaine.",
+            "headers": ["Ville", "Ligne", "Trajet", "Durée"],
+            "valueCol": 3,
+            "byMode": True,
+            "rows": line_rows(
+                longest,
+                lambda line: line["endToEndMinutes"],
+                lambda city, name, line: [city_link(city), line_label(line, name), esc(line["endToEnd"]), f'{line["endToEndMinutes"]} min'],
+            ),
+            "podium": [
+                (f'{line["endToEndMinutes"]} min', f'{esc(MODE_NAMES[line["mode"]])} {esc(name)}', esc(city["city"]))
+                for city, name, line in longest[:3]
+            ],
+            "highlight": (
+                f'{longest[0][2]["endToEndMinutes"]} min',
+                f'de bout en bout sur la ligne {esc(longest[0][1])} à {esc(longest[0][0]["city"])}',
+            ),
+            "position": lambda rank, total, city, name, line: (
+                f'{ordinal(rank)} ligne de {MODE_NAMES[line["mode"]].lower()} la plus longue sur {total}&nbsp;: '
+                f'ligne {esc(name)}, {line["endToEndMinutes"]} min de bout en bout'
+            ),
+        },
+        {
+            "slug": "reseau-le-plus-fourni",
+            "short": "Le réseau le plus fourni",
+            "title": "Le réseau de tram et de métro le plus fourni de France",
+            "question": "Quel réseau fait rouler le plus de trams et de métros ?",
+            "intro": "Le nombre de trajets de tram et de métro programmés chaque jour : une mesure simple de l'offre de "
+            "chaque réseau.",
+            "method": "Nombre de trajets de tram et de métro programmés un jour de semaine, quelle que soit leur longueur.",
+            "headers": ["Ville", "Réseau", "Trajets par jour"],
+            "valueCol": 2,
+            "rows": [
+                {"city": city["slug"], "mode": None, "value": city["weekdayTrips"],
+                 "cells": [city_link(city), esc(city["network"]), thousands(city["weekdayTrips"])]}
+                for city in trips
+            ],
+            "podium": [(thousands(city["weekdayTrips"]), esc(city["network"]), esc(city["city"])) for city in trips[:3]],
+            "highlight": (thousands(trips[0]["weekdayTrips"]), f'trajets de tram et de métro par jour à {esc(trips[0]["city"])}'),
+            "position": lambda rank, total, city: (
+                f'{ordinal(rank)} réseau le plus fourni sur {total}&nbsp;: {thousands(city["weekdayTrips"])} trajets de '
+                f'tram et de métro par jour'
+            ),
+        },
+    ]
+
+
+def city_positions(cities: list[dict], slug: str, base: str) -> list[str]:
+    """Where a city stands in each ranking (its best line for the line rankings), linked to its row."""
+    data = load_rankings(cities)
+    entry = next((city for city in data if city["slug"] == slug), None)
+    if not entry:
+        return []
+    items = []
+    for d in ranking_definitions(data, base):
+        rows = d["rows"]
+        query = ""
+        if d.get("byMode"):
+            # Compared with lines of the same mode (a tram cannot match a metro); rows are sorted, so the city's
+            # first row is its best line.
+            mode = next(row["mode"] for row in rows if row["city"] == slug)
+            rows = [row for row in rows if row["mode"] == mode]
+            query = f"?mode={mode}"
+        ranks = competition_ranks([row["value"] for row in rows])
+        index = next(i for i, row in enumerate(rows) if row["city"] == slug)
+        if d.get("byMode"):
+            name = rows[index]["line"]
+            text = d["position"](ranks[index], len(rows), entry, name, entry["lines"][name])
+        else:
+            text = d["position"](ranks[index], len(rows), entry)
+        items.append(f'<li><a href="{base}{RANKINGS_DIR}/{d["slug"]}/{query}#{slug}">{text}</a></li>')
+    return items
+
+
+def ranking_page(*, title: str, description: str, url: str, base: str, image_name: str, crumbs: list, cities: list, body: str) -> str:
+    image = SITE / "og" / image_name
+    image_url = f"{SITE_URL}og/{image_name}?v={short_hash(image)}" if image.exists() else SITE_URL + "og/home.jpg"
+    graph = [
+        {
+            "@type": "Article",
+            "headline": title,
+            "description": description,
+            "url": url,
+            "inLanguage": "fr",
+            "author": {"@id": AUTHOR_URL + "#me"},
+            "datePublished": date.today().isoformat(),
+            "image": image_url,
+        },
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1, "name": name, "item": item} for i, (name, item) in enumerate(crumbs)
+            ],
+        },
+        author_schema(),
+    ]
+    trail = " <span aria-hidden=\"true\">›</span> ".join(
+        [f'<a href="{item.replace(SITE_URL, base) or "./"}">{esc(name)}</a>' for name, item in crumbs[:-1]]
+        + [f'<span aria-current="page">{esc(crumbs[-1][0])}</span>']
+    )
+    return f"""<!doctype html>
+<html lang="fr">
+  <head>
+{head(title=f"{title} · {SITE_NAME}", description=description, url=url, base=base, image=image_url, image_alt=title, published=date.today().isoformat(), graph=graph)}
+    <link rel="stylesheet" href="{base}styles.css?v={short_hash(SITE / 'styles.css')}" />
+  </head>
+  <body>
+{header(base)}
+    <main class="page">
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">{trail}</nav>
+{body}
+    </main>
+{footer(cities, base, "")}
+    <script>{RANKING_SCRIPT}</script>
+{ANALYTICS}
+  </body>
+</html>
+"""
+
+
+RANKING_SCRIPT = """
+document.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
+  const mode = button.dataset.filter;
+  document.querySelectorAll("[data-filter]").forEach((b) => b.classList.toggle("active", b === button));
+  document.querySelectorAll("#ranking tbody tr").forEach((row) => {
+    row.hidden = mode && row.dataset.mode !== mode;
+    const cell = row.querySelector(".rank");
+    cell.textContent = mode ? row.dataset.modeRank : cell.dataset.rank;
+  });
+}));
+const wanted = new URLSearchParams(location.search).get("mode");
+if (wanted) document.querySelector(`[data-filter="${wanted}"]`)?.click();
+if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
+document.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(button.dataset.copy); button.textContent = "Lien copié ✓"; } catch {}
+}));
+"""
+
+
+def method_section(data: list[dict], base: str, method: str) -> str:
+    dates = ", ".join(f'{esc(city["city"])} ({french_date(city["weekday"])})' for city in sorted(data, key=lambda c: c["city"]))
+    paris = next((city for city in data if city.get("externalUrl")), None)
+    paris = (
+        f' {esc(paris["city"])} n\'a pas de carte ici&nbsp;: elle existe déjà, c\'est <a href="{esc(paris["externalUrl"])}">celle '
+        f'de Jules Grandin</a>, qui a inspiré ce site. Ses chiffres comptent le métro et le tram d\'Île-de-France '
+        f'Mobilités, sans RER, Transilien, CDGVAL, Orlyval ni funiculaire de Montmartre.'
+        if paris
+        else ""
+    )
+    return f"""      <section class="section" aria-labelledby="method-title">
+        <h2 id="method-title">Méthode</h2>
+        <p>{esc(method)} Ces chiffres ne reposent sur aucun calcul de trajet&nbsp;: ce sont des comptages directs dans les
+        horaires théoriques publiés par chaque réseau (GTFS), pour un mardi ou un jeudi de semaine scolaire. Seuls le tram et
+        le métro sont comptés (pas les bus, Busway, funiculaires ni téléphériques)&nbsp;; Rhônexpress et la navette OL
+        Stadium sont exclus à Lyon.{paris} Jours utilisés&nbsp;: {dates}.</p>
+        <p>Sources et licences&nbsp;: voir les <a href="{base}mentions-legales/">mentions légales</a>. Une erreur&nbsp;?
+        <a href="{GITHUB_URL}/issues">Signalez-la sur GitHub</a>.</p>
+      </section>"""
+
+
+def render_rankings(cities: list[dict]) -> dict[str, str]:
+    """Pages of the rankings: the hub (/classements/) and one page per ranking. Returns {path: html}."""
+    data = load_rankings(cities)
+    if not data:
+        return {}
+    hub_url = f"{SITE_URL}{RANKINGS_DIR}/"
+    pages = {}
+
+    hub_defs = ranking_definitions(data, "../")
+    cards = "\n".join(
+        f"""          <a class="ranking-card" href="./{d['slug']}/">
+            <span class="ranking-card-question">{esc(d['question'])}</span>
+            <ol>{"".join(f"<li><span>{MEDALS[i]}</span> <strong>{value}</strong> {label} · {sub}</li>" for i, (value, label, sub) in enumerate(d["podium"]))}</ol>
+            <span class="ranking-card-link">Voir le classement complet →</span>
+          </a>"""
+        for d in hub_defs
+    )
+    highlights = "\n".join(
+        f'          <div class="stat"><strong>{d["highlight"][0]}</strong><span>{d["highlight"][1]}</span></div>' for d in hub_defs
+    )
+    hub_description = (
+        f"Le métro le plus fréquent, la station la plus desservie, la ligne la plus longue : les trams et métros de "
+        f"{len(data)} villes françaises comparés à partir de leurs horaires officiels."
+    )
+    pages[f"{RANKINGS_DIR}/index.html"] = ranking_page(
+        title="Les classements des trams et métros de France",
+        description=hub_description,
+        url=hub_url,
+        base="../",
+        image_name="classements.jpg",
+        crumbs=[(SITE_NAME, SITE_URL), ("Classements", hub_url)],
+        cities=cities,
+        body=f"""      <section class="hero">
+        <span class="chip">🏆 {len(data)} réseaux comparés</span>
+        <h1>Les classements des trams et&nbsp;métros</h1>
+        <p class="lede">Quel métro passe le plus souvent, quelle station voit défiler le plus de rames, quelle ligne est la
+        plus longue à parcourir, où rentre-t-on le plus tard le samedi soir&nbsp;? Tous les chiffres viennent directement des
+        horaires officiels des réseaux.</p>
+        <div class="stat-grid ranking-highlights">
+{highlights}
+        </div>
+      </section>
+      <section aria-label="Les classements">
+        <div class="ranking-cards">
+{cards}
+        </div>
+      </section>
+{method_section(data, "../", "Chaque classement détaille sa propre mesure.")}""",
+    )
+
+    defs = ranking_definitions(data, "../../")
+    for d in defs:
+        url = f"{hub_url}{d['slug']}/"
+        podium = "\n".join(
+            f'          <div class="podium-step step-{i + 1}"><span class="medal">{MEDALS[i]}</span><strong>{value}</strong>'
+            f"<span>{label}</span><small>{sub}</small></div>"
+            for i, (value, label, sub) in enumerate(d["podium"])
+        )
+        headers = "".join(f'<th scope="col">{esc(h)}</th>' for h in ["#", *d["headers"]])
+        rows = d["rows"]
+        ranks = competition_ranks([row["value"] for row in rows])
+        mode_ranks = {}
+        for mode in {row["mode"] for row in rows}:
+            subset = [i for i, row in enumerate(rows) if row["mode"] == mode]
+            for i, rank in zip(subset, competition_ranks([rows[i]["value"] for i in subset])):
+                mode_ranks[i] = rank
+        top = max(row["value"] for row in rows)
+        seen = set()
+        body_rows = []
+        for i, row in enumerate(rows):
+            cells = list(row["cells"])
+            col = d["valueCol"]
+            cells[col] = f'<span class="bar" style="width:{100 * row["value"] / top:.0f}%"></span><span class="bar-value">{cells[col]}</span>'
+            anchor = f' id="{row["city"]}"' if row["city"] not in seen else ""
+            seen.add(row["city"])
+            mode = f' data-mode="{row["mode"]}" data-mode-rank="{mode_ranks[i]}"' if d.get("byMode") else ""
+            body_rows.append(
+                f'            <tr{anchor}{mode}><td class="rank" data-rank="{ranks[i]}">{ranks[i]}</td>'
+                + "".join(f'<td{" class=\"bar-cell\"" if j == col else ""}>{cell}</td>' for j, cell in enumerate(cells))
+                + "</tr>"
+            )
+        rows = "\n".join(body_rows)
+        filters = (
+            """        <div class="mode-filter" role="group" aria-label="Filtrer par mode">
+          <button type="button" class="chip active" data-filter="">Tous</button>
+          <button type="button" class="chip" data-filter="metro">Métro</button>
+          <button type="button" class="chip" data-filter="tram">Tram</button>
+        </div>
+"""
+            if d.get("byMode")
+            else ""
+        )
+        page_url = f"{hub_url}{d['slug']}/"
+        share_text = quote(f"{d['question']} Le classement des trams et métros de France")
+        share = f"""        <p class="share">Partager&nbsp;:
+          <a href="https://www.linkedin.com/sharing/share-offsite/?url={quote(page_url)}" rel="noopener">LinkedIn</a> ·
+          <a href="https://x.com/intent/post?text={share_text}&amp;url={quote(page_url)}" rel="noopener">X</a> ·
+          <a href="https://bsky.app/intent/compose?text={share_text}%20{quote(page_url)}" rel="noopener">Bluesky</a> ·
+          <button type="button" class="link-button" data-copy="{page_url}">Copier le lien</button>
+        </p>"""
+        others = " · ".join(f'<a href="../{o["slug"]}/">{esc(o["short"])}</a>' for o in defs if o["slug"] != d["slug"])
+        pages[f"{RANKINGS_DIR}/{d['slug']}/index.html"] = ranking_page(
+            title=d["title"],
+            description=f'{d["question"]} {d["intro"]}',
+            url=url,
+            base="../../",
+            image_name=f"classement-{d['slug']}.jpg",
+            crumbs=[(SITE_NAME, SITE_URL), ("Classements", hub_url), (d["short"], url)],
+            cities=cities,
+            body=f"""      <section class="hero">
+        <span class="chip">🏆 Classement · {len(data)} réseaux</span>
+        <h1>{esc(d["question"])}</h1>
+        <p class="lede">{esc(d["intro"])}</p>
+        <div class="podium">
+{podium}
+        </div>
+      </section>
+      <section class="section" aria-labelledby="table-title">
+        <h2 id="table-title">{esc(d["title"])}</h2>
+        <p>{esc(d["method"])}</p>
+{filters}        <div class="table-scroll">
+        <table class="lines-table ranking-table" id="ranking">
+          <thead><tr>{headers}</tr></thead>
+          <tbody>
+{rows}
+          </tbody>
+        </table>
+        </div>
+{share}
+        <p class="section-link">Les autres classements&nbsp;: {others} · <a href="../">tous les classements</a></p>
+      </section>
+{method_section(data, "../../", d["method"])}""",
+        )
+    return pages
+
+
 def render_404(cities: list[dict]) -> str:
     links = "\n".join(f'          <a class="chip" href="/{city["path"]}">{esc(city["name"])}</a>' for city in cities)
     return f"""<!doctype html>
@@ -576,13 +1068,19 @@ def main() -> None:
     home_template = Template((ROOT / "templates" / "home.html").read_text(encoding="utf-8"))
     (SITE / "index.html").write_text(render_home(home_template, cities), encoding="utf-8")
     (SITE / "404.html").write_text(render_404(cities), encoding="utf-8")
+    rankings = render_rankings(cities)
+    for relative, html_page in rankings.items():
+        (SITE / relative).parent.mkdir(parents=True, exist_ok=True)
+        (SITE / relative).write_text(html_page, encoding="utf-8")
     (SITE / "mentions-legales").mkdir(exist_ok=True)
     (SITE / "mentions-legales" / "index.html").write_text(render_legal(cities), encoding="utf-8")
     write_sources_readme(cities)
     print("Wrote site/index.html, site/404.html")
 
     today = date.today().isoformat()
-    urls = [f"  <url><loc>{SITE_URL}</loc><lastmod>{today}</lastmod></url>"] + [
+    urls = [f"  <url><loc>{SITE_URL}</loc><lastmod>{today}</lastmod></url>"]
+    urls += [f"  <url><loc>{SITE_URL}{relative.removesuffix('index.html')}</loc><lastmod>{today}</lastmod></url>" for relative in rankings]
+    urls += [
         f"  <url><loc>{SITE_URL}{city['path']}</loc><lastmod>{city['sources']['builtAt'][:10]}</lastmod></url>" for city in cities
     ]
     (SITE / "sitemap.xml").write_text(

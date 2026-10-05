@@ -2,7 +2,7 @@
 """Render social previews with headless Chrome: site/og/<city>.jpg (1200×630), its thumbnail og/thumb-<city>.jpg
 for the home page cards, and og/home.jpg for the home page.
 
-Usage: python3 tools/render_og.py <city>|home|all   (run build_pages.py before, and again after for "home")
+Usage: python3 tools/render_og.py <city>|home|classements|all   (run build_pages.py before, and again after for "home")
 Needs Google Chrome and ImageMagick (`magick`).
 """
 
@@ -96,14 +96,55 @@ def render_home(cities: list[dict]) -> None:
         preview.unlink()
 
 
+RANKINGS_OVERLAY = """<style>
+  html, body { width: 1200px; height: 630px; overflow: hidden; margin: 0; }
+  .topbar, .breadcrumb, .section, .site-footer, .lede, .ranking-cards { display: none !important; }
+  .podium { width: 100%; margin-top: 34px; }
+  .podium-step strong { font-size: 2.6rem; }
+  .podium-step span:not(.medal) { font-size: 1.15rem; }
+  .page { max-width: 1120px; padding: 34px 40px 0; }
+  .hero { padding: 0; }
+  .hero h1 { font-size: 64px; margin: 18px 0 8px; }
+  .ranking-highlights { margin-top: 30px; gap: 16px; }
+  .ranking-highlights .stat { padding: 22px; }
+  .ranking-highlights strong { font-size: 2.6rem; }
+  .ranking-highlights span { font-size: 1.05rem; }
+  body::after { content: "À portée de tram · tram.camilleroux.com · d'après les horaires officiels des réseaux";
+    position: absolute; left: 0; right: 0; bottom: 44px; text-align: center; color: #3aa70b; font: 600 20px Inter, sans-serif; }
+</style>
+</head>"""
+
+
+def render_rankings() -> None:
+    """The rankings hub (og/classements.jpg) and every ranking page (og/classement-<slug>.jpg)."""
+    pages = [(SITE / "classements", "classements.jpg")] + [
+        (path.parent, f"classement-{path.parent.name}.jpg") for path in sorted((SITE / "classements").glob("*/index.html"))
+    ]
+    server = serve()
+    try:
+        for folder, image in pages:
+            page = (folder / "index.html").read_text(encoding="utf-8").replace("</head>", RANKINGS_OVERLAY, 1)
+            preview = folder / "_og.html"
+            preview.write_text(page, encoding="utf-8")
+            try:
+                relative = folder.relative_to(SITE).as_posix()
+                screenshot(f"http://127.0.0.1:{server.server_port}/{relative}/_og.html", SITE / "og" / image)
+            finally:
+                preview.unlink()
+    finally:
+        server.shutdown()
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     cities = load_cities()
-    targets = [c["slug"] for c in cities] + ["home"] if sys.argv[1] == "all" else [sys.argv[1]]
+    targets = [c["slug"] for c in cities] + ["home", "classements"] if sys.argv[1] == "all" else [sys.argv[1]]
     for target in targets:
         if target == "home":
             render_home(cities)
+        elif target == "classements":
+            render_rankings()
         else:
             render_city(next(city for city in cities if city["slug"] == target))
 

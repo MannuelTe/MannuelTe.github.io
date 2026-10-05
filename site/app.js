@@ -72,6 +72,7 @@ const app = {
   from: null, // { point, label }
   to: null, // { point, label }
   includeBus: false,
+  basemap: true, // faint OSM street layer
   mode: "transit", // "transit" or "bike"
   bike: null, // cycling layer (data/<city>-bike.json), loaded on first use
   year: CITY.defaultTimetable,
@@ -932,6 +933,62 @@ function drawMarker(point, color, label) {
   ctx.fillText(label, left + width / 2, top + 11.5);
 }
 
+// --- Base map: OpenStreetMap streets, drawn faintly over the heatmap ----------------------------------------
+
+// From the same OSM street network as the bike layer (build_bike.py → data/<city>-streets.json), so no tile
+// service or key is needed. Multiplied in soft grey; minor streets and paths fade in as the map is zoomed.
+const STREET_STYLE = {
+  major: { width: 1.6, alpha: 0.32, from: 0 },
+  minor: { width: 0.9, alpha: 0.26, from: 1.8 },
+  path: { width: 0.7, alpha: 0.18, from: 3.5, dash: [2, 3] },
+};
+const STREET_INK = "#5b5f6b";
+
+async function loadStreets() {
+  const payload = await (await fetch(new URL(`./data/${CITY.slug}-streets.json?v=${CITY.streetsVersion}`, import.meta.url))).json();
+  const [ox0, oy0] = payload.origin;
+  const paths = {};
+  for (const [kind, lines] of Object.entries(payload.classes)) {
+    const path = new Path2D();
+    for (const flat of lines) {
+      let x = ox0;
+      let y = oy0;
+      for (let i = 0; i < flat.length; i += 2) {
+        x += flat[i];
+        y += flat[i + 1];
+        // Paths are built in the canvas's offset world frame, like the other layers.
+        if (i === 0) path.moveTo(x - app.offset[0], y - app.offset[1]);
+        else path.lineTo(x - app.offset[0], y - app.offset[1]);
+      }
+    }
+    paths[kind] = path;
+  }
+  app.streets = paths;
+  requestRender();
+}
+
+function drawStreets() {
+  if (!app.basemap || !app.streets) return;
+  const zoom = app.view.scale / app.view.fitScale;
+  const px = 1 / app.view.scale;
+  ctx.save();
+  ctx.globalCompositeOperation = "multiply";
+  ctx.strokeStyle = STREET_INK;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (const [kind, style] of Object.entries(STREET_STYLE)) {
+    const path = app.streets[kind];
+    if (!path || zoom < style.from) continue;
+    // Fade in over one zoom step past the threshold; widths grow gently with zoom.
+    const fade = style.from ? clamp((zoom - style.from) / style.from, 0, 1) : 1;
+    ctx.globalAlpha = style.alpha * fade;
+    ctx.lineWidth = style.width * Math.min(2, 0.8 + zoom / 8) * px;
+    ctx.setLineDash(style.dash ? style.dash.map((d) => d * px) : []);
+    ctx.stroke(path);
+  }
+  ctx.restore();
+}
+
 function render() {
   app.frameRequested = false;
   if (!app.data) return;
@@ -963,6 +1020,7 @@ function render() {
     ctx.drawImage(app.heatCanvas, minX - ox, minY - oy, maxX - minX, maxY - minY);
     ctx.restore();
   }
+  drawStreets();
 
   ctx.fillStyle = COLORS.park;
   for (const park of app.paths.parks) ctx.fill(park, "evenodd");
@@ -1336,6 +1394,7 @@ function syncUrl() {
   if (app.mode === "bike") params.set("mode", "bike");
   if (app.year !== CITY.defaultTimetable) params.set("year", app.year);
   if (app.includeBus) params.set("bus", "1");
+  if (!app.basemap) params.set("streets", "0");
   if (app.maxMinutes !== DEFAULT_MAX) params.set("max", String(app.maxMinutes));
   const iso = [...app.isochrones].sort((a, b) => a - b).join(",");
   if (iso !== DEFAULT_ISOCHRONES.join(",")) params.set("iso", iso || "0");
@@ -1346,6 +1405,8 @@ function syncUrl() {
 function restoreFromUrl() {
   const params = new URLSearchParams(location.search);
   app.includeBus = params.get("bus") === "1";
+  app.basemap = params.get("streets") !== "0";
+  $("basemapToggle").checked = app.basemap;
   $("busToggle").checked = app.includeBus;
   const max = Number(params.get("max"));
   if (max >= 20 && max <= 90) app.maxMinutes = max;
@@ -1491,6 +1552,12 @@ $("fullscreen").hidden = !document.fullscreenEnabled;
 $("fullscreen").addEventListener("click", () => {
   if (document.fullscreenElement) document.exitFullscreen();
   else stage.requestFullscreen?.();
+});
+
+$("basemapToggle").addEventListener("change", (event) => {
+  app.basemap = event.target.checked;
+  requestRender();
+  syncUrl();
 });
 
 $("busToggle").addEventListener("change", (event) => {
@@ -2021,6 +2088,7 @@ async function init() {
   resize();
   if (new URLSearchParams(location.search).get("mode") === "bike") await setMode("bike").catch(() => toast("Could not load the cycling layer."));
   restoreFromUrl();
+  loadStreets().catch((error) => console.error("streets", error));
   new ResizeObserver(resize).observe(canvas);
   $("modePicker").addEventListener("click", (event) => {
     const mode = event.target.closest("button")?.dataset.mode;

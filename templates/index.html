@@ -72,6 +72,10 @@ ${header}
               <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
             </div>
 
+            <p class="map-attribution">
+              <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a> · swisstopo · BFS · opentransportdata.swiss
+            </p>
+
             <div class="legend" aria-hidden="true">
               <div id="legendBar" class="legend-bar"></div>
               <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
@@ -97,6 +101,10 @@ ${year_buttons}
               <span class="control-label">Network</span>
               <label class="chip-toggle"><input type="checkbox" checked disabled /><span>${rail_label}</span></label>
               <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>${bus_label}</span></label>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Base map</span>
+              <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>Streets</span></label>
             </div>
             <div id="isoToggles" class="control-group">
               <span class="control-label">Isochrones</span>

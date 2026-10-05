@@ -276,6 +276,10 @@ def sources_block(city: dict) -> str:
         ("Lines, lakes, parks and cycling streets",
          f'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API'
          f'{esc(fetched(osm.get("osm_water_parks")))}.'),
+        ("Base map",
+         'Faint street layer drawn from the same OpenStreetMap network as the bike layer (major roads, streets and '
+         'paths; service roads left out), © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap '
+         'contributors</a>. Untick « Streets » to hide it.'),
         ("Address search",
          'Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> '
          "(swisstopo) from your browser."),
@@ -352,6 +356,7 @@ def render_page(template: Template, city: dict) -> str:
         "history": figures,
         "center": stats["center"],
         "bikeVersion": short_hash(SITE / "data" / f"{city['slug']}-bike.json"),
+        "streetsVersion": short_hash(SITE / "data" / f"{city['slug']}-streets.json"),
         "defaultFrom": city["defaultFrom"],
         "railNoun": city["railNoun"],
         "railStations": city["railStations"],

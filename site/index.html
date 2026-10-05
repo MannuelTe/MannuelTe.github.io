@@ -114,10 +114,10 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=bbf12a35" />
+    <link rel="stylesheet" href="./styles.css?v=3662b564" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "fc00091c", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "65d9eaf9", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "2254d215", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "6e007548", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "history": [{"year": "2022", "draft": false, "day": "Tuesday 25 October 2022", "population": {"total": 717159, "45": 658837, "30": 412707, "15": 62452}, "jobs": {"total": 761616, "45": 734668, "30": 621844, "15": 228917}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14}, {"year": "2024", "draft": false, "day": "Tuesday 22 October 2024", "population": {"total": 717159, "45": 654754, "30": 427870, "15": 79588}, "jobs": {"total": 761616, "45": 729988, "30": 620104, "15": 247340}, "within15": 35, "within30": 87, "railStations": 289, "tramLines": 16}, {"year": "2026", "draft": false, "day": "Tuesday 20 October 2026", "population": {"total": 717159, "45": 642700, "30": 415214, "15": 81684}, "jobs": {"total": 761616, "45": 727559, "30": 612366, "15": 243376}, "within15": 34, "within30": 84, "railStations": 286, "tramLines": 19}, {"year": "2027", "draft": true, "day": "Tuesday 23 November 2027", "population": {"total": 717159, "45": 645495, "30": 426155, "15": 88222}, "jobs": {"total": 761616, "45": 726737, "30": 619363, "15": 242047}, "within15": 34, "within30": 89, "railStations": 280, "tramLines": 16}], "center": "Zürich HB", "bikeVersion": "dd4b6081", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
+    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "fc00091c", "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "65d9eaf9", "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "2254d215", "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "6e007548", "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "history": [{"year": "2022", "draft": false, "day": "Tuesday 25 October 2022", "population": {"total": 717159, "45": 658837, "30": 412707, "15": 62452}, "jobs": {"total": 761616, "45": 734668, "30": 621844, "15": 228917}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14}, {"year": "2024", "draft": false, "day": "Tuesday 22 October 2024", "population": {"total": 717159, "45": 654754, "30": 427870, "15": 79588}, "jobs": {"total": 761616, "45": 729988, "30": 620104, "15": 247340}, "within15": 35, "within30": 87, "railStations": 289, "tramLines": 16}, {"year": "2026", "draft": false, "day": "Tuesday 20 October 2026", "population": {"total": 717159, "45": 642700, "30": 415214, "15": 81684}, "jobs": {"total": 761616, "45": 727559, "30": 612366, "15": 243376}, "within15": 34, "within30": 84, "railStations": 286, "tramLines": 19}, {"year": "2027", "draft": true, "day": "Tuesday 23 November 2027", "population": {"total": 717159, "45": 645495, "30": 426155, "15": 88222}, "jobs": {"total": 761616, "45": 726737, "30": 619363, "15": 242047}, "within15": 34, "within30": 89, "railStations": 280, "tramLines": 16}], "center": "Zürich HB", "bikeVersion": "dd4b6081", "streetsVersion": "6767497f", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
     <div class="frame">
     <header class="topbar">
       <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
@@ -192,6 +192,10 @@
               <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
             </div>
 
+            <p class="map-attribution">
+              <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a> · swisstopo · BFS · opentransportdata.swiss
+            </p>
+
             <div class="legend" aria-hidden="true">
               <div id="legendBar" class="legend-bar"></div>
               <div class="legend-labels"><span>0</span><span id="legendMid"></span><span id="legendMax"></span></div>
@@ -220,6 +224,10 @@
               <span class="control-label">Network</span>
               <label class="chip-toggle"><input type="checkbox" checked disabled /><span>Tram, S-Bahn and train</span></label>
               <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>Bus and boat</span></label>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Base map</span>
+              <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>Streets</span></label>
             </div>
             <div id="isoToggles" class="control-group">
               <span class="control-label">Isochrones</span>
@@ -410,6 +418,7 @@
           <dt>Jobs</dt><dd><a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36073031.html">STATENT 2023</a> hectare grid (employees, all sectors), BFS, downloaded 5 October 2026.</dd>
           <dt>Elevation</dt><dd>swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the <a href="https://api3.geo.admin.ch/services/sdiservices.html#profile">geo.admin.ch profile service</a>, downloaded 5 October 2026.</dd>
           <dt>Lines, lakes, parks and cycling streets</dt><dd>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API, downloaded 5 October 2026.</dd>
+          <dt>Base map</dt><dd>Faint street layer drawn from the same OpenStreetMap network as the bike layer (major roads, streets and paths; service roads left out), © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Untick « Streets » to hide it.</dd>
           <dt>Address search</dt><dd>Live queries to the <a href="https://api3.geo.admin.ch/services/sdiservices.html#search">geo.admin.ch search service</a> (swisstopo) from your browser.</dd>
           <dt>Method</dt><dd>Fork of <a href="https://github.com/camilleroux/montpellier-temps-transport">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, dates) in <a href="https://github.com/MannuelTe/MannuelTe.github.io/tree/main/sources">sources/</a>.</dd>
             </dl>
@@ -445,6 +454,6 @@
     </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=d36082cf"></script>
+    <script type="module" src="./app.js?v=c3991977"></script>
   </body>
 </html>

@@ -156,6 +156,105 @@ def merge(*networks):
     return points, graph
 
 
+# --- Street layer (faint base map) -------------------------------------------------------------------------
+
+STREET_CLASSES = {
+    "major": {"trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link"},
+    "minor": {"tertiary", "tertiary_link", "unclassified", "residential", "living_street", "road"},
+    "path": {"path", "track", "cycleway", "footway", "pedestrian", "bridleway"},
+}
+STREET_TOLERANCE_METERS = 3.0
+
+
+def street_class(highway: str | None) -> str | None:
+    first = (highway or "").strip("[]'\" ").split("'")[0]
+    return next((name for name, kinds in STREET_CLASSES.items() if first in kinds), None)
+
+
+def douglas_peucker(points, tolerance):
+    if len(points) <= 2:
+        return points
+    (ax, ay), (bx, by) = points[0], points[-1]
+    dx, dy = bx - ax, by - ay
+    norm = math.hypot(dx, dy) or 1e-9
+    index, distance = 0, -1.0
+    for i in range(1, len(points) - 1):
+        d = abs(dy * (points[i][0] - ax) - dx * (points[i][1] - ay)) / norm
+        if d > distance:
+            index, distance = i, d
+    if distance <= tolerance:
+        return [points[0], points[-1]]
+    return douglas_peucker(points[: index + 1], tolerance)[:-1] + douglas_peucker(points[index:], tolerance)
+
+
+def street_lines(data_dir: Path):
+    """Undirected street polylines in local metres, by class, from the zh-cycling graph and the Overpass patches."""
+    seen, lines = set(), defaultdict(list)
+    graphml = data_dir / "bike_graph.graphml"
+    if graphml.exists():
+        ns = "{http://graphml.graphdrawing.org/xmlns}"
+        keys, coords = {}, {}
+        for _, element in ET.iterparse(graphml, events=("end",)):
+            tag = element.tag.removeprefix(ns)
+            if tag == "key":
+                keys[element.get("id")] = element.get("attr.name")
+            elif tag == "node":
+                data = {keys.get(d.get("key")): d.text for d in element.findall(f"{ns}data")}
+                coords[element.get("id")] = (float(data["x"]), float(data["y"]))
+                element.clear()
+            elif tag == "edge":
+                data = {keys.get(d.get("key")): d.text for d in element.findall(f"{ns}data")}
+                u, v = element.get("source"), element.get("target")
+                element.clear()
+                kind = street_class(data.get("highway"))
+                geometry = data.get("geometry")
+                key = (min(u, v), max(u, v), len(geometry or ""))
+                if not kind or key in seen:
+                    continue
+                seen.add(key)
+                if geometry and geometry.startswith("LINESTRING"):
+                    line = [tuple(map(float, pair.split())) for pair in geometry[geometry.index("(") + 1:-1].split(",")]
+                else:
+                    line = [coords[u], coords[v]]
+                lines[kind].append([lv95_to_xy(e, n) for e, n in line])
+    patches = data_dir / "osm_bike.json"
+    if patches.exists():
+        payload = bd.load_json(patches)
+        nodes = {e["id"]: bd.lonlat_to_xy(e["lon"], e["lat"]) for e in payload["elements"] if e["type"] == "node"}
+        for way in (e for e in payload["elements"] if e["type"] == "way"):
+            kind = street_class(way.get("tags", {}).get("highway"))
+            refs = [ref for ref in way["nodes"] if ref in nodes]
+            if kind and len(refs) >= 2 and ("w", way["id"]) not in seen:
+                seen.add(("w", way["id"]))
+                lines[kind].append([nodes[ref] for ref in refs])
+    return lines
+
+
+def write_streets(city: dict, meta: dict) -> None:
+    min_x, min_y, max_x, max_y = meta["bounds"]
+    out = {"origin": [round(min_x), round(min_y)], "classes": {}}
+    total = 0
+    for kind, lines in street_lines(ROOT / "data" / city["slug"]).items():
+        encoded = []
+        for line in lines:
+            if not any(min_x <= x <= max_x and min_y <= y <= max_y for x, y in line):
+                continue
+            simple = douglas_peucker(line, STREET_TOLERANCE_METERS)
+            flat, px, py = [], round(min_x), round(min_y)
+            for x, y in simple:
+                ix, iy = round(x), round(y)
+                flat += [ix - px, iy - py]
+                px, py = ix, iy
+            if len(flat) >= 4:
+                encoded.append(flat)
+                total += len(flat) // 2
+        out["classes"][kind] = encoded
+    path = ROOT / "site" / "data" / f"{city['slug']}-streets.json"
+    path.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    counts = {kind: len(lines) for kind, lines in out["classes"].items()}
+    print(f"Wrote {path.relative_to(ROOT)} ({path.stat().st_size / 1e6:.2f} MB, {counts}, {total} points)")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -231,6 +330,7 @@ def main() -> None:
         "snap": [round(m, 2) if math.isfinite(m) else None for m in snap_minutes],
         "adjacency": adjacency,
     }
+    write_streets(city, meta)
     path = ROOT / "site" / "data" / f"{city['slug']}-bike.json"
     path.write_text(json.dumps(output, separators=(",", ":")), encoding="utf-8")
     edge_count = sum(len(e) for e in adjacency)

@@ -1209,3 +1209,25 @@ output {
   padding: 8px 14px;
   font-size: 13px;
 }
+
+.map-attribution {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  z-index: 4;
+  margin: 0;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.map-attribution a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.map-attribution a:hover {
+  color: var(--blue);
+}

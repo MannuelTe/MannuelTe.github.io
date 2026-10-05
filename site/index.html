@@ -72,7 +72,23 @@
               "name": "How are travel times computed?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. No real-time data or disruptions: this is the city « on paper »."
+                "text": "Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or disruptions: this is the city « on paper »."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do hills and the lake count?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Walking is slower uphill and a little faster on gentle descents (Tobler's hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How are bike times computed?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project."
               }
             },
             {
@@ -306,7 +322,9 @@
         <details class="faq"><summary>How long does it take to cross Zurich by public transport?</summary><p>From Zürich HB, 47% of the 286 tram and rail stops on the map are less than 15 minutes away and 93% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 56 minutes.</p></details>
         <details class="faq"><summary>Where do the timetables come from?</summary><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 5 October 2026 and valid until 12 December 2026. Times are those of Tuesday 20 October 2026, between 7:00 and 20:00.</p></details>
         <details class="faq"><summary>Are buses included?</summary><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></details>
-        <details class="faq"><summary>How are travel times computed?</summary><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. No real-time data or disruptions: this is the city « on paper ».</p></details>
+        <details class="faq"><summary>How are travel times computed?</summary><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or disruptions: this is the city « on paper ».</p></details>
+        <details class="faq"><summary>Do hills and the lake count?</summary><p>Yes. Walking is slower uphill and a little faster on gentle descents (Tobler&#x27;s hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town.</p></details>
+        <details class="faq"><summary>How are bike times computed?</summary><p>On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.</p></details>
         <details class="faq"><summary>Where do the resident and job figures come from?</summary><p>From the Federal Statistical Office&#x27;s hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></details>
         <details class="faq"><summary>Why do some tram lines look unusual?</summary><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></details>
         <details class="faq sources">

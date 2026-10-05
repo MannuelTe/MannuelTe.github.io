@@ -164,7 +164,20 @@ def city_faq(city: dict) -> list[tuple]:
             "How are travel times computed?",
             "Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the "
             "scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway "
-            "platform. No real-time data or disruptions: this is the city « on paper ».",
+            "platform. Where several lines run to the same next stop, the wait counts all of them. No real-time data or "
+            "disruptions: this is the city « on paper ».",
+        ),
+        (
+            "Do hills and the lake count?",
+            "Yes. Walking is slower uphill and a little faster on gentle descents (Tobler's hiking function on swisstopo "
+            "elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since "
+            "bridges are close together in town.",
+        ),
+        (
+            "How are bike times computed?",
+            "On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the "
+            "traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a "
+            "minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.",
         ),
         (
             "Where do the resident and job figures come from?",

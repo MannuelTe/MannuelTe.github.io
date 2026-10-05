@@ -70,13 +70,20 @@ ${header}
 
         <div class="controls">
           <div class="control-group">
+            <span class="control-label">Mode</span>
+            <div id="modePicker" class="segmented mode-picker" role="group" aria-label="Mode of travel">
+              <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
+              <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
+            </div>
+          </div>
+          <div class="control-group transit-only">
             <span class="control-label">Timetable</span>
             <div id="yearPicker" class="segmented year-picker" role="group" aria-label="Timetable year">
 ${year_buttons}
             </div>
             <small id="yearNote" class="year-note"></small>
           </div>
-          <div class="control-group">
+          <div class="control-group transit-only">
             <span class="control-label">Network</span>
             <label class="pill-toggle"><input type="checkbox" checked disabled /> ${rail_label}</label>
             <label class="pill-toggle"><input id="busToggle" type="checkbox" /> ${bus_label}</label>

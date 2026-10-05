@@ -72,6 +72,8 @@ const app = {
   from: null, // { point, label }
   to: null, // { point, label }
   includeBus: false,
+  mode: "transit", // "transit" or "bike"
+  bike: null, // cycling layer (data/<city>-bike.json), loaded on first use
   year: CITY.defaultTimetable,
   maxMinutes: DEFAULT_MAX,
   isochrones: [...DEFAULT_ISOCHRONES],
@@ -363,8 +365,94 @@ function solveFrom(point) {
   return { point, z, dist, prev, seedWalk, stationTime, stationBest };
 }
 
+// --- Bike: shortest paths over the cell graph (build_bike.py) ----------------------
+
+const bikeUrl = () => new URL(`./data/${CITY.slug}-bike.json?v=${CITY.bikeVersion}`, import.meta.url);
+
+async function loadBike() {
+  if (app.bike) return app.bike;
+  const bike = await (await fetch(bikeUrl())).json();
+  const count = bike.adjacency.length;
+  const offsets = new Int32Array(count + 1);
+  bike.adjacency.forEach((edges, i) => {
+    offsets[i + 1] = offsets[i] + edges.length;
+  });
+  const targets = new Int32Array(offsets[count]);
+  const weights = new Float32Array(offsets[count]);
+  bike.adjacency.forEach((edges, i) => {
+    edges.forEach(([target, weight], k) => {
+      targets[offsets[i] + k] = target;
+      weights[offsets[i] + k] = weight;
+    });
+  });
+  const snap = Float32Array.from(bike.snap, (value) => value ?? Infinity);
+  app.bike = { meta: bike.meta, offsets, targets, weights, snap };
+  return app.bike;
+}
+
+/** Index of the land cell under a point, or of the nearest land cell around it. */
+function cellAt(point) {
+  const { meta, mask } = app.data;
+  const [minX, minY, maxX, maxY] = meta.bounds;
+  const col = Math.floor(((point[0] - minX) / (maxX - minX)) * meta.gridCols);
+  const row = Math.floor(((point[1] - minY) / (maxY - minY)) * meta.gridRows);
+  for (let ring = 0; ring <= 3; ring += 1) {
+    for (let dr = -ring; dr <= ring; dr += 1) {
+      for (let dc = -ring; dc <= ring; dc += 1) {
+        if (Math.max(Math.abs(dr), Math.abs(dc)) !== ring) continue;
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= meta.gridRows || c >= meta.gridCols) continue;
+        const index = mask[r * meta.gridCols + c];
+        if (index >= 0) return index;
+      }
+    }
+  }
+  return -1;
+}
+
+/** Bike times from a point: push to the nearest street, unlock, ride over the cell graph. */
+function solveBike(point) {
+  const bike = app.bike;
+  const count = bike.snap.length;
+  const time = new Float64Array(count).fill(Infinity);
+  const heap = new MinHeap();
+  const start = cellAt(point);
+  if (start >= 0) {
+    time[start] = bike.meta.parkMinutes + bike.snap[start];
+    heap.push(time[start], start);
+  }
+  while (heap.size) {
+    const cell = heap.pop();
+    const base = time[cell];
+    for (let e = bike.offsets[cell]; e < bike.offsets[cell + 1]; e += 1) {
+      const next = bike.targets[e];
+      const t = base + bike.weights[e];
+      if (t < time[next]) {
+        time[next] = t;
+        heap.push(t, next);
+      }
+    }
+  }
+  // Arriving: from the street to the cell centre, and park.
+  const arrive = Float64Array.from(time, (t, i) => t + bike.snap[i] + bike.meta.parkMinutes);
+  return { bike: true, point, z: elevationAt(point), cellTime: arrive };
+}
+
+function solve(point) {
+  return app.mode === "bike" ? solveBike(point) : solveFrom(point);
+}
+
+function travelBike(solution, point) {
+  const cell = cellAt(point);
+  const byBike = cell >= 0 ? solution.cellTime[cell] : Infinity;
+  const byFoot = walkBetween(solution.point, solution.z, point, elevationAt(point));
+  return byFoot <= byBike ? { minutes: byFoot, station: -1, walk: byFoot } : { minutes: byBike, station: -1, bike: true };
+}
+
 /** Meilleur temps vers un point quelconque : à pied direct, ou via l'arrêt le plus favorable. */
 function travelTo(solution, point) {
+  if (solution.bike) return travelBike(solution, point);
   const z = elevationAt(point);
   const direct = walkBetween(solution.point, solution.z, point, z);
   let best = { minutes: direct, station: -1, walk: direct };
@@ -391,6 +479,10 @@ function routeLabel(routeId) {
 function buildItinerary(solution, point) {
   const { graph, data } = app;
   const result = travelTo(solution, point);
+  if (result.bike) {
+    const km = (hypot(solution.point, point) / 1000).toFixed(1);
+    return { minutes: result.minutes, steps: [{ kind: "bike", text: `By bike (${km} km as the crow flies)`, minutes: result.minutes }] };
+  }
   if (result.station === -1) {
     return { minutes: result.minutes, steps: [{ kind: "walk", text: "Walk all the way", minutes: result.minutes }] };
   }
@@ -463,6 +555,16 @@ function computeGrid(solution) {
   const { cells, meta } = app.data;
   const { gridCols: cols, gridRows: rows } = meta;
   const times = new Float32Array(cols * rows).fill(NaN);
+  if (solution.bike) {
+    cells.forEach((cell, i) => {
+      let best = solution.cellTime[i];
+      const direct = hillWalk(solution.point, solution.z, cell.point, cell.z ?? solution.z);
+      if (direct < best && !crossesLake(solution.point, cell.point)) best = direct;
+      times[cell.row * cols + cell.col] = best;
+    });
+    const bridged = fillGaps(times, cols, rows, RIVER_BRIDGE_CELLS);
+    return { times, smooth: smoothGrid(bridged, cols, rows), cols, rows, contours: {} };
+  }
   for (const cell of cells) {
     // cell.access: nearby stops with the walk from the stop to the cell, in minutes (hills and lakes included).
     let best = Infinity;
@@ -939,8 +1041,8 @@ function heatSource() {
 
 function recompute({ fast = false } = {}) {
   if (!app.from) return;
-  app.solution = solveFrom(app.from.point);
-  app.heatSolution = heatSource() === app.from ? app.solution : solveFrom(app.to.point);
+  app.solution = solve(app.from.point);
+  app.heatSolution = heatSource() === app.from ? app.solution : solve(app.to.point);
   app.grid = computeGrid(app.heatSolution);
   paintHeat(app.grid, { fast });
   updatePanel();
@@ -1010,7 +1112,7 @@ function updatePanel() {
             badge.title = routeLabel(step.route);
           } else {
             badge.classList.add("walk");
-            badge.textContent = "🚶";
+            badge.textContent = step.kind === "bike" ? "🚲" : "🚶";
           }
           const text = document.createElement("span");
           text.textContent = step.kind === "ride" ? `${step.text} · wait ~${Math.round(step.wait)} min` : step.text;
@@ -1026,15 +1128,21 @@ function updatePanel() {
   if (app.heatSolution) {
     const source = heatSource();
     const tram = app.data.stations.map((station, index) => ({ station, index })).filter(({ station }) => station.rail);
-    const reachable = tram.filter(({ station, index }) => {
-      const byFoot = walkBetween(source.point, elevationAt(source.point), station.point, station.z ?? 0);
-      return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
-    }).length;
-    const percent = Math.round((reachable / tram.length) * 100);
     const where = source === app.from ? "this start" : "this destination";
-    $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
-      app.includeBus ? ` (with ${CITY.busNoun})` : ""
-    }.`;
+    if (app.heatSolution.bike) {
+      const reachable = tram.filter(({ station }) => travelBike(app.heatSolution, station.point).minutes <= REACH_MINUTES).length;
+      const percent = Math.round((reachable / tram.length) * 100);
+      $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes by bike from ${where}.`;
+    } else {
+      const reachable = tram.filter(({ station, index }) => {
+        const byFoot = walkBetween(source.point, elevationAt(source.point), station.point, station.z ?? 0);
+        return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
+      }).length;
+      const percent = Math.round((reachable / tram.length) * 100);
+      $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
+        app.includeBus ? ` (with ${CITY.busNoun})` : ""
+      }.`;
+    }
   }
 }
 
@@ -1109,6 +1217,7 @@ function syncUrl() {
   if (app.from) params.set("from", formatPair(app.from.point));
   if (app.to) params.set("to", formatPair(app.to.point));
   if (app.to && app.heatFrom === "to") params.set("map", "to");
+  if (app.mode === "bike") params.set("mode", "bike");
   if (app.year !== CITY.defaultTimetable) params.set("year", app.year);
   if (app.includeBus) params.set("bus", "1");
   if (app.maxMinutes !== DEFAULT_MAX) params.set("max", String(app.maxMinutes));
@@ -1494,14 +1603,35 @@ async function switchYear(year) {
   syncUrl();
 }
 
+/** Public transport or bike: the bike layer ignores the timetable year and the bus toggle. */
+async function setMode(mode) {
+  if (mode === "bike") await loadBike();
+  app.mode = mode === "bike" ? "bike" : "transit";
+  for (const button of $("modePicker").querySelectorAll("button")) {
+    button.setAttribute("aria-pressed", String(button.dataset.mode === app.mode));
+  }
+  document.body.classList.toggle("bike-mode", app.mode === "bike");
+}
+
 async function init() {
   resize();
   const requested = new URLSearchParams(location.search).get("year");
   await loadYear(CITY.timetables[requested] ? requested : CITY.defaultTimetable);
   app.size.width = 0;
   resize();
+  if (new URLSearchParams(location.search).get("mode") === "bike") await setMode("bike").catch(() => toast("Could not load the cycling layer."));
   restoreFromUrl();
   new ResizeObserver(resize).observe(canvas);
+  $("modePicker").addEventListener("click", (event) => {
+    const mode = event.target.closest("button")?.dataset.mode;
+    if (!mode || mode === app.mode) return;
+    setMode(mode)
+      .then(() => {
+        recompute();
+        syncUrl();
+      })
+      .catch(() => toast("Could not load the cycling layer."));
+  });
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;
     if (year) switchYear(year).catch(() => toast("Could not load that timetable."));

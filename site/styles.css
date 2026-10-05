@@ -1284,3 +1284,5 @@ output {
 .sources dd { margin: 0; }
 .sources ul { margin: 4px 0 0; padding-left: 18px; }
 @media (max-width: 640px) { .sources dl { grid-template-columns: 1fr; } .sources dd { margin-bottom: 8px; } }
+.mode-picker { margin: 0; padding: 0; border: 0; }
+.bike-mode .transit-only { opacity: 0.4; pointer-events: none; }

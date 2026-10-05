@@ -322,6 +322,7 @@ def render_page(template: Template, city: dict) -> str:
         "name": city["name"],
         "timetables": timetables,
         "defaultTimetable": city["defaultTimetable"],
+        "bikeVersion": short_hash(SITE / "data" / f"{city['slug']}-bike.json"),
         "defaultFrom": city["defaultFrom"],
         "railNoun": city["railNoun"],
         "railStations": city["railStations"],

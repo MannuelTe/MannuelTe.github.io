@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from cities import load_cities
+from cities import load_cities, load_city
 
 ROOT = Path(__file__).resolve().parent
 
@@ -21,14 +21,14 @@ def run(*args: str) -> None:
     subprocess.run([sys.executable, *args], cwd=ROOT, check=True)
 
 
-def control_row(slug: str) -> str:
-    """One line per city to spot anomalies at a glance (reference day, size, reach, farthest station)."""
-    sources = json.loads((ROOT / "sources" / f"{slug}.json").read_text(encoding="utf-8"))
+def control_row(slug: str, year: str) -> str:
+    """One line per timetable year to spot anomalies at a glance (reference day, size, reach, farthest station)."""
+    sources = json.loads((ROOT / "sources" / f"{slug}-{year}.json").read_text(encoding="utf-8"))
     stats = sources["stats"]
-    size = (ROOT / "site" / "data" / f"{slug}.json").stat().st_size / 1e6
-    lines = " ".join(f"{line['name']}:{line['headway']:g}" for line in stats["lines"])
+    size = (ROOT / "site" / "data" / f"{slug}-{year}.json").stat().st_size / 1e6
+    lines = " ".join(f"{line['name']}:{line['headway']:g}" for line in stats["lines"] if line["mode"] == "tram")
     return (
-        f"{slug:16s} {sources['referenceDate']} | {size:4.1f} MB | {stats['railStations']:3d} stations | "
+        f"{slug} {year} {sources['referenceDate']} | {size:4.1f} MB | {stats['railStations']:3d} stations | "
         f"30 min: {stats['within30']:3d}% | farthest: {stats['farthestStation'][:24]} {stats['farthestMinutes']} min | {lines}"
     )
 
@@ -39,11 +39,14 @@ def main() -> None:
     for slug in slugs:
         if "--fetch" in flags:
             run("fetch_data.py", slug)
-        run("build_data.py", slug)
+        for year in load_city(slug)["timetables"]:
+            run("build_data.py", slug, year)
+        run("build_bike.py", slug)
     run("build_pages.py")
     print()
     for slug in slugs:
-        print(control_row(slug))
+        for year in load_city(slug)["timetables"]:
+            print(control_row(slug, year))
 
 
 if __name__ == "__main__":

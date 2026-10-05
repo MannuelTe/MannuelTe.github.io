@@ -30,6 +30,7 @@ USER_AGENT = "zurich-temps-transport/0.1 (build script; github.com/MannuelTe/zur
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ]
 # Municipal boundaries (swissBOUNDARIES3D, swisstopo) and the 12 districts (Stadtkreise) of the City of Zurich.
 MUNICIPALITIES_URL = (
@@ -315,9 +316,15 @@ BIKE_FILTERS = [
 
 
 def fetch_bike_network(city: dict, out: Path) -> None:
+    """Streets for the bike layer. The main network is the zh-cycling graph (data/<city>/bike_graph.graphml, City of
+    Zurich + 6 km); Overpass fills the parts of the map beyond it (`bikePatchBboxes`), or the whole map without it.
+    A single query for the whole map is too heavy for the public Overpass servers."""
     print("Cycling network (OSM)…")
-    area = bbox(city["gtfsClipBbox"])
-    query = "[out:json][timeout:300];(" + "".join(f"way{f}({area});" for f in BIKE_FILTERS) + ");out body;>;out skel qt;"
+    has_graph = (out / "bike_graph.graphml").exists()
+    boxes = city.get("bikePatchBboxes", []) if has_graph else [city["gtfsClipBbox"]]
+    if not has_graph:
+        print("  bike_graph.graphml missing (copy it from GIS_playground_ZH/data/cache/): downloading the whole map")
+    query = "[out:json][timeout:300];(" + "".join(f"way{f}({bbox(b)});" for b in boxes for f in BIKE_FILTERS) + ");out body;>;out skel qt;"
     (out / "osm_bike.json").write_bytes(overpass(query))
     record(out, "osm_bike.json", f"Overpass API: {query}")
 

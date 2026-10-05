@@ -70,6 +70,13 @@ ${header}
 
         <div class="controls">
           <div class="control-group">
+            <span class="control-label">Timetable</span>
+            <div id="yearPicker" class="segmented year-picker" role="group" aria-label="Timetable year">
+${year_buttons}
+            </div>
+            <small id="yearNote" class="year-note"></small>
+          </div>
+          <div class="control-group">
             <span class="control-label">Network</span>
             <label class="pill-toggle"><input type="checkbox" checked disabled /> ${rail_label}</label>
             <label class="pill-toggle"><input id="busToggle" type="checkbox" /> ${bus_label}</label>
@@ -112,6 +119,20 @@ ${stat_tiles}
 ${line_rows}
           </tbody>
         </table>
+      </section>
+
+      <section class="section" aria-labelledby="history-title">
+        <h2 id="history-title">The network over time</h2>
+        <p>The same model run on the official timetable of each year, for a weekday in late autumn. Times from ${center}
+        by tram, S-Bahn and train; residents and jobs held at their current numbers so that only the network changes.</p>
+        <table class="lines-table">
+          <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
+          <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+          <tbody>
+${history_rows}
+          </tbody>
+        </table>
+        <p class="table-note">${history_note}</p>
       </section>
 
       <section class="section" aria-labelledby="faq-title">

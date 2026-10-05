@@ -1,27 +1,29 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:38:33+00:00",
-  "referenceDate": "2026-10-20",
+  "builtAt": "2026-10-05T18:40:51+00:00",
+  "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
     "network": "ZVV",
-    "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
-    "source": "gtfs_ch.zip clipped to [47.28, 8.36, 47.49, 8.68]",
-    "how": "derived",
-    "fetchedAt": "2026-10-05T16:47:55+00:00",
-    "bytes": 33189566,
-    "sha256": "9d3126a7edbf4532db9c58836ddae69351f2871993da14c07360758e4870ae0b",
+    "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020",
+    "source": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020/permalink",
+    "how": "download",
+    "fetchedAt": "2026-10-05T18:40:27+00:00",
+    "bytes": 90237206,
+    "sha256": "886b206071e28b9160f4a14ef3584bc76338c9215d206bb5f8f2084302d1c7cd",
+    "timetableYear": "2027",
+    "note": "Swiss timetable 2027, first published version (opentransportdata.swiss)",
     "feedInfo": {
       "feed_publisher_name": "SBB",
       "feed_publisher_url": "https://sbb.ch",
       "feed_lang": "DE",
-      "feed_start_date": "20251214",
-      "feed_end_date": "20261212",
-      "feed_version": "20260930"
+      "feed_start_date": "20261213",
+      "feed_end_date": "20271211",
+      "feed_version": "20261003"
     },
     "servicePeriod": [
-      "2025-12-14",
-      "2026-12-12"
+      "2026-12-13",
+      "2027-12-11"
     ]
   },
   "boundaries": {
@@ -75,16 +77,16 @@
   "excludedRoutes": [],
   "network": {
     "lines": {
-      "bus": 165,
+      "bus": 162,
       "ferry": 4,
-      "train": 16,
+      "train": 17,
       "funicular": 3,
       "cable": 1,
       "sbahn": 22,
-      "tram": 20
+      "tram": 17
     },
-    "stops": 1320,
-    "railStations": 314
+    "stops": 1310,
+    "railStations": 305
   },
   "stats": {
     "lines": [
@@ -107,21 +109,21 @@
         "mode": "tram",
         "color": "#322E71",
         "stations": 43,
-        "headway": 5.4
+        "headway": 7.5
       },
       {
         "name": "5",
         "mode": "tram",
         "color": "#70492C",
-        "stations": 31,
-        "headway": 7.4
+        "stations": 46,
+        "headway": 14.2
       },
       {
         "name": "6",
         "mode": "tram",
         "color": "#BE8543",
-        "stations": 19,
-        "headway": 7.4
+        "stations": 30,
+        "headway": 7.5
       },
       {
         "name": "7",
@@ -134,14 +136,14 @@
         "name": "8",
         "mode": "tram",
         "color": "#8BC036",
-        "stations": 55,
-        "headway": 7.5
+        "stations": 50,
+        "headway": 7.4
       },
       {
         "name": "9",
         "mode": "tram",
         "color": "#322E71",
-        "stations": 42,
+        "stations": 34,
         "headway": 7.5
       },
       {
@@ -155,14 +157,14 @@
         "name": "10",
         "mode": "tram",
         "color": "#CE1F75",
-        "stations": 29,
+        "stations": 34,
         "headway": 7.5
       },
       {
         "name": "11",
         "mode": "tram",
         "color": "#00923C",
-        "stations": 36,
+        "stations": 39,
         "headway": 7.5
       },
       {
@@ -176,36 +178,29 @@
         "name": "13",
         "mode": "tram",
         "color": "#F6C828",
-        "stations": 34,
-        "headway": 5.5
+        "stations": 54,
+        "headway": 7.5
       },
       {
         "name": "14",
         "mode": "tram",
         "color": "#0093D0",
-        "stations": 12,
+        "stations": 36,
         "headway": 7.5
       },
       {
         "name": "15",
         "mode": "tram",
         "color": "#CB0A25",
-        "stations": 20,
+        "stations": 29,
         "headway": 7.5
       },
       {
         "name": "17",
         "mode": "tram",
         "color": "#8D1D2C",
-        "stations": 32,
+        "stations": 51,
         "headway": 7.5
-      },
-      {
-        "name": "18",
-        "mode": "tram",
-        "color": "#1d4f91",
-        "stations": 14,
-        "headway": 15.0
       },
       {
         "name": "20",
@@ -213,20 +208,6 @@
         "color": "#A0216E",
         "stations": 25,
         "headway": 15.0
-      },
-      {
-        "name": "50",
-        "mode": "tram",
-        "color": "#000000",
-        "stations": 48,
-        "headway": 7.5
-      },
-      {
-        "name": "51",
-        "mode": "tram",
-        "color": "#000000",
-        "stations": 55,
-        "headway": 7.5
       },
       {
         "name": "S",
@@ -246,7 +227,7 @@
         "name": "S3",
         "mode": "sbahn",
         "color": "#0097D8",
-        "stations": 9,
+        "stations": 8,
         "headway": 30.0
       },
       {
@@ -295,8 +276,8 @@
         "name": "S10",
         "mode": "sbahn",
         "color": "#F6C454",
-        "stations": 8,
-        "headway": 20.0
+        "stations": 9,
+        "headway": 12.4
       },
       {
         "name": "S11",
@@ -309,7 +290,7 @@
         "name": "S12",
         "mode": "sbahn",
         "color": "#D8242B",
-        "stations": 9,
+        "stations": 8,
         "headway": 30.0
       },
       {
@@ -408,32 +389,32 @@
         "mode": "cable",
         "color": "#6b4c9a",
         "stations": 2,
-        "headway": 16.2
+        "headway": 17.7
       }
     ],
-    "railStations": 286,
-    "busLines": 169,
+    "railStations": 280,
+    "busLines": 166,
     "center": "Zürich HB",
-    "within15": 47,
-    "within30": 93,
+    "within15": 50,
+    "within30": 96,
     "population": {
       "total": 717159,
-      "45": 697775,
-      "30": 535629,
-      "15": 139507
+      "45": 692685,
+      "30": 548546,
+      "15": 141308
     },
     "jobs": {
       "total": 761616,
-      "45": 751883,
-      "30": 677787,
-      "15": 315427
+      "45": 750905,
+      "30": 685755,
+      "15": 331354
     },
     "farthestStation": "Felsenegg",
-    "farthestMinutes": 53,
+    "farthestMinutes": 45,
     "ogTrip": {
       "name": "Mattenhof",
-      "lat": 47.39869,
-      "lon": 8.59093
+      "lat": 47.39871,
+      "lon": 8.59094
     }
   }
 }

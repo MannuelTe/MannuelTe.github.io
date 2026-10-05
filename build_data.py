@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Build the compact JSON bundle of a city for the transit time map.
 
-Usage: python3 build_data.py <city>   (reads data/<city>/, writes site/data/<city>.json)
+Usage: python3 build_data.py <city> [year]
+  (reads data/<city>/gtfs_<year>.zip, writes site/data/<city>-<year>.json and sources/<city>-<year>.json;
+   year: a timetable year of the config, its default timetable when omitted)
 """
 
 from __future__ import annotations
@@ -93,6 +95,7 @@ Polygon = List[Ring]
 MultiPolygon = List[Polygon]
 
 LAT0 = 0.0  # set from the city config in main()
+GTFS_FILE = "gtfs.zip"  # set from the timetable year in main()
 
 
 def lonlat_to_xy(lon: float, lat: float) -> Point:
@@ -451,7 +454,8 @@ def pick_reference_date(services: Dict[date, frozenset], trips_per_service: Coun
     with a thinner timetable are left out: holidays, and feeds that run months ahead with only a few lines filled in.
     """
     weekdays = sorted(day for day, active in services.items() if day.weekday() in (1, 3) and active)
-    start = max(date.today(), not_before) if not_before else date.today()
+    # A config date wins over today: archived timetables lie in the past.
+    start = not_before or date.today()
     upcoming = [day for day in weekdays if day >= start] or weekdays
     # Stay close to today when the feed allows it: a date months ahead reads oddly on the page.
     soon = [day for day in upcoming if day <= upcoming[0] + timedelta(days=REFERENCE_HORIZON_DAYS)]
@@ -577,7 +581,7 @@ def line_key(row: dict) -> str:
 def extract_network(data_dir: Path, city: dict):
     # Some feeds mislabel their lines (Reims declares its tram as a metro); configs fix them by short name.
     mode_overrides = city.get("routeModes", {})
-    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
+    with zipfile.ZipFile(data_dir / GTFS_FILE) as archive:
         raw_routes = {row["route_id"]: row for row in read_gtfs_table(archive, "routes.txt")}
         excluded = {route_id for route_id, row in raw_routes.items() if route_excluded(row, city)}
         # The Swiss feed has one route_id per operator and timetable variant (S10 runs as several): a line is
@@ -717,7 +721,7 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
 
 def rail_routes_from_gtfs(data_dir: Path, shape_routes: Dict[str, str], route_info: Dict[str, dict]) -> List[dict]:
     points: Dict[str, List[Tuple[int, Point]]] = defaultdict(list)
-    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
+    with zipfile.ZipFile(data_dir / GTFS_FILE) as archive:
         for row in read_gtfs_table(archive, "shapes.txt"):
             if row["shape_id"] in shape_routes:
                 points[row["shape_id"]].append(
@@ -960,7 +964,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
     """Record in sources/<city>.json (versioned) which raw files were used, when they were fetched and what they cover."""
     manifest_path = data_dir / "manifest.json"
     manifest = load_json(manifest_path) if manifest_path.exists() else {}
-    with zipfile.ZipFile(data_dir / "gtfs.zip") as archive:
+    with zipfile.ZipFile(data_dir / GTFS_FILE) as archive:
         feed_info = next(iter(read_gtfs_table(archive, "feed_info.txt")), None)
         services = services_by_date(list(read_gtfs_table(archive, "calendar.txt")), list(read_gtfs_table(archive, "calendar_dates.txt")))
     days = sorted(day for day, active in services.items() if active)
@@ -973,7 +977,9 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
         "gtfs": {
             "network": city["network"],
             "dataset": city["gtfsDataset"],
-            **manifest.get("gtfs.zip", {}),
+            **manifest.get(GTFS_FILE.replace("gtfs_", "gtfs_ch_"), {}),
+            "timetableYear": city["year"],
+            "note": city["timetables"][city["year"]].get("note"),
             "feedInfo": feed_info,
             "servicePeriod": [days[0].isoformat(), days[-1].isoformat()] if days else None,
         },
@@ -991,20 +997,24 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
         },
         "stats": stats,
     }
-    path = ROOT / "sources" / f"{city['slug']}.json"
+    path = ROOT / "sources" / f"{city['slug']}-{city['year']}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
 
 
 def main() -> None:
-    global LAT0
+    global LAT0, GTFS_FILE
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     city = load_city(sys.argv[1])
+    year = sys.argv[2] if len(sys.argv) > 2 else city["defaultTimetable"]
+    timetable = city["timetables"][year]
+    city.update(year=year, gtfsDataset=timetable["dataset"], referenceNotBefore=timetable.get("referenceNotBefore"))
+    GTFS_FILE = f"gtfs_{year}.zip"
     LAT0 = city["lat0"]
     data_dir = ROOT / "data" / city["slug"]
-    output_path = ROOT / "site" / "data" / f"{city['slug']}.json"
+    output_path = ROOT / "site" / "data" / f"{city['slug']}-{year}.json"
 
     reference_date, complexes, edges, waits, own_waits, route_info, shape_routes = extract_network(data_dir, city)
     for station in complexes:

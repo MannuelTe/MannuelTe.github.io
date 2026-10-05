@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Download the raw sources of a city into data/<city>/.
 
-Usage: python3 fetch_data.py <city> [--gtfs-only | --context-only] [--refresh]
-  (--refresh: download the national GTFS again even when a copy is already there)
+Usage: python3 fetch_data.py <city> [year …] [--gtfs-only | --context-only] [--refresh]
+  (years: timetable years of the config, all by default; --refresh: download the national GTFS again)
 
-The Swiss national GTFS (opentransportdata.swiss) covers the whole country: 290 MB zipped, 3.7 GB of stop times.
-It is kept as data/<city>/gtfs_ch.zip and clipped to the city's bounding box into data/<city>/gtfs.zip, which is
-what build_data.py reads.
+The Swiss national GTFS covers the whole country: about 300 MB zipped, up to 3.7 GB of stop times. Each timetable
+year is kept as data/<city>/gtfs_ch_<year>.zip and clipped to the city's bounding box into data/<city>/gtfs_<year>.zip,
+which is what build_data.py reads.
 """
 
 from __future__ import annotations
@@ -185,17 +185,18 @@ def clip_gtfs(source: Path, target: Path, clip: list[float]) -> None:
             out.writestr(name, archive.read(name))
 
 
-def fetch_gtfs(city: dict, out: Path, refresh: bool) -> None:
-    national = out / "gtfs_ch.zip"
+def fetch_gtfs(city: dict, out: Path, year: str, refresh: bool) -> None:
+    timetable = city["timetables"][year]
+    national = out / f"gtfs_ch_{year}.zip"
     if refresh or not national.exists():
-        print(f"GTFS {city['network']} (national feed, ~300 MB)…")
-        download_to(city["gtfsUrl"], national)
-        record(out, "gtfs_ch.zip", city["gtfsUrl"])
+        print(f"GTFS {year} (national feed, ~300 MB)…")
+        download_to(timetable["url"], national)
+        record(out, national.name, timetable["url"])
     else:
-        print(f"GTFS: keeping {national.relative_to(ROOT)} (--refresh to download it again)")
-    print(f"Clipping the GTFS to {city['gtfsClipBbox']}…")
-    clip_gtfs(national, out / "gtfs.zip", city["gtfsClipBbox"])
-    record(out, "gtfs.zip", f"gtfs_ch.zip clipped to {city['gtfsClipBbox']}", how="derived")
+        print(f"GTFS {year}: keeping {national.relative_to(ROOT)} (--refresh to download it again)")
+    print(f"Clipping the {year} GTFS to {city['gtfsClipBbox']}…")
+    clip_gtfs(national, out / f"gtfs_{year}.zip", city["gtfsClipBbox"])
+    record(out, f"gtfs_{year}.zip", f"{national.name} clipped to {city['gtfsClipBbox']}", how="derived")
 
 
 # --- Boundaries, water, parks -----------------------------------------------
@@ -264,8 +265,10 @@ def main() -> None:
     city = load_city(sys.argv[1])
     out = ROOT / "data" / city["slug"]
     out.mkdir(parents=True, exist_ok=True)
+    years = [arg for arg in sys.argv[2:] if not arg.startswith("--")] or list(city["timetables"])
     if "--context-only" not in sys.argv:
-        fetch_gtfs(city, out, refresh="--refresh" in sys.argv)
+        for year in years:
+            fetch_gtfs(city, out, year, refresh="--refresh" in sys.argv)
     if "--gtfs-only" in sys.argv:
         return
     fetch_boundaries(city, out)

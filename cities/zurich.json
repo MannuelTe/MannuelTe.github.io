@@ -3,7 +3,6 @@
   "name": "Zurich",
   "network": "ZVV",
   "region": "City of Zurich and neighbouring municipalities",
-  "gtfsUrl": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink",
   "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
   "gtfsLicence": "opentransportdata",
   "gtfsClipBbox": [
@@ -74,11 +73,38 @@
   ],
   "railGeometry": "osm",
   "stopPrefix": "Zürich",
-  "referenceNotBefore": "2026-10-19",
   "searchBboxLV95": [
     2670000,
     1235000,
     2697000,
     1262000
-  ]
+  ],
+  "timetables": {
+    "2022": {
+      "url": "https://storage.googleapis.com/storage/v1/b/mdb-latest/o/de-unknown-basler-verkehrsbetriebe-gtfs-1092.zip?alt=media",
+      "dataset": "https://mobilitydatabase.org/feeds/mdb-1092",
+      "referenceNotBefore": "2022-10-25",
+      "note": "Swiss timetable 2022, last version archived by the Mobility Database (mdb-1092)"
+    },
+    "2024": {
+      "url": "https://storage.googleapis.com/storage/v1/b/mdb-latest/o/ch-unknown-swiss-federal-railways-sbb-gtfs-2144.zip?alt=media",
+      "dataset": "https://mobilitydatabase.org/feeds/mdb-2144",
+      "referenceNotBefore": "2024-10-22",
+      "note": "Swiss timetable 2024, last version archived by the Mobility Database (mdb-2144)"
+    },
+    "2026": {
+      "url": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink",
+      "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
+      "referenceNotBefore": "2026-10-19",
+      "note": "Swiss timetable 2026 (opentransportdata.swiss)"
+    },
+    "2027": {
+      "url": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020/permalink",
+      "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020",
+      "referenceNotBefore": "2027-10-26",
+      "note": "Swiss timetable 2027, first published version (opentransportdata.swiss)",
+      "draft": true
+    }
+  },
+  "defaultTimetable": "2026"
 }

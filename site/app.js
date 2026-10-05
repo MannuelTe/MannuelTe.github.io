@@ -2,7 +2,8 @@
 // The city shown is described by the #city-config JSON block of the page.
 
 const CITY = JSON.parse(document.getElementById("city-config").textContent);
-const DATA_URL = new URL(`./data/${CITY.slug}.json?v=${CITY.dataVersion}`, import.meta.url);
+// One bundle per timetable year (network history): data/<city>-<year>.json.
+const dataUrl = (year) => new URL(`./data/${CITY.slug}-${year}.json?v=${CITY.timetables[year].version}`, import.meta.url);
 const GEOCODER_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer";
 
 const DEFAULT_FROM = CITY.defaultFrom;
@@ -71,6 +72,7 @@ const app = {
   from: null, // { point, label }
   to: null, // { point, label }
   includeBus: false,
+  year: CITY.defaultTimetable,
   maxMinutes: DEFAULT_MAX,
   isochrones: [...DEFAULT_ISOCHRONES],
   heatFrom: "from", // la heatmap part du départ ou de l'arrivée
@@ -1030,6 +1032,7 @@ function syncUrl() {
   if (app.from) params.set("from", formatPair(app.from.point));
   if (app.to) params.set("to", formatPair(app.to.point));
   if (app.to && app.heatFrom === "to") params.set("map", "to");
+  if (app.year !== CITY.defaultTimetable) params.set("year", app.year);
   if (app.includeBus) params.set("bus", "1");
   if (app.maxMinutes !== DEFAULT_MAX) params.set("max", String(app.maxMinutes));
   const iso = [...app.isochrones].sort((a, b) => a - b).join(",");
@@ -1387,17 +1390,44 @@ document.addEventListener("click", (event) => {
 
 // --- Démarrage ----------------------------------------------------------------
 
+const bundles = new Map();
+
+async function loadYear(year) {
+  if (!bundles.has(year)) bundles.set(year, fetch(dataUrl(year)).then((response) => response.json()));
+  const data = await bundles.get(year);
+  app.year = year;
+  app.data = data;
+  app.offset = [data.meta.bounds[0], data.meta.bounds[1]];
+  app.graph = prepareGraph(data);
+  app.paths = buildPaths(data);
+  for (const button of $("yearPicker").querySelectorAll("button")) {
+    button.setAttribute("aria-pressed", String(button.dataset.year === year));
+  }
+  $("yearNote").textContent = CITY.timetables[year].label;
+}
+
+/** Switch timetable year, keeping the start, destination and settings: the map shows how the network changed. */
+async function switchYear(year) {
+  if (year === app.year || !CITY.timetables[year]) return;
+  await loadYear(year);
+  if (app.from) app.from.label = describePlace(app.from.point);
+  if (app.to) app.to.label = describePlace(app.to.point);
+  recompute();
+  syncUrl();
+}
+
 async function init() {
   resize();
-  const response = await fetch(DATA_URL);
-  app.data = await response.json();
-  app.offset = [app.data.meta.bounds[0], app.data.meta.bounds[1]];
-  app.graph = prepareGraph(app.data);
-  app.paths = buildPaths(app.data);
+  const requested = new URLSearchParams(location.search).get("year");
+  await loadYear(CITY.timetables[requested] ? requested : CITY.defaultTimetable);
   app.size.width = 0;
   resize();
   restoreFromUrl();
   new ResizeObserver(resize).observe(canvas);
+  $("yearPicker").addEventListener("click", (event) => {
+    const year = event.target.closest("button")?.dataset.year;
+    if (year) switchYear(year).catch(() => toast("Could not load that timetable."));
+  });
 }
 
 init().catch((error) => {

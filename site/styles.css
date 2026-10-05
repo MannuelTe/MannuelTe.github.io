@@ -1271,3 +1271,11 @@ output {
     margin-left: 0;
   }
 }
+
+/* Zurich fork: timetable years, residents and jobs within reach */
+.year-picker { margin: 0; padding: 0; border: 0; }
+.year-note,
+.table-note { color: #666; font-size: 12px; }
+.reach-counts { margin-top: 4px; }
+.reach-counts td:not(:first-child),
+.reach-counts th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }

@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T18:25:20+00:00",
+  "builtAt": "2026-10-05T18:38:33+00:00",
   "referenceDate": "2026-10-20",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -416,6 +416,18 @@
     "center": "Zürich HB",
     "within15": 47,
     "within30": 93,
+    "population": {
+      "total": 717159,
+      "45": 697775,
+      "30": 535629,
+      "15": 139507
+    },
+    "jobs": {
+      "total": 761616,
+      "45": 751883,
+      "30": 677787,
+      "15": 315427
+    },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 53,
     "ogTrip": {

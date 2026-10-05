@@ -77,6 +77,14 @@
             },
             {
               "@type": "Question",
+              "name": "Where do the resident and job figures come from?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "From the Federal Statistical Office's hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone."
+              }
+            },
+            {
+              "@type": "Question",
               "name": "Why do some tram lines look unusual?",
               "acceptedAnswer": {
                 "@type": "Answer",
@@ -93,7 +101,7 @@
     <link rel="stylesheet" href="./styles.css?v=3b985c73" />
   </head>
   <body>
-    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "dataVersion": "01cfe583", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
+    <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "dataVersion": "ba45e462", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
     <header class="topbar">
       <nav class="topbar-inner" aria-label="Main navigation">
         <a class="brand" href="./"><img src="./favicon.svg" width="22" height="22" alt="" /> How far is it in Zurich?</a>
@@ -188,6 +196,11 @@
           </div>
         </div>
         <p id="reach" class="reach"></p>
+        <table id="reachCounts" class="lines-table reach-counts">
+          <caption>Residents and jobs within reach of the point the map starts from, for the isochrones ticked above</caption>
+          <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </section>
 
       <section class="section" aria-labelledby="stats-title">
@@ -197,6 +210,10 @@
           <div class="stat"><strong>286</strong><span>tram and rail stops on the map</span></div>
           <div class="stat"><strong>5.4 min</strong><span>between two trams on line 4, the most frequent</span></div>
           <div class="stat"><strong>53 min</strong><span>from Zürich HB to Felsenegg, the farthest stop</span></div>
+          <div class="stat"><strong>717k</strong><span>residents on the map (STATPOP 2024)</span></div>
+          <div class="stat"><strong>762k</strong><span>jobs on the map (STATENT 2023)</span></div>
+          <div class="stat"><strong>536k</strong><span>residents within 30 min of Zürich HB by tram and train</span></div>
+          <div class="stat"><strong>678k</strong><span>jobs within 30 min of Zürich HB by tram and train</span></div>
         </div>
         <table class="lines-table">
           <caption>Tram, S-Bahn and funicular lines (ZVV), on a weekday</caption>
@@ -256,6 +273,7 @@
         <details class="faq"><summary>Where do the timetables come from?</summary><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 5 October 2026 and valid until 12 December 2026. Times are those of Tuesday 20 October 2026, between 7:00 and 20:00.</p></details>
         <details class="faq"><summary>Are buses included?</summary><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></details>
         <details class="faq"><summary>How are travel times computed?</summary><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. No real-time data or disruptions: this is the city « on paper ».</p></details>
+        <details class="faq"><summary>Where do the resident and job figures come from?</summary><p>From the Federal Statistical Office&#x27;s hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></details>
         <details class="faq"><summary>Why do some tram lines look unusual?</summary><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></details>
       </section>
     </main>
@@ -285,6 +303,6 @@
     </footer>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="./app.js?v=3e7b9cec"></script>
+    <script type="module" src="./app.js?v=7627a56d"></script>
   </body>
 </html>

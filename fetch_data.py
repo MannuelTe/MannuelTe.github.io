@@ -43,6 +43,13 @@ KREISE_URL = (
 )
 
 
+# Hectare grids of the Federal Statistical Office: residents (STATPOP) and employees (STATENT).
+BFS_ASSETS = {
+    "statpop.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",  # STATPOP 2024
+    "statent.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36073031/master",  # STATENT 2023
+}
+
+
 def bbox(values) -> str:
     return ",".join(str(v) for v in values)
 
@@ -244,6 +251,13 @@ def fetch_osm(city: dict, out: Path) -> None:
     record(out, "osm_water_parks.json", f"Overpass API: {query}")
 
 
+def fetch_bfs(out: Path) -> None:
+    for name, url in BFS_ASSETS.items():
+        print(f"BFS hectare grid {name}…")
+        download_to(url, out / name)
+        record(out, name, url)
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -256,6 +270,7 @@ def main() -> None:
         return
     fetch_boundaries(city, out)
     fetch_osm(city, out)
+    fetch_bfs(out)
 
 
 if __name__ == "__main__":

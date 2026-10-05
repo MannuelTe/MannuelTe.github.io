@@ -41,6 +41,10 @@ def line_badge(color: str, name: str) -> str:
     return f'<span class="line-badge" style="background:{color};color:{text_color(color)}">{esc(name)}</span>'
 
 
+def people(value: int) -> str:
+    return f"{value / 1000:,.0f}k" if value >= 10_000 else f"{value:,}"
+
+
 def num(value: float) -> str:
     return f"{value:g}"
 
@@ -163,6 +167,13 @@ def city_faq(city: dict) -> list[tuple]:
             "platform. No real-time data or disruptions: this is the city « on paper ».",
         ),
         (
+            "Where do the resident and job figures come from?",
+            "From the Federal Statistical Office's hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 "
+            "(employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
+            "rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached "
+            "within each isochrone.",
+        ),
+        (
             "Why do some tram lines look unusual?",
             "The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 "
             "in 2026, for example).",
@@ -204,6 +215,10 @@ def render_page(template: Template, city: dict) -> str:
         (str(stats["railStations"]), f"{city['railStations']} on the map"),
         (f"{num(fastest['headway'])} min", f"between two trams on line {fastest['name']}, the most frequent"),
         (f"{stats['farthestMinutes']} min", f"from {stats['center']} to {stats['farthestStation']}, the farthest stop"),
+        (people(stats["population"]["total"]), "residents on the map (STATPOP 2024)"),
+        (people(stats["jobs"]["total"]), "jobs on the map (STATENT 2023)"),
+        (people(stats["population"].get("30", 0)), f"residents within 30 min of {stats['center']} by tram and train"),
+        (people(stats["jobs"].get("30", 0)), f"jobs within 30 min of {stats['center']} by tram and train"),
     ]
     stat_tiles = "\n".join(f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles)
     line_rows = "\n".join(

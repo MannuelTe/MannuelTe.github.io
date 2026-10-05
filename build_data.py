@@ -785,6 +785,55 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
     return shapes
 
 
+# --- Population and jobs ------------------------------------------------------
+
+# Hectare files of the Federal Statistical Office: (zip, csv inside, column with the count).
+HECTARE_SOURCES = {
+    "pop": ("statpop.zip", "STATPOP", "BBTOT"),  # permanent residents
+    "jobs": ("statent.zip", "STATENT_", "B08EMPT"),  # employees (jobs), all sectors
+}
+
+
+def lv95_to_wgs84(east: float, north: float) -> Tuple[float, float]:
+    """swisstopo's approximate formulas (about 1 m accurate): LV95 → (lat, lon)."""
+    y = (east - 2_600_000) / 1e6
+    x = (north - 1_200_000) / 1e6
+    lon = 2.6779094 + 4.728982 * y + 0.791484 * y * x + 0.1306 * y * x * x - 0.0436 * y ** 3
+    lat = 16.9023892 + 3.238272 * x - 0.270978 * y * y - 0.002528 * x * x - 0.0447 * y * y * x - 0.0140 * x ** 3
+    return lat * 100 / 36, lon * 100 / 36
+
+
+def hectare_counts(data_dir: Path, bounds, cols: int, rows: int, mask: Sequence[int]) -> Dict[str, Dict[int, int]]:
+    """Residents and jobs per map cell: each hectare (100 m, LV95 south-west corner) goes to the cell of its centre.
+    Hectares on water or outside the map are left out, so totals are those of the map."""
+    min_x, min_y, max_x, max_y = bounds
+    cell_w, cell_h = (max_x - min_x) / cols, (max_y - min_y) / rows
+    counts: Dict[str, Dict[int, int]] = {}
+    for key, (zip_name, prefix, column) in HECTARE_SOURCES.items():
+        path = data_dir / zip_name
+        per_cell: Dict[int, int] = defaultdict(int)
+        if not path.exists():
+            print(f"  {zip_name} missing: no {key} figures (python3 fetch_data.py <city> --context-only)")
+            counts[key] = per_cell
+            continue
+        with zipfile.ZipFile(path) as archive:
+            name = next(n for n in archive.namelist() if n.startswith(prefix) and n.endswith(".csv") and "_GMDE" not in n and "_NOLOC" not in n)
+            with archive.open(name) as handle:
+                reader = csv.reader(io.TextIOWrapper(handle, encoding="utf-8-sig"), delimiter=";")
+                header = next(reader)
+                e_col, n_col, v_col = header.index("E_KOORD"), header.index("N_KOORD"), header.index(column)
+                for row in reader:
+                    lat, lon = lv95_to_wgs84(float(row[e_col]) + 50, float(row[n_col]) + 50)
+                    x, y = lonlat_to_xy(lon, lat)
+                    if not (min_x <= x < max_x and min_y <= y < max_y):
+                        continue
+                    index = mask[int((y - min_y) // cell_h) * cols + int((x - min_x) // cell_w)]
+                    if index >= 0 and row[v_col]:
+                        per_cell[index] += round(float(row[v_col]))
+        counts[key] = per_cell
+    return counts
+
+
 # --- Grid -------------------------------------------------------------------
 
 
@@ -818,7 +867,7 @@ def build_grid(land: MultiPolygon, masked_water: MultiPolygon, stations: Sequenc
     return cells, mask
 
 
-def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency, on_map, own_waits) -> dict:
+def network_stats(city: dict, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells) -> dict:
     """Figures shown on the page (and its FAQ): lines, headways, share of rail stations within 30 min of the centre."""
     rail_states = [i for i, state in enumerate(route_states) if route_info[state["routeId"]]["rail"]]
     lines = []
@@ -872,6 +921,17 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         walk = dist(origin, stations[index]["point"]) / WALK_METERS_PER_MINUTE
         arrival[index] = min(arrival.get(index, math.inf), out, walk)
     rail_times = [arrival.get(i, math.inf) for i in shown_ids]
+    # Residents and jobs reachable from the centre (rail only, as on the page's default map).
+    reach = {"pop": Counter(), "jobs": Counter()}
+    for cell in cells:
+        time = dist(origin, cell["point"]) / WALK_METERS_PER_MINUTE
+        for index, meters in cell["access"]:
+            time = min(time, arrival.get(index, math.inf) + meters / WALK_METERS_PER_MINUTE)
+        for key in reach:
+            reach[key]["total"] += cell.get(key, 0)
+            for limit in (15, 30, 45):
+                if time <= limit:
+                    reach[key][str(limit)] += cell.get(key, 0)
     reachable = [i for i in shown_ids if math.isfinite(arrival.get(i, math.inf))]
     farthest = max(reachable, key=lambda i: arrival[i])
     og_station = min(reachable, key=lambda i: abs(arrival[i] - OG_TRIP_MINUTES))
@@ -884,6 +944,8 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         "center": city["defaultFrom"]["label"],
         "within15": round(100 * sum(t <= 15 for t in rail_times) / len(rail_times)),
         "within30": round(100 * sum(t <= 30 for t in rail_times) / len(rail_times)),
+        "population": dict(reach["pop"]),
+        "jobs": dict(reach["jobs"]),
         "farthestStation": stations[farthest]["name"],
         "farthestMinutes": round(arrival[farthest]),
         "ogTrip": {
@@ -982,6 +1044,10 @@ def main() -> None:
         max(y for _, y in rail_points) + VIEW_PAD_METERS,
     )
     cells, mask = build_grid(land, masked_water, stations, bounds, cols, rows)
+    counts = hectare_counts(data_dir, bounds, cols, rows, mask)
+    for key, per_cell in counts.items():
+        for index, value in per_cell.items():
+            cells[index][key] = value
 
     output = {
         "meta": {
@@ -1011,7 +1077,7 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency, on_map, own_waits)
+    stats = network_stats(city, route_info, stations, route_states, station_states, adjacency, on_map, own_waits, cells)
     provenance_path = write_provenance(city, data_dir, reference_date, route_info, stations, stats)
     print(f"Wrote {provenance_path.relative_to(ROOT)}")
     rail_count = sum(1 for station in stations if station["rail"])

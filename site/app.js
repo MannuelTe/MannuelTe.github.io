@@ -865,6 +865,7 @@ function recompute({ fast = false } = {}) {
   app.grid = computeGrid(app.heatSolution);
   paintHeat(app.grid, { fast });
   updatePanel();
+  if (!fast) updateCounts();
   requestRender();
 }
 
@@ -956,6 +957,48 @@ function updatePanel() {
       app.includeBus ? ` (with ${CITY.busNoun})` : ""
     }.`;
   }
+}
+
+const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+
+/** Residents and jobs in the cells reached within each isochrone (BFS hectare grids, summed per cell). */
+function reachCounts(grid, limits) {
+  const { cells } = app.data;
+  const totals = { pop: 0, jobs: 0 };
+  const within = limits.map(() => ({ pop: 0, jobs: 0 }));
+  for (const cell of cells) {
+    const time = grid.times[cell.row * grid.cols + cell.col];
+    totals.pop += cell.pop ?? 0;
+    totals.jobs += cell.jobs ?? 0;
+    limits.forEach((limit, k) => {
+      if (time <= limit) {
+        within[k].pop += cell.pop ?? 0;
+        within[k].jobs += cell.jobs ?? 0;
+      }
+    });
+  }
+  return { totals, within };
+}
+
+function updateCounts() {
+  const table = $("reachCounts");
+  if (!table || !app.grid) return;
+  const limits = app.isochrones.length ? [...app.isochrones].sort((a, b) => a - b) : [30];
+  const { totals, within } = reachCounts(app.grid, limits);
+  const share = (value, total) => (total ? ` (${Math.round((value / total) * 100)}%)` : "");
+  const row = (label, counts) => {
+    const tr = document.createElement("tr");
+    for (const text of [label, compact.format(counts.pop) + share(counts.pop, totals.pop), compact.format(counts.jobs) + share(counts.jobs, totals.jobs)]) {
+      const td = document.createElement("td");
+      td.textContent = text;
+      tr.append(td);
+    }
+    return tr;
+  };
+  table.querySelector("tbody").replaceChildren(
+    ...limits.map((limit, k) => row(`Within ${limit} min`, within[k])),
+    row("Whole map", totals),
+  );
 }
 
 function contrastText(hex) {
@@ -1153,6 +1196,7 @@ $("busToggle").addEventListener("change", (event) => {
 
 $("isoToggles").addEventListener("change", () => {
   app.isochrones = [...$("isoToggles").querySelectorAll("input:checked")].map((input) => Number(input.value));
+  updateCounts();
   requestRender();
   syncUrl();
 });

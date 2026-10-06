@@ -67,8 +67,8 @@ Greifensee, Türlersee). Rivers are treated as crossable: the Limmat and Sihl ha
 town.
 
 Bike (`build_bike.py`, same model as the GIS_playground_ZH cycling project): OSM streets open to bicycles,
-contraflow where `oneway:bicycle=no`, 16 km/h on the flat, slower uphill (≈10 km/h on 5 %, never below walking pace),
-up to 22 km/h downhill, 1 min to unlock and to park. The street network is the one computed in GIS_playground_ZH
+contraflow where `oneway:bicycle=no`, 20 km/h on the flat, slower uphill (≈10 km/h on 5 %, never below 5 km/h),
+25 km/h on a 3 % descent and 30 km/h from 5 %, 1 min to unlock and to park. The street network is the one computed in GIS_playground_ZH
 (its cached osmnx graph of the city + 6 km, copied to `data/zurich/bike_graph.graphml`), with OSM patches from Overpass
 for Küsnacht, Zumikon, Stallikon and the edges of Kloten and Dietikon. It is folded onto the 200 m grid (each cell →
 the 28 cells within 600 m, times from Dijkstra on the real network, both directions), so the browser only runs

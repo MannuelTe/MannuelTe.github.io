@@ -739,6 +739,17 @@ output {
   font-weight: 600;
 }
 
+.years-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.years-charts .chart-bar strong {
+  font-weight: 500;
+}
+
 .year-bar {
   display: block;
   max-width: 160px;
@@ -840,6 +851,10 @@ output {
   margin: 0;
 }
 
+.expander-body p + p {
+  margin-top: 8px;
+}
+
 .faq-list {
   display: grid;
   gap: 6px;
@@ -882,12 +897,62 @@ output {
 
 .footer-inner {
   display: grid;
-  gap: 8px;
-  max-width: 820px;
+  gap: 12px;
 }
 
 .footer-inner p {
   margin: 0;
+}
+
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.footer-author {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+.footer-author a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.footer-links a {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--white);
+  box-shadow: 0 0 0 1px var(--ring);
+  color: var(--ink-soft);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue-ring);
+}
+
+.footer-credits {
+  max-width: 820px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ring);
+  line-height: 1.6;
+}
+
+.footer-credits a {
+  color: var(--ink-soft);
 }
 
 .toast {
@@ -1127,6 +1192,15 @@ output {
 .chart-axis {
   stroke: #e3e5ea;
   stroke-width: 1;
+}
+
+.chart-grid {
+  stroke: #eceef2;
+  stroke-width: 1;
+}
+
+.chart-ref {
+  stroke-dasharray: 3 3;
 }
 
 .chart-crosshair {

@@ -20,11 +20,16 @@ SITE = ROOT / "site"
 SITE_URL = "https://mannuelte.github.io/"
 GITHUB_URL = "https://github.com/MannuelTe/MannuelTe.github.io"
 UPSTREAM_URL = "https://github.com/camilleroux/montpellier-temps-transport"
+AUTHOR_NAME = "Manuel Trachsler"
+AUTHOR_URL = "https://manueltrachsler.ch"
+AUTHOR_GITHUB = "https://github.com/MannuelTe"
 SITE_NAME = "How far is it in Zurich?"
 LICENCES = {
     "opentransportdata": ("opentransportdata.swiss terms of use", "https://opentransportdata.swiss/en/terms-of-use/"),
 }
 ODBL_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
+# ZVV's official stop and line timetables; its per-line pages need codes that change each timetable year.
+LINE_TIMETABLES_URL = "https://online.fahrplaninfo.zvv.ch/"
 MODE_NAMES = {"tram": "Tram", "sbahn": "S-Bahn", "funicular": "Funicular", "cable": "Cable car"}
 
 esc = html.escape
@@ -104,24 +109,26 @@ def header(base: str) -> str:
 def footer(city: dict) -> str:
     return f"""    <footer class="site-footer">
       <div class="footer-inner">
-        <p class="footer-author">
-          A Zurich fork of <a href="https://tram.camilleroux.com/">À portée de tram</a> by
-          <a href="https://www.camilleroux.com/">Camille Roux</a>
-          (<a href="{UPSTREAM_URL}">code</a>), itself based on Anthony Castrio's
-          <a href="https://castrio.me/nyc/">NYC Transit Time Cartogram</a> and Jules Grandin's
-          <a href="https://julesgrandin.github.io/paris-temps-transport/">Paris version</a>.
-        </p>
-        <p class="footer-links">
-          <a href="{GITHUB_URL}" rel="noopener">Source code on GitHub</a> ·
-          <a href="{GITHUB_URL}/issues" rel="noopener">Report an error</a>
-        </p>
+        <div class="footer-top">
+          <p class="footer-author">Made by <a href="{AUTHOR_URL}">{esc(AUTHOR_NAME)}</a></p>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="{AUTHOR_URL}">manueltrachsler.ch</a>
+            <a href="{AUTHOR_GITHUB}" rel="noopener">GitHub</a>
+            <a href="{GITHUB_URL}" rel="noopener">Source</a>
+            <a href="{GITHUB_URL}/issues" rel="noopener">Report an error</a>
+          </nav>
+        </div>
         <p class="footer-credits">
-          Timetables: <a href="{esc(city["gtfsDataset"])}">Swiss national GTFS</a> (opentransportdata.swiss).
-          Municipal boundaries: <a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swissBOUNDARIES3D</a>
-          (swisstopo); districts: <a href="https://data.stadt-zuerich.ch/">Stadt Zürich Open Data</a>.
-          Lines, water and parks © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
-          Address search: <a href="https://api3.geo.admin.ch/">geo.admin.ch</a>.
-          Derived data under <a href="{ODBL_URL}">ODbL</a>, code under the MIT licence.
+          Fork of <a href="https://tram.camilleroux.com/">À portée de tram</a> by Camille Roux
+          (<a href="{UPSTREAM_URL}">code</a>), after <a href="https://castrio.me/nyc/">Anthony Castrio</a> and
+          <a href="https://julesgrandin.github.io/paris-temps-transport/">Jules Grandin</a>.
+          Data: <a href="{esc(city["gtfsDataset"])}">Swiss GTFS</a> ·
+          <a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.html">BFS STATPOP/STATENT</a> ·
+          <a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swisstopo</a> ·
+          <a href="https://data.stadt-zuerich.ch/">Stadt Zürich</a> ·
+          © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ·
+          <a href="https://api3.geo.admin.ch/">geo.admin.ch</a>.
+          Timetable on paper, no delays; figures approximate. Data <a href="{ODBL_URL}">ODbL</a>, code MIT.
         </p>
       </div>
     </footer>"""
@@ -177,7 +184,7 @@ def city_faq(city: dict) -> list[tuple]:
         (
             "How are bike times computed?",
             "On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the "
-            "traffic is allowed: 16 km/h on the flat, about 10 km/h on a 5 % climb, up to 22 km/h downhill, plus a "
+            "traffic is allowed: 20 km/h on the flat, about 10 km/h on a 5 % climb, 25 km/h on a 3 % descent and 30 km/h on 5 % or steeper, plus a "
             "minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.",
         ),
         (
@@ -234,6 +241,53 @@ def history(city: dict) -> tuple[str, str, dict]:
         "trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed."
     )
     return "\n".join(rows), note, timetables, figures
+
+
+def note_expander(summary: str, paragraphs: list[str]) -> str:
+    body = "".join(f"<p>{esc(p)}</p>" for p in paragraphs)
+    return f'        <details class="expander data-note"><summary>{esc(summary)}</summary><div class="expander-body">{body}</div></details>'
+
+
+def reach_notes(city: dict) -> str:
+    """What the resident and job counts under the map measure, and what they do not."""
+    stats = city["stats"]
+    return note_expander("What these resident and job counts mean", [
+        f"Residents are the BFS STATPOP 2024 grid (permanent residents, by home address); jobs are the STATENT 2023 grid "
+        f"(employees of all sectors, counted where they work). The map covers the {city['region'][0].lower()}{city['region'][1:]}: "
+        f"{people(stats['population']['total'])} residents and {people(stats['jobs']['total'])} jobs in all, more than the "
+        "city alone.",
+        "Jobs are people employed, not full-time equivalents: a part-timer counts as one job, so in a city with much "
+        "part-time work the figure overstates the amount of work. Staff are counted at the workplace their employer "
+        "registers, which for firms with several sites is not always where they actually sit.",
+        "The BFS rounds small hectare counts for privacy, and each 100 m hectare goes to the 200 m map cell its centre "
+        "falls in, so figures for a few streets are rough; totals over a whole isochrone hold up much better.",
+        "The grids are the same for every timetable year. Switching years changes only how far the network reaches, "
+        "not where people live or work.",
+    ])
+
+
+def history_notes(figures: list[dict]) -> str:
+    """Why residents within 30 min of the centre move between years, the 2026 dip in particular."""
+    by_year = {f["year"]: f for f in figures}
+    paragraphs = [
+        "Residents and jobs are held at the STATPOP 2024 and STATENT 2023 figures in every year, so a change in the "
+        "table is a change in the network: a fall means part of the map takes longer to reach, not that people left.",
+    ]
+    if "2024" in by_year and "2026" in by_year:
+        before, after = by_year["2024"], by_year["2026"]
+        paragraphs.append(
+            f"2024 → 2026: residents within 30 min go from {before['population']['30']:,} to {after['population']['30']:,} "
+            f"({after['population']['30'] - before['population']['30']:+,}), jobs from {before['jobs']['30']:,} to "
+            f"{after['jobs']['30']:,}. The SZU lines S4 and S10 no longer call at Zürich HB SZU but start at Selnau (works "
+            "on the HB–Selnau section), so the Sihltal and Uetliberg need an extra change from HB and slip past 30 minutes; "
+            "trams also run construction diversions (temporary lines 50 and 51). The core got faster at the same time: "
+            f"residents within 15 min went from {before['population']['15']:,} to {after['population']['15']:,}."
+        )
+    paragraphs.append(
+        "Each year is one reference weekday of the published timetable, 7:00–20:00, with no delays or disruptions, "
+        "so a diversion running on that day shows up in that year's figures."
+    )
+    return note_expander("Why the counts change from year to year", paragraphs)
 
 
 def fetched(entry: dict | None) -> str:
@@ -343,7 +397,8 @@ def render_page(template: Template, city: dict) -> str:
     stat_tiles = "\n".join(f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles)
     line_rows = "\n".join(
         f'            <tr><td>{line_badge(line["color"], line["name"])} {esc(MODE_NAMES.get(line["mode"], ""))}</td>'
-        f'<td>{line["stations"]}</td><td>~{num(line["headway"])} min</td></tr>'
+        f'<td>{line["stations"]}</td><td>~{num(line["headway"])} min</td>'
+        f'<td><a href="{LINE_TIMETABLES_URL}" rel="noopener" aria-label="Official ZVV timetable for line {esc(line["name"])}">ZVV timetable</a></td></tr>'
         for line in table_lines
     )
     history_rows, history_note, timetables, figures = history(city)
@@ -385,6 +440,8 @@ def render_page(template: Template, city: dict) -> str:
         "year_buttons": year_buttons,
         "history_rows": history_rows,
         "history_note": esc(history_note),
+        "reach_notes": reach_notes(city),
+        "history_notes": history_notes(figures),
         "center": esc(stats["center"]),
         "default_year": esc(city["defaultTimetable"]),
         "faq_html": faq_block(faq) + "\n" + sources_block(city),

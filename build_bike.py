@@ -9,14 +9,13 @@ of the City of Zurich plus 6 km (data/cache/osm_bike_osm-current-v1_canton6.grap
 data/<city>/bike_graph.graphml. Without it, fetch_data.py downloads the same streets from Overpass (osm_bike.json).
 
 Model, as in the GIS_playground_ZH cycling project: streets cyclists may use (fetch_data.BIKE_FILTERS), one-way
-streets open both ways when OSM says cycling is allowed against the traffic, 16 km/h on the flat. Hills come from
-the same swisstopo elevation as walking: slower uphill (about 10 km/h on 5 %, 7 km/h on 10 %, never below walking
-pace), faster downhill up to 22 km/h. One minute is added at each end to unlock and park the bike.
+streets open both ways when OSM says cycling is allowed against the traffic, 20 km/h on the flat. Hills come from
+the same swisstopo elevation as walking: slower uphill (about 10 km/h on 5 %, 6.7 km/h on 10 %, never below 5 km/h),
+faster downhill (25 km/h on 3 %, 30 km/h from 5 %). One minute is added at each end to unlock and park the bike.
 
 The browser cannot hold the whole street graph, so the network is folded onto the map grid: each cell is snapped to
 a junction near its centre, and a short Dijkstra from there on the real network gives the time to the nodes of the
 28 cells within 600 m. Shortest paths over this cell graph stay within about 5 % of a full street-network Dijkstra
-(Zürich HB → ETH Hönggerberg: 28.8 min against 28.5 uphill, 23.1 against 22 downhill),
 keep one-way streets and slopes (each direction is computed separately), and lakes or rivers without a bridge
 simply have no edge across them.
 """
@@ -36,11 +35,11 @@ from cities import load_city
 
 ROOT = Path(__file__).resolve().parent
 
-BIKE_KMH = 16.0
+BIKE_KMH = 20.0
 BIKE_METERS_PER_MINUTE = BIKE_KMH * 1000 / 60
-UPHILL_K = 12.0  # speed / (1 + k·slope) uphill
-DOWNHILL_K = 8.0  # speed × (1 − k·slope) downhill, capped
-DOWNHILL_MAX = 1.4
+UPHILL_K = 20.0  # speed / (1 + k·slope) uphill: 10 km/h on 5 %
+# Downhill speed factor against the descent, interpolated linearly and flat beyond the last point.
+DOWNHILL_FACTORS = [(0.0, 1.0), (0.03, 25 / 20), (0.05, 30 / 20)]
 MIN_KMH = 5.0  # steeper than that: pushing
 SLOPE_MIN_METERS = 20.0
 PARK_MINUTES = 1.0  # unlock at the start, park at the end
@@ -55,12 +54,19 @@ NEIGHBOURS = [(dr, dc) for dr in range(-NEIGHBOUR_RADIUS, NEIGHBOUR_RADIUS + 1) 
 SNAP_JUNCTION_METERS = 120.0
 
 
+def downhill_factor(descent: float) -> float:
+    for (d0, f0), (d1, f1) in zip(DOWNHILL_FACTORS, DOWNHILL_FACTORS[1:]):
+        if descent <= d1:
+            return f0 + (f1 - f0) * (descent - d0) / (d1 - d0)
+    return DOWNHILL_FACTORS[-1][1]
+
+
 def bike_factor(rise: float, run: float) -> float:
     slope = rise / max(run, SLOPE_MIN_METERS)
     if slope > 0:
         factor = 1 / (1 + UPHILL_K * slope)
     else:
-        factor = min(DOWNHILL_MAX, 1 - DOWNHILL_K * slope)
+        factor = downhill_factor(-slope)
     return max(factor, MIN_KMH / BIKE_KMH)
 
 
@@ -384,7 +390,7 @@ def main() -> None:
         "meta": {
             "speedKmh": BIKE_KMH,
             "parkMinutes": PARK_MINUTES,
-            "model": "OSM streets open to bicycles, contraflow where allowed, 16 km/h on the flat, slopes from swisstopo",
+            "model": "OSM streets open to bicycles, contraflow where allowed, 20 km/h on the flat, slopes from swisstopo",
         },
         "snap": [round(m, 2) if math.isfinite(m) else None for m in snap_minutes],
         "adjacency": adjacency,

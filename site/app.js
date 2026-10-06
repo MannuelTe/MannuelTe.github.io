@@ -671,15 +671,25 @@ function paintHeat(grid, { fast = false } = {}) {
   heatCtx.putImageData(image, 0, 0);
 }
 
+const CONTOUR_MARGIN = 1; // minutes
+
 /** Marching squares sur les centres de cellules ; renvoie des segments en coordonnées monde. */
 function contourSegments(grid, threshold) {
-  const { cols, rows, smooth } = grid;
+  const { cols, rows, smooth, times } = grid;
   const [minX, minY, maxX, maxY] = app.data.meta.bounds;
   const cellW = (maxX - minX) / cols;
   const cellH = (maxY - minY) / rows;
+  // The smoothed value shapes the line, but a cell clearly on one side of the threshold by its own time (a narrow
+  // fast strip, such as a bus along a hillside) is not averaged across it. Cells within CONTOUR_MARGIN of the
+  // threshold keep the smoothed value, so ordinary edges stay smooth instead of snapping to cell centres.
   const value = (row, col) => {
     const v = smooth[row * cols + col];
-    return Number.isNaN(v) ? Infinity : v;
+    if (Number.isNaN(v)) return Infinity;
+    const own = times[row * cols + col];
+    if (Number.isNaN(own)) return v;
+    if (own <= threshold - CONTOUR_MARGIN) return Math.min(v, threshold - CONTOUR_MARGIN / 2);
+    if (own >= threshold + CONTOUR_MARGIN) return Math.max(v, threshold + CONTOUR_MARGIN / 2);
+    return v;
   };
   const center = (row, col) => [minX + (col + 0.5) * cellW, minY + (row + 0.5) * cellH];
   const between = (pa, va, pb, vb) => {
@@ -724,6 +734,22 @@ function buildPaths(data) {
     for (const polygon of polygons) for (const ring of polygon) ringPath(path, ring);
     return path;
   };
+  // Neighbouring communes overlap slightly along their borders. Under "evenodd" each overlap would be a hole (no
+  // land, no heat), so land is filled "nonzero" with outer rings wound one way and holes the other.
+  const signedArea = (ring) => ring.reduce((sum, [x, y], i) => {
+    const [nx, ny] = ring[(i + 1) % ring.length];
+    return sum + x * ny - nx * y;
+  }, 0);
+  const landPath = (polygons) => {
+    const path = new Path2D();
+    for (const polygon of polygons) {
+      polygon.forEach((ring, k) => {
+        const outer = k === 0;
+        ringPath(path, (signedArea(ring) > 0) === outer ? ring : [...ring].reverse());
+      });
+    }
+    return path;
+  };
   const communeLines = new Path2D();
   for (const commune of data.boroughs) for (const ring of commune.outline) ringPath(communeLines, ring);
 
@@ -740,7 +766,7 @@ function buildPaths(data) {
   for (const polygon of data.water) for (const ring of polygon) ringPath(notWater, ring);
   return {
     notWater,
-    land: polygonsPath(data.boroughs.flatMap((commune) => commune.polygons)),
+    land: landPath(data.boroughs.flatMap((commune) => commune.polygons)),
     // Terres voisines des villes côtières : ce qui reste découvert autour est la mer.
     context: polygonsPath(data.context ?? []),
     // Un chemin par polygone, rempli en « evenodd » : les îles (trous) restent de la terre ferme,
@@ -827,7 +853,7 @@ function drawIsochrones() {
     }
     ctx.save();
     // Land, then everything but water: the district polygons include part of the lake.
-    ctx.clip(app.paths.land, "evenodd");
+    ctx.clip(app.paths.land, "nonzero");
     ctx.clip(app.paths.notWater, "evenodd");
     ctx.lineCap = "round";
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
@@ -1060,13 +1086,13 @@ function render() {
     ctx.fill(app.paths.context);
   }
   ctx.fillStyle = COLORS.land;
-  ctx.fill(app.paths.land, "evenodd");
+  ctx.fill(app.paths.land, "nonzero");
 
   if (app.grid) {
     const [minX, minY, maxX, maxY] = app.data.meta.bounds;
     const [ox, oy] = app.offset;
     ctx.save();
-    ctx.clip(app.paths.land, "evenodd");
+    ctx.clip(app.paths.land, "nonzero");
     ctx.globalAlpha = HEAT_ALPHA;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
@@ -1390,10 +1416,66 @@ async function updateYears() {
   table.append(tbody);
   const note = document.createElement("p");
   note.className = "table-note";
-  note.textContent = `Same start${app.to ? " and destination" : ""} on each year's timetable${
+  note.textContent = `Counted from the start on the map (${app.from.label.replace(/^Near /, "")})${app.to ? " with the same destination" : ""} on each year's timetable${
     app.includeBus ? ", buses and boats included" : ", tram and train only"
-  }; residents and jobs held at today's numbers. Changes are against the previous row.${app.to ? "" : " Click the map to add a destination."}`;
-  body.replaceChildren(table, note);
+  }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs held at today's numbers; changes are against the previous row.${app.to ? "" : " Click the map to add a destination."}`;
+  const charts = yearsCharts(rows);
+  body.replaceChildren(charts, table, note);
+  drawYearsCharts(charts);
+}
+
+/** Residents and jobs within 30 min as two small line charts (two scales: never one dual-axis chart). */
+function yearsCharts(rows) {
+  const wrap = document.createElement("div");
+  wrap.className = "years-charts";
+  for (const [key, label] of [["pop", "Residents within 30 min"], ["jobs", "Jobs within 30 min"]]) {
+    const series = rows.map((row) => ({
+      year: row.year,
+      draft: CITY.timetables[row.year].label.startsWith("Draft"),
+      current: row.year === app.year,
+      value: row[key],
+    }));
+    const first = series[0].value;
+    const last = series.at(-1).value;
+    const panel = document.createElement("div");
+    panel.className = "chart-panel";
+    const bar = document.createElement("div");
+    bar.className = "chart-bar";
+    const title = document.createElement("strong");
+    title.textContent = label;
+    const change = document.createElement("span");
+    change.className = "muted";
+    change.textContent = `from your start · ${signed(last - first, (v) => compact.format(v))} since ${series[0].year}`;
+    bar.append(title, change);
+    const chart = document.createElement("div");
+    chart.className = "chart";
+    chart.setAttribute("role", "img");
+    chart.setAttribute("aria-label", `${label}: ${series.map((s) => `${s.year} ${compact.format(s.value)}`).join(", ")}`);
+    chart.yearsSeries = series;
+    panel.append(bar, chart);
+    wrap.append(panel);
+  }
+  return wrap;
+}
+
+let yearsChartsObserver = null;
+
+function drawYearsCharts(wrap) {
+  const draw = () =>
+    wrap.querySelectorAll(".chart").forEach((chart) =>
+      drawLineChart(chart, chart.yearsSeries, (v) => compact.format(v), chart.yearsSeries[0].value),
+    );
+  draw();
+  yearsChartsObserver?.disconnect();
+  let lastWidth = Math.round(wrap.clientWidth);
+  yearsChartsObserver = new ResizeObserver(([entry]) => {
+    const width = Math.round(entry.contentRect.width);
+    if (width !== lastWidth && width > 0) {
+      lastWidth = width;
+      draw();
+    }
+  });
+  yearsChartsObserver.observe(wrap);
 }
 
 function updateCounts() {
@@ -1890,10 +1972,11 @@ function signed(value, format) {
   return `${value > 0 ? "+" : "−"}${format(Math.abs(value))}`;
 }
 
-/** Monotone cubic path through the points (no overshoot between years). */
-function smoothPath(points) {
-  if (points.length < 2) return "";
+/** Monotone cubic segments through the points (no overshoot between years), one "C…" command per interval.
+ * Tangents come from all the points, so a path split into solid and dashed parts stays smooth at the join. */
+function smoothSegments(points) {
   const n = points.length;
+  if (n < 2) return [];
   const dx = [];
   const slope = [];
   for (let i = 0; i < n - 1; i += 1) {
@@ -1903,14 +1986,27 @@ function smoothPath(points) {
   const tangent = [slope[0]];
   for (let i = 1; i < n - 1; i += 1) tangent.push(slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2);
   tangent.push(slope[n - 2]);
-  let d = `M${points[0][0]},${points[0][1]}`;
-  for (let i = 0; i < n - 1; i += 1) {
-    const [x0, y0] = points[i];
+  return points.slice(0, -1).map(([x0, y0], i) => {
     const [x1, y1] = points[i + 1];
     const h = dx[i] / 3;
-    d += ` C${x0 + h},${y0 + tangent[i] * h} ${x1 - h},${y1 - tangent[i + 1] * h} ${x1},${y1}`;
-  }
-  return d;
+    return `C${x0 + h},${y0 + tangent[i] * h} ${x1 - h},${y1 - tangent[i + 1] * h} ${x1},${y1}`;
+  });
+}
+
+/** Path from point `from` to point `to` along the smooth segments. */
+function segmentPath(points, segments, from, to) {
+  return `M${points[from][0]},${points[from][1]} ${segments.slice(from, to).join(" ")}`;
+}
+
+/** About `count` round tick values (1, 2, 2.5 or 5 × 10^k apart) covering lo…hi. */
+function niceTicks(lo, hi, count = 4) {
+  const raw = (hi - lo) / count || 1;
+  const power = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * power).find((s) => s >= raw);
+  const ticks = [];
+  for (let v = Math.floor(lo / step) * step; v <= hi + step * 1e-9; v += step) ticks.push(Number(v.toPrecision(12)));
+  if (ticks.at(-1) < hi) ticks.push(Number((ticks.at(-1) + step).toPrecision(12)));
+  return ticks;
 }
 
 function svg(tag, attributes = {}, parent = null) {
@@ -1926,26 +2022,34 @@ function drawLineChart(container, rows, format, reference) {
   container.replaceChildren();
   const width = Math.max(260, container.clientWidth);
   const height = 190;
-  const pad = { top: 22, right: 22, bottom: 26, left: 22 };
   const values = rows.map((row) => row.value);
-  let lo = Math.min(...values);
-  let hi = Math.max(...values);
-  const span = hi - lo || Math.abs(hi) * 0.1 || 1;
-  lo -= span * 0.35;
-  hi += span * 0.35;
-  const x = (i) => pad.left + (i / (rows.length - 1)) * (width - pad.left - pad.right);
+  const span = Math.max(...values) - Math.min(...values) || Math.abs(values[0]) * 0.1 || 1;
+  const ticks = niceTicks(Math.min(...values) - span * 0.2, Math.max(...values) + span * 0.2);
+  const lo = ticks[0];
+  const hi = ticks.at(-1);
+  const tickLabels = ticks.map((v) => format(v));
+  // Gutter for the y labels: 6.6 px per character of the 11 px mono font, plus the gap to the plot.
+  const pad = { top: 18, right: 22, bottom: 26, left: Math.max(...tickLabels.map((t) => t.length)) * 6.6 + 14 };
+  const inset = 14; // first and last year sit off the axis lines
+  const x = (i) => pad.left + inset + (i / (rows.length - 1)) * (width - pad.left - pad.right - inset);
   const y = (v) => pad.top + (1 - (v - lo) / (hi - lo)) * (height - pad.top - pad.bottom);
   const root = svg("svg", { viewBox: `0 0 ${width} ${height}`, width, height, class: "line-chart" }, container);
-  svg("line", { x1: 0, x2: width, y1: y(reference), y2: y(reference), class: "chart-ref" }, root);
-  svg("line", { x1: 0, x2: width, y1: height - pad.bottom, y2: height - pad.bottom, class: "chart-axis" }, root);
+  ticks.forEach((v, k) => {
+    svg("line", { x1: pad.left, x2: width - pad.right + inset, y1: y(v), y2: y(v), class: k === 0 ? "chart-axis" : "chart-grid" }, root);
+    const label = svg("text", { x: pad.left - 8, y: y(v) + 3.5, class: "chart-tick", "text-anchor": "end" }, root);
+    label.textContent = tickLabels[k];
+  });
+  svg("line", { x1: pad.left, x2: pad.left, y1: pad.top, y2: height - pad.bottom, class: "chart-axis" }, root);
+  svg("line", { x1: pad.left, x2: width - pad.right + inset, y1: y(reference), y2: y(reference), class: "chart-ref" }, root);
   const points = rows.map((row, i) => [x(i), y(row.value)]);
+  const segments = smoothSegments(points);
   const draft = rows.findIndex((row) => row.draft);
-  const solidEnd = draft === -1 ? points.length : draft;
-  svg("path", { d: smoothPath(points.slice(0, solidEnd)), class: "chart-line", stroke: SERIES_COLOR }, root);
-  if (draft > 0) svg("path", { d: smoothPath(points.slice(draft - 1, draft + 1)), class: "chart-line draft", stroke: SERIES_COLOR }, root);
+  const solidEnd = draft === -1 ? points.length - 1 : draft - 1;
+  if (solidEnd > 0) svg("path", { d: segmentPath(points, segments, 0, solidEnd), class: "chart-line", stroke: SERIES_COLOR }, root);
+  if (draft > 0) svg("path", { d: segmentPath(points, segments, draft - 1, points.length - 1), class: "chart-line draft", stroke: SERIES_COLOR }, root);
   rows.forEach((row, i) => {
-    const anchor = i === 0 ? "start" : i === rows.length - 1 ? "end" : "middle";
-    const label = svg("text", { x: x(i) + (i === 0 ? -pad.left + 4 : i === rows.length - 1 ? pad.right - 4 : 0), y: height - 8, class: "chart-tick", "text-anchor": anchor }, root);
+    const last = i === rows.length - 1;
+    const label = svg("text", { x: last ? width - 4 : x(i), y: height - 8, class: "chart-tick", "text-anchor": last ? "end" : "middle" }, root);
     label.textContent = row.draft ? `${row.year} draft` : row.year;
   });
   const crosshair = svg("line", { y1: pad.top - 10, y2: height - pad.bottom, class: "chart-crosshair", visibility: "hidden" }, root);

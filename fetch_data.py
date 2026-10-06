@@ -226,18 +226,24 @@ def fetch_boundaries(city: dict, out: Path) -> None:
     record(out, "communes.geojson", f"{url} + {KREISE_URL}")
 
 
+def fetch_osm_rail(city: dict, out: Path) -> None:
+    print("Rail lines (OSM)…")
+    rail = bbox(city["osmRailBbox"])
+    # Numbered trains are the rack railways (Dolderbahn 25); aerialways the Adliswil–Felsenegg cable car.
+    query = (
+        "[out:json][timeout:180];("
+        f'relation["route"~"^(tram|light_rail|funicular|subway|aerialway)$"]({rail});'
+        f'relation["route"="train"]["ref"~"^S[0-9]+$"]({rail});'
+        f'relation["route"="train"]["network"="{city["network"]}"]["ref"~"^[0-9]+$"]({rail});'
+        ");out geom;"
+    )
+    (out / "osm_rail.json").write_bytes(overpass(query))
+    record(out, "osm_rail.json", f"Overpass API: {query}")
+
+
 def fetch_osm(city: dict, out: Path) -> None:
     if city.get("railGeometry") == "osm":
-        print("Rail lines (OSM)…")
-        rail = bbox(city["osmRailBbox"])
-        query = (
-            "[out:json][timeout:180];("
-            f'relation["route"~"^(tram|light_rail|funicular|subway)$"]({rail});'
-            f'relation["route"="train"]["ref"~"^S[0-9]+$"]({rail});'
-            ");out geom;"
-        )
-        (out / "osm_rail.json").write_bytes(overpass(query))
-        record(out, "osm_rail.json", f"Overpass API: {query}")
+        fetch_osm_rail(city, out)
 
     print("Water and parks (OSM)…")
     area, parks = bbox(city["osmBbox"]), bbox(city["parksBbox"])

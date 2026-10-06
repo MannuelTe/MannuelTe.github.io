@@ -1,4 +1,4 @@
-# How far is it in Zurich?
+# Zurich Isochrones
 
 Interactive travel time map of Zurich by **tram, S-Bahn and train** (optionally **bus and boat**) and by **bike**.
 Pick a starting point and every place in the City of Zurich and 20 neighbouring municipalities is coloured by how

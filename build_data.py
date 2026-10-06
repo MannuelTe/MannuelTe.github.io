@@ -943,9 +943,17 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
     aliases = city.get("osmRefAliases", {})
     min_x, min_y, max_x, max_y = bounds
     colours: Dict[str, Counter] = defaultdict(Counter)
+    def osm_route_id(tags: dict) -> str | None:
+        # Older feeds name some lines differently (the Felsenegg cable car: LAF in 2022, 2705 in 2024, 26 since).
+        ref = tags.get("ref", "")
+        for name in (aliases.get(ref), ref, tags.get("nat_ref")):
+            if name in by_name:
+                return by_name[name]
+        return None
+
     for relation in payload["elements"]:
         tags = relation.get("tags", {})
-        route_id = by_name.get(aliases.get(tags.get("ref", ""), tags.get("ref", "")))
+        route_id = osm_route_id(tags)
         colour = tags.get("colour", "")
         if route_id and colour.startswith("#") and len(colour) == 7 and colour.upper() != "#FFFFFF":
             # Count the ways inside the map: a namesake line elsewhere in Switzerland (S24) weighs little.
@@ -959,8 +967,7 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
     seen: Dict[str, set] = defaultdict(set)
     shapes = []
     for relation in sorted(payload["elements"], key=lambda item: item["id"]):
-        ref = relation.get("tags", {}).get("ref", "")
-        route_id = by_name.get(aliases.get(ref, ref))
+        route_id = osm_route_id(relation.get("tags", {}))
         if not route_id:
             continue
         for member in relation.get("members", []):
@@ -1148,6 +1155,8 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
                     reach[key][str(limit)] += cell.get(key, 0)
     reachable = [i for i in shown_ids if math.isfinite(arrival.get(i, math.inf))]
     farthest = max(reachable, key=lambda i: arrival[i])
+    # The runner-up (another name than the farthest): the easter egg on the « farthest stop » tile.
+    runner_up = max((i for i in reachable if stations[i]["name"] != stations[farthest]["name"]), key=lambda i: arrival[i])
     og_station = min(reachable, key=lambda i: abs(arrival[i] - OG_TRIP_MINUTES))
     meters_per_deg_lat = 111_320.0
     og_x, og_y = stations[og_station]["point"]
@@ -1162,6 +1171,8 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
         "jobs": dict(reach["jobs"]),
         "farthestStation": stations[farthest]["name"],
         "farthestMinutes": round(arrival[farthest]),
+        "runnerUpStation": stations[runner_up]["name"],
+        "runnerUpMinutes": round(arrival[runner_up]),
         "ogTrip": {
             "name": stations[og_station]["name"],
             "lat": round(og_y / meters_per_deg_lat, 5),

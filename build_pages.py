@@ -23,7 +23,15 @@ UPSTREAM_URL = "https://github.com/camilleroux/montpellier-temps-transport"
 AUTHOR_NAME = "Manuel Trachsler"
 AUTHOR_URL = "https://manueltrachsler.ch"
 AUTHOR_GITHUB = "https://github.com/MannuelTe"
-SITE_NAME = "How far is it in Zurich?"
+SITE_NAME = "Zurich Isochrones"
+GITHUB_ICON = (
+    '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8'
+    'c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13'
+    '-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95'
+    ' 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2'
+    '-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93'
+    '-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>'
+)
 LICENCES = {
     "opentransportdata": ("opentransportdata.swiss terms of use", "https://opentransportdata.swiss/en/terms-of-use/"),
 }
@@ -101,7 +109,7 @@ def header(base: str) -> str:
         <a href="#map-title">Map</a>
         <a href="#history-title">Over time</a>
         <a href="#faq-title">Questions</a>
-        <a class="topbar-pill" href="{GITHUB_URL}">GitHub <span aria-hidden="true">→</span></a>
+        <a class="topbar-pill github-link" href="{GITHUB_URL}" aria-label="GitHub" title="GitHub">{GITHUB_ICON}</a>
       </nav>
     </header>"""
 
@@ -113,7 +121,7 @@ def footer(city: dict) -> str:
           <p class="footer-author">Made by <a href="{AUTHOR_URL}">{esc(AUTHOR_NAME)}</a></p>
           <nav class="footer-links" aria-label="Footer">
             <a href="{AUTHOR_URL}">manueltrachsler.ch</a>
-            <a href="{AUTHOR_GITHUB}" rel="noopener">GitHub</a>
+            <a class="github-link" href="{AUTHOR_GITHUB}" rel="noopener" aria-label="GitHub" title="GitHub">{GITHUB_ICON}</a>
             <a href="{GITHUB_URL}" rel="noopener">Source</a>
             <a href="{GITHUB_URL}/issues" rel="noopener">Report an error</a>
           </nav>
@@ -384,6 +392,7 @@ def render_page(template: Template, city: dict) -> str:
     table_lines = [line for line in stats["lines"] if any(c.isdigit() for c in line["name"])]
     trams = [line for line in table_lines if line["mode"] == "tram"]
     fastest = min(trams or table_lines, key=lambda line: line["headway"])
+    # Two rows of four: the network, then the people; each column has its own colour.
     tiles = [
         (f"{stats['within30']}%", f"of the {city['railStations']} within 30 min of {stats['center']}"),
         (str(stats["railStations"]), f"{city['railStations']} on the map"),
@@ -394,7 +403,16 @@ def render_page(template: Template, city: dict) -> str:
         (people(stats["population"].get("30", 0)), f"residents within 30 min of {stats['center']} by tram and train"),
         (people(stats["jobs"].get("30", 0)), f"jobs within 30 min of {stats['center']} by tram and train"),
     ]
-    stat_tiles = "\n".join(f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles)
+    stat_html = [f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles]
+    if stats.get("runnerUpStation"):
+        # Easter egg: hovering the farthest stop reveals the runner-up.
+        stat_html[3] = (
+            '          <div class="stat stat-egg" tabindex="0">'
+            f'<div class="stat-face"><strong>{esc(tiles[3][0])}</strong><span>{esc(tiles[3][1])}</span></div>'
+            f'<div class="stat-face stat-egg-face"><strong>{stats["runnerUpMinutes"]} min</strong>'
+            f'<span>{esc(stats["runnerUpStation"])} is the runner-up. So close.</span></div></div>'
+        )
+    stat_tiles = "\n".join(stat_html)
     line_rows = "\n".join(
         f'            <tr><td>{line_badge(line["color"], line["name"])} {esc(MODE_NAMES.get(line["mode"], ""))}</td>'
         f'<td>{line["stations"]}</td><td>~{num(line["headway"])} min</td>'

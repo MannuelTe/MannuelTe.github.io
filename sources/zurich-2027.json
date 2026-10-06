@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-05T21:54:08+00:00",
+  "builtAt": "2026-10-06T17:18:43+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -59,11 +59,11 @@
   "openStreetMap": {
     "licence": "ODbL, © OpenStreetMap contributors",
     "osm_rail": {
-      "source": "Overpass API: [out:json][timeout:180];(relation[\"route\"~\"^(tram|light_rail|funicular|subway)$\"](47.3,8.4,47.47,8.64);relation[\"route\"=\"train\"][\"ref\"~\"^S[0-9]+$\"](47.3,8.4,47.47,8.64););out geom;",
+      "source": "Overpass API: [out:json][timeout:180];(relation[\"route\"~\"^(tram|light_rail|funicular|subway|aerialway)$\"](47.3,8.4,47.47,8.64);relation[\"route\"=\"train\"][\"ref\"~\"^S[0-9]+$\"](47.3,8.4,47.47,8.64);relation[\"route\"=\"train\"][\"network\"=\"ZVV\"][\"ref\"~\"^[0-9]+$\"](47.3,8.4,47.47,8.64););out geom;",
       "how": "download",
-      "fetchedAt": "2026-10-05T16:47:37+00:00",
-      "bytes": 11079972,
-      "sha256": "fbcab3919768b753ae959382e8409cd354697146ca4dfdfcee38fee06b9b27e3"
+      "fetchedAt": "2026-10-06T17:10:07+00:00",
+      "bytes": 11095581,
+      "sha256": "6cd54058524bd490b93c477368696e3a4dfd70e6e902cc7406c1f0c6d360026c"
     },
     "osm_water_parks": {
       "source": "Overpass API: [out:json][timeout:180];(relation[\"natural\"=\"water\"](47.25,8.33,47.52,8.72);way[\"natural\"=\"water\"](47.25,8.33,47.52,8.72);relation[\"leisure\"=\"park\"](47.3,8.42,47.46,8.64);way[\"leisure\"=\"park\"](47.3,8.42,47.46,8.64););out geom;",
@@ -439,6 +439,8 @@
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 51,
+    "runnerUpStation": "Reppischhof",
+    "runnerUpMinutes": 47,
     "ogTrip": {
       "name": "Kappeli",
       "lat": 47.38466,

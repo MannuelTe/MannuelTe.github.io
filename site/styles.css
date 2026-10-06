@@ -128,6 +128,21 @@ a:hover {
   font-weight: 500;
 }
 
+.topbar-links .github-link,
+.footer-links .github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-links .github-link {
+  padding: 5px 7px;
+}
+
+.footer-links .github-link {
+  padding: 4px 8px;
+}
+
 .page {
   padding: 0 24px 48px;
 }
@@ -230,34 +245,6 @@ h1 {
 .search-results small {
   color: var(--muted);
   font-weight: 400;
-}
-
-.steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.steps li {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.steps .num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--faint);
-}
-
-.steps strong {
-  color: var(--ink);
-  font-weight: 500;
 }
 
 /* --- Buttons and controls -------------------------------------------------------- */
@@ -704,6 +691,13 @@ output {
   color: var(--ink-soft);
 }
 
+.reach-share {
+  color: var(--blue);
+  font-size: 1.35em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -739,17 +733,6 @@ output {
   font-weight: 600;
 }
 
-.years-charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px;
-  margin: 4px 0 12px;
-}
-
-.years-charts .chart-bar strong {
-  font-weight: 500;
-}
-
 .year-bar {
   display: block;
   max-width: 160px;
@@ -767,27 +750,83 @@ output {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
+/* One colour per column: the network on the first row, the people on the second. */
 .stat {
+  --tone: var(--blue);
+  --tone-soft: var(--blue-soft);
   display: grid;
   gap: 2px;
   padding: 14px 16px;
   border-radius: var(--radius);
-  background: var(--card);
+  background: var(--tone-soft);
+  box-shadow: inset 3px 0 0 var(--tone);
+}
+
+.stat:nth-child(4n + 2) {
+  --tone: #1a7f4b;
+  --tone-soft: #e5f3ea;
+}
+
+.stat:nth-child(4n + 3) {
+  --tone: #a35a00;
+  --tone-soft: #fcefdc;
+}
+
+.stat:nth-child(4n + 4) {
+  --tone: #b2362c;
+  --tone-soft: #fbe8e6;
 }
 
 .stat strong {
+  color: var(--tone);
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.035em;
 }
 
 .stat span {
-  color: var(--muted);
+  color: var(--ink-soft);
   font-size: 12.5px;
+}
+
+/* Easter egg: the farthest stop's tile turns over to the runner-up. */
+.stat-egg {
+  cursor: help;
+  outline: none;
+}
+
+.stat-face {
+  display: grid;
+  gap: 2px;
+}
+
+.stat-egg-face,
+.stat-egg:hover .stat-face:first-child,
+.stat-egg:focus-visible .stat-face:first-child {
+  display: none;
+}
+
+.stat-egg:hover .stat-egg-face,
+.stat-egg:focus-visible .stat-egg-face {
+  display: grid;
+  animation: egg-in 0.25s ease-out;
+}
+
+@keyframes egg-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (max-width: 900px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .line-badge {

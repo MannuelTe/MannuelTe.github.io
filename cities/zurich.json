@@ -1,6 +1,7 @@
 {
   "slug": "zurich",
   "name": "Zurich",
+  "title": "Zurich Isochrones",
   "network": "ZVV",
   "region": "City of Zurich and neighbouring municipalities",
   "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
@@ -72,6 +73,9 @@
     8.64
   ],
   "railGeometry": "osm",
+  "osmRefAliases": {
+    "LAF": "26"
+  },
   "stopPrefix": "Zürich",
   "searchBboxLV95": [
     2670000,

@@ -1285,18 +1285,26 @@ function updatePanel() {
     if (app.heatSolution.bike) {
       const reachable = tram.filter(({ station }) => travelBike(app.heatSolution, station.point).minutes <= REACH_MINUTES).length;
       const percent = Math.round((reachable / tram.length) * 100);
-      $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes by bike from ${where}.`;
+      setReach(percent, ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes by bike from ${where}.`);
     } else {
       const reachable = tram.filter(({ station, index }) => {
         const byFoot = walkBetween(source.point, elevationAt(source.point), station.point, station.z ?? 0);
         return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
       }).length;
       const percent = Math.round((reachable / tram.length) * 100);
-      $("reach").textContent = `${percent}% of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
+      setReach(percent, ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
         app.includeBus ? ` (with ${CITY.busNoun})` : ""
-      }.`;
+      }.`);
     }
   }
+}
+
+/** "82% of the stops…", the share in the accent colour. */
+function setReach(percent, rest) {
+  const share = document.createElement("strong");
+  share.className = "reach-share";
+  share.textContent = `${percent}%`;
+  $("reach").replaceChildren(share, rest);
 }
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
@@ -1320,9 +1328,10 @@ function reachCounts(grid, limits) {
   return { totals, within };
 }
 
-// --- This trip across the timetable years (expander under the map) --------------
+// --- Across the years: this trip on every timetable year (section 03) --------------
 
 let yearsTimer = null;
+let yearsVisible = false; // the other years' bundles load only once the section scrolls into view
 
 function scheduleYears() {
   clearTimeout(yearsTimer);
@@ -1359,8 +1368,7 @@ async function tripAcrossYears() {
 
 async function updateYears() {
   if (app.from && insights.page?.id === "trip") renderInsight().catch((error) => console.error(error));
-  const panel = $("yearsPanel");
-  if (!panel?.open || !app.from) return;
+  if (!yearsVisible || !app.from) return;
   const body = $("yearsBody");
   if (app.mode === "bike") {
     body.textContent = "The bike network is today's; switch to public transport to compare timetable years.";
@@ -1419,63 +1427,7 @@ async function updateYears() {
   note.textContent = `Counted from the start on the map (${app.from.label.replace(/^Near /, "")})${app.to ? " with the same destination" : ""} on each year's timetable${
     app.includeBus ? ", buses and boats included" : ", tram and train only"
   }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs held at today's numbers; changes are against the previous row.${app.to ? "" : " Click the map to add a destination."}`;
-  const charts = yearsCharts(rows);
-  body.replaceChildren(charts, table, note);
-  drawYearsCharts(charts);
-}
-
-/** Residents and jobs within 30 min as two small line charts (two scales: never one dual-axis chart). */
-function yearsCharts(rows) {
-  const wrap = document.createElement("div");
-  wrap.className = "years-charts";
-  for (const [key, label] of [["pop", "Residents within 30 min"], ["jobs", "Jobs within 30 min"]]) {
-    const series = rows.map((row) => ({
-      year: row.year,
-      draft: CITY.timetables[row.year].label.startsWith("Draft"),
-      current: row.year === app.year,
-      value: row[key],
-    }));
-    const first = series[0].value;
-    const last = series.at(-1).value;
-    const panel = document.createElement("div");
-    panel.className = "chart-panel";
-    const bar = document.createElement("div");
-    bar.className = "chart-bar";
-    const title = document.createElement("strong");
-    title.textContent = label;
-    const change = document.createElement("span");
-    change.className = "muted";
-    change.textContent = `from your start · ${signed(last - first, (v) => compact.format(v))} since ${series[0].year}`;
-    bar.append(title, change);
-    const chart = document.createElement("div");
-    chart.className = "chart";
-    chart.setAttribute("role", "img");
-    chart.setAttribute("aria-label", `${label}: ${series.map((s) => `${s.year} ${compact.format(s.value)}`).join(", ")}`);
-    chart.yearsSeries = series;
-    panel.append(bar, chart);
-    wrap.append(panel);
-  }
-  return wrap;
-}
-
-let yearsChartsObserver = null;
-
-function drawYearsCharts(wrap) {
-  const draw = () =>
-    wrap.querySelectorAll(".chart").forEach((chart) =>
-      drawLineChart(chart, chart.yearsSeries, (v) => compact.format(v), chart.yearsSeries[0].value),
-    );
-  draw();
-  yearsChartsObserver?.disconnect();
-  let lastWidth = Math.round(wrap.clientWidth);
-  yearsChartsObserver = new ResizeObserver(([entry]) => {
-    const width = Math.round(entry.contentRect.width);
-    if (width !== lastWidth && width > 0) {
-      lastWidth = width;
-      draw();
-    }
-  });
-  yearsChartsObserver.observe(wrap);
+  body.replaceChildren(table, note);
 }
 
 function updateCounts() {
@@ -2260,7 +2212,12 @@ async function init() {
       })
       .catch(() => toast("Could not load the cycling layer."));
   });
-  $("yearsPanel").addEventListener("toggle", scheduleYears);
+  new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !yearsVisible) {
+      yearsVisible = true;
+      scheduleYears();
+    }
+  }, { rootMargin: "200px" }).observe($("yearsPanel"));
   setupInsights();
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;

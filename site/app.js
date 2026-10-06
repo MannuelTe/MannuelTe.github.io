@@ -2,6 +2,10 @@
 // The city shown is described by the #city-config JSON block of the page.
 
 const CITY = JSON.parse(document.getElementById("city-config").textContent);
+// The page is German (index.html, the default) or English (en/index.html); every text below comes in both.
+const LANG = document.documentElement.lang === "de" ? "de" : "en";
+const t = (en, de) => (LANG === "de" ? de : en);
+const LOCALE = t("en", "de-CH");
 // One bundle per timetable year (network history): data/<city>-<year>.json.
 const dataUrl = (year) => new URL(`./data/${CITY.slug}-${year}.json?v=${CITY.timetables[year].version}`, import.meta.url);
 const GEOCODER_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer";
@@ -11,10 +15,10 @@ const MODE_LABELS = {
   tram: "Tram",
   metro: "Metro",
   sbahn: "S-Bahn",
-  train: "Train",
-  funicular: "Funicular",
-  cable: "Cable car",
-  ferry: "Boat",
+  train: t("Train", "Zug"),
+  funicular: t("Funicular", "Standseilbahn"),
+  cable: t("Cable car", "Luftseilbahn"),
+  ferry: t("Boat", "Schiff"),
   busway: "Busway",
   bus: "Bus",
 };
@@ -471,7 +475,7 @@ function travelTo(solution, point) {
 
 function routeLabel(routeId) {
   const info = app.data.routeInfo[routeId];
-  const mode = MODE_LABELS[info.mode] ?? "Line";
+  const mode = MODE_LABELS[info.mode] ?? t("Line", "Linie");
   // S-Bahn and train names already say what they are (S3, IC5).
   return /^[A-Z]/.test(info.name) ? info.name : `${mode} ${info.name}`;
 }
@@ -482,10 +486,10 @@ function buildItinerary(solution, point) {
   const result = travelTo(solution, point);
   if (result.bike) {
     const km = (hypot(solution.point, point) / 1000).toFixed(1);
-    return { minutes: result.minutes, steps: [{ kind: "bike", text: `By bike (${km} km as the crow flies)`, minutes: result.minutes }] };
+    return { minutes: result.minutes, steps: [{ kind: "bike", text: t(`By bike (${km} km as the crow flies)`, `Mit dem Velo (${km.replace(".", ",")} km Luftlinie)`), minutes: result.minutes }] };
   }
   if (result.station === -1) {
-    return { minutes: result.minutes, steps: [{ kind: "walk", text: "Walk all the way", minutes: result.minutes }] };
+    return { minutes: result.minutes, steps: [{ kind: "walk", text: t("Walk all the way", "Ganzer Weg zu Fuss"), minutes: result.minutes }] };
   }
 
   const chain = [];
@@ -495,7 +499,7 @@ function buildItinerary(solution, point) {
   const name = (state) => data.stations[graph.station[state]].name;
   // A ride into a terminus arrives in the line's end state (build_data.split_terminating): same line, same leg.
   const line = (state) => data.routeInfo[graph.route[state]]?.endOf ?? graph.route[state];
-  const steps = [{ kind: "walk", text: `Walk to ${name(chain[0])}`, minutes: solution.seedWalk[chain[0]] }];
+  const steps = [{ kind: "walk", text: t(`Walk to ${name(chain[0])}`, `Zu Fuss nach ${name(chain[0])}`), minutes: solution.seedWalk[chain[0]] }];
   let legStart = chain[0];
   const closeLeg = (legEnd) => {
     steps.push({
@@ -514,14 +518,14 @@ function buildItinerary(solution, point) {
     if (graph.station[from] !== graph.station[to]) {
       const a = data.stations[graph.station[from]];
       const b = data.stations[graph.station[to]];
-      steps.push({ kind: "walk", text: `Walk to ${name(to)} to change`, minutes: hillWalk(a.point, a.z ?? 0, b.point, b.z ?? 0) });
+      steps.push({ kind: "walk", text: t(`Walk to ${name(to)} to change`, `Zu Fuss nach ${name(to)} zum Umsteigen`), minutes: hillWalk(a.point, a.z ?? 0, b.point, b.z ?? 0) });
     }
     legStart = to;
   }
   closeLeg(chain[chain.length - 1]);
   // La sortie du quai (métro) est comptée avec la marche finale.
   const exit = graph.access[chain[chain.length - 1]];
-  steps.push({ kind: "walk", text: "Walk to the destination", minutes: result.walk + exit });
+  steps.push({ kind: "walk", text: t("Walk to the destination", "Zu Fuss zum Ziel"), minutes: result.walk + exit });
   return { minutes: result.minutes, steps };
 }
 
@@ -1126,9 +1130,9 @@ function render() {
   drawStops();
   if (app.to) {
     const minutes = app.solution ? formatMinutes(travelTo(app.solution, app.to.point).minutes) : null;
-    drawMarker(app.to.point, COLORS.to, app.heatFrom === "to" ? `Destination · ${minutes}` : minutes);
+    drawMarker(app.to.point, COLORS.to, app.heatFrom === "to" ? `${t("Destination", "Ziel")} · ${minutes}` : minutes);
   }
-  if (app.from) drawMarker(app.from.point, COLORS.from, "Start");
+  if (app.from) drawMarker(app.from.point, COLORS.from, t("Start", "Start"));
 }
 
 function requestRender() {
@@ -1180,7 +1184,8 @@ function nearestStopName(point) {
 function describePlace(point) {
   const stop = nearestStopName(point);
   const commune = communeAt(point);
-  return commune ? `Near ${stop} (${commune})` : `Near ${stop}`;
+  const near = t("Near", "Bei");
+  return commune ? `${near} ${stop} (${commune})` : `${near} ${stop}`;
 }
 
 function heatSource() {
@@ -1268,7 +1273,7 @@ function updatePanel() {
             badge.textContent = step.kind === "bike" ? "🚲" : "🚶";
           }
           const text = document.createElement("span");
-          text.textContent = step.kind === "ride" ? `${step.text} · wait ~${Math.round(step.wait)} min` : step.text;
+          text.textContent = step.kind === "ride" ? `${step.text} · ${t("wait", "warten")} ~${Math.round(step.wait)} min` : step.text;
           const minutes = document.createElement("span");
           minutes.className = "minutes";
           minutes.textContent = formatMinutes(step.minutes);
@@ -1281,20 +1286,25 @@ function updatePanel() {
   if (app.heatSolution) {
     const source = heatSource();
     const tram = app.data.stations.map((station, index) => ({ station, index })).filter(({ station }) => station.rail);
-    const where = source === app.from ? "this start" : "this destination";
+    const where = source === app.from ? t("this start", "diesem Start") : t("this destination", "diesem Ziel");
     if (app.heatSolution.bike) {
       const reachable = tram.filter(({ station }) => travelBike(app.heatSolution, station.point).minutes <= REACH_MINUTES).length;
       const percent = Math.round((reachable / tram.length) * 100);
-      setReach(percent, ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes by bike from ${where}.`);
+      setReach(percent, t(
+        ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes by bike from ${where}.`,
+        ` der ${CITY.railStations} sind mit dem Velo weniger als ${REACH_MINUTES} Minuten von ${where} entfernt.`,
+      ));
     } else {
       const reachable = tram.filter(({ station, index }) => {
         const byFoot = walkBetween(source.point, elevationAt(source.point), station.point, station.z ?? 0);
         return Math.min(byFoot, app.heatSolution.stationTime[index]) <= REACH_MINUTES;
       }).length;
       const percent = Math.round((reachable / tram.length) * 100);
-      setReach(percent, ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${
-        app.includeBus ? ` (with ${CITY.busNoun})` : ""
-      }.`);
+      const bus = app.includeBus ? t(` (with ${CITY.busNoun})`, ` (mit ${CITY.busNoun})`) : "";
+      setReach(percent, t(
+        ` of ${CITY.railStations} are less than ${REACH_MINUTES} minutes from ${where}${bus}.`,
+        ` der ${CITY.railStations} sind weniger als ${REACH_MINUTES} Minuten von ${where} entfernt${bus}.`,
+      ));
     }
   }
 }
@@ -1307,7 +1317,8 @@ function setReach(percent, rest) {
   $("reach").replaceChildren(share, rest);
 }
 
-const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+// German has no short form for thousands (410'200, not 410k): compact still shortens millions (1,2 Mio.).
+const compact = new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 });
 
 /** Residents and jobs in the cells reached within each isochrone (BFS hectare grids, summed per cell). */
 function reachCounts(grid, limits) {
@@ -1329,6 +1340,13 @@ function reachCounts(grid, limits) {
 }
 
 // --- Across the years: this trip on every timetable year (section 03) --------------
+
+const BIKE_YEARS_NOTE = t(
+  "The bike network is today's; switch to public transport to compare timetable years.",
+  "Das Velonetz ist das heutige; wechsle zum ÖV, um Fahrplanjahre zu vergleichen.",
+);
+const LOADING_TIMETABLES = t("Loading the timetables…", "Fahrpläne werden geladen…");
+const ON_FOOT = t("on foot", "zu Fuss");
 
 let yearsTimer = null;
 let yearsVisible = false; // the other years' bundles load only once the section scrolls into view
@@ -1371,16 +1389,18 @@ async function updateYears() {
   if (!yearsVisible || !app.from) return;
   const body = $("yearsBody");
   if (app.mode === "bike") {
-    body.textContent = "The bike network is today's; switch to public transport to compare timetable years.";
+    body.textContent = BIKE_YEARS_NOTE;
     return;
   }
-  body.textContent = "Loading the timetables…";
+  body.textContent = LOADING_TIMETABLES;
   const rows = await tripAcrossYears();
   const longest = Math.max(...rows.map((row) => row.minutes ?? 0), 1);
   const table = document.createElement("table");
   table.className = "data-table years-table";
-  table.innerHTML = `<thead><tr><th scope="col">Timetable</th>${app.to ? '<th scope="col">This trip</th><th scope="col">Lines</th>' : ""}
-    <th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>`;
+  table.innerHTML = `<thead><tr><th scope="col">${t("Timetable", "Fahrplan")}</th>${
+    app.to ? `<th scope="col">${t("This trip", "Diese Fahrt")}</th><th scope="col">${t("Lines", "Linien")}</th>` : ""
+  }
+    <th scope="col">${t("Residents within 30 min", "Einwohner innert 30 min")}</th><th scope="col">${t("Jobs within 30 min", "Arbeitsplätze innert 30 min")}</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   rows.forEach((row, k) => {
     const tr = document.createElement("tr");
@@ -1391,14 +1411,14 @@ async function updateYears() {
       else td.append(...content);
       tr.append(td);
     };
-    cell(CITY.timetables[row.year].label.startsWith("Draft") ? `${row.year} (draft)` : row.year);
+    cell(CITY.timetables[row.year].draft ? `${row.year} (${t("draft", "Entwurf")})` : row.year);
     if (app.to) {
       const bar = document.createElement("span");
       bar.className = "year-bar";
       bar.style.width = `${Math.round((row.minutes / longest) * 160)}px`; // longest trip = 160 px
       const previous = rows[k - 1]?.minutes;
       const change = Math.round(row.minutes) - Math.round(previous ?? row.minutes);
-      const delta = previous == null ? "" : change === 0 ? " (same)" : ` (${change > 0 ? "+" : "−"}${formatMinutes(Math.abs(change))})`;
+      const delta = previous == null ? "" : change === 0 ? t(" (same)", " (gleich)") : ` (${change > 0 ? "+" : "−"}${formatMinutes(Math.abs(change))})`;
       const label = document.createElement("span");
       label.textContent = formatMinutes(row.minutes) + delta;
       cell([label, bar]);
@@ -1412,7 +1432,7 @@ async function updateYears() {
               badge.style.color = contrastText(info.color);
               return badge;
             })
-          : "on foot",
+          : ON_FOOT,
       );
     }
     const previous = rows[k - 1];
@@ -1424,9 +1444,19 @@ async function updateYears() {
   table.append(tbody);
   const note = document.createElement("p");
   note.className = "table-note";
-  note.textContent = `Counted from the start on the map (${app.from.label.replace(/^Near /, "")})${app.to ? " with the same destination" : ""} on each year's timetable${
-    app.includeBus ? ", buses and boats included" : ", tram and train only"
-  }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs held at today's numbers; changes are against the previous row.${app.to ? "" : " Click the map to add a destination."}`;
+  const start = app.from.label.replace(new RegExp(`^${t("Near", "Bei")} `), "");
+  note.textContent = t(
+    `Counted from the start on the map (${start})${app.to ? " with the same destination" : ""} on each year's timetable${
+      app.includeBus ? ", buses and boats included" : ", tram and train only"
+    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs held at today's numbers; changes are against the previous row.${
+      app.to ? "" : " Click the map to add a destination."
+    }`,
+    `Gezählt ab dem Start auf der Karte (${start})${app.to ? " mit demselben Ziel" : ""} auf dem Fahrplan jedes Jahres${
+      app.includeBus ? ", Busse und Schiffe inbegriffen" : ", nur Tram und Zug"
+    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Einwohner und Arbeitsplätze auf heutigem Stand; Änderungen gegenüber der Zeile davor.${
+      app.to ? "" : " Klicke auf die Karte, um ein Ziel hinzuzufügen."
+    }`,
+  );
   body.replaceChildren(table, note);
 }
 
@@ -1446,8 +1476,8 @@ function updateCounts() {
     return tr;
   };
   table.querySelector("tbody").replaceChildren(
-    ...limits.map((limit, k) => row(`Within ${limit} min`, within[k])),
-    row("Whole map", totals),
+    ...limits.map((limit, k) => row(t(`Within ${limit} min`, `Innert ${limit} min`), within[k])),
+    row(t("Whole map", "Ganze Karte"), totals),
   );
 }
 
@@ -1490,6 +1520,11 @@ function syncUrl() {
   const query = params.toString().replaceAll("%2C", ",");
   history.replaceState(null, "", query ? `?${query}` : location.pathname);
 }
+
+// The language switch keeps the same start, destination and settings (the query string syncUrl maintains).
+document.querySelector(".lang-switch")?.addEventListener("click", (event) => {
+  event.currentTarget.search = location.search;
+});
 
 function restoreFromUrl() {
   const params = new URLSearchParams(location.search);
@@ -1605,7 +1640,7 @@ function endPointer(event) {
   canvas.classList.remove("panning");
   if (event.type === "pointercancel") return;
   if (drag.kind === "pan" && !drag.moved) {
-    if (!setTo(unproject(...eventPoint(event)))) toast("This point is outside the map or on water.");
+    if (!setTo(unproject(...eventPoint(event)))) toast(t("This point is outside the map or on water.", "Dieser Punkt liegt ausserhalb der Karte oder auf dem Wasser."));
   } else if (drag.kind === "marker") {
     recompute();
     syncUrl();
@@ -1672,7 +1707,7 @@ $("maxRange").addEventListener("input", (event) => {
 
 $("swap").addEventListener("click", () => {
   if (!app.to) {
-    toast("Click the map to set a destination first.");
+    toast(t("Click the map to set a destination first.", "Klicke zuerst auf die Karte, um ein Ziel zu setzen."));
     return;
   }
   [app.from, app.to] = [app.to, app.from];
@@ -1691,14 +1726,14 @@ $("heatFrom").addEventListener("click", (event) => {
 
 $("locate").addEventListener("click", () => {
   if (!navigator.geolocation) {
-    toast("Geolocation is not available.");
+    toast(t("Geolocation is not available.", "Standortbestimmung ist nicht verfügbar."));
     return;
   }
   navigator.geolocation.getCurrentPosition(
     ({ coords }) => {
-      if (!setFrom(toWorld(coords.latitude, coords.longitude), "My location")) toast("You are outside the map.");
+      if (!setFrom(toWorld(coords.latitude, coords.longitude), t("My location", "Mein Standort"))) toast(t("You are outside the map.", "Du bist ausserhalb der Karte."));
     },
-    () => toast("Could not get your location."),
+    () => toast(t("Could not get your location.", "Dein Standort konnte nicht bestimmt werden.")),
   );
 });
 
@@ -1714,7 +1749,7 @@ $("share").addEventListener("click", async () => {
   }
   try {
     await navigator.clipboard.writeText(url);
-    toast("Link copied!");
+    toast(t("Link copied!", "Link kopiert!"));
   } catch {
     toast(url);
   }
@@ -1836,9 +1871,9 @@ $("searchForm").addEventListener("submit", async (event) => {
   try {
     const results = await searchAddress(query);
     if (results.length) chooseResult(results[0]);
-    else toast("No address found on the map.");
+    else toast(t("No address found on the map.", "Keine Adresse auf der Karte gefunden."));
   } catch (error) {
-    if (error.name !== "AbortError") toast("The address search is not responding.");
+    if (error.name !== "AbortError") toast(t("The address search is not responding.", "Die Adresssuche antwortet nicht."));
   }
 });
 
@@ -1900,21 +1935,23 @@ const HISTORY = CITY.history ?? [];
 const metricOf = (key, limit) => (row) =>
   key === "stops" ? row[`within${limit}`] : (row[key === "pop" ? "population" : "jobs"][limit] ?? 0);
 const METRICS = {
-  pop: { label: "Residents", noun: "residents", format: (v) => compact.format(v) },
-  jobs: { label: "Jobs", noun: "jobs", format: (v) => compact.format(v) },
-  stops: { label: "Rail stops", noun: "points of rail stops", format: (v) => `${v}%` },
+  pop: { label: t("Residents", "Einwohner"), noun: t("residents", "Einwohner"), format: (v) => compact.format(v) },
+  jobs: { label: t("Jobs", "Arbeitsplätze"), noun: t("jobs", "Arbeitsplätze"), format: (v) => compact.format(v) },
+  stops: { label: t("Rail stops", "Haltestellen"), noun: t("points of rail stops", "Prozentpunkte der Haltestellen"), format: (v) => `${v}%` },
 };
+// German nouns keep their capital in the middle of a sentence.
+const lowerNoun = (noun) => (LANG === "de" ? noun : noun.toLowerCase());
 
 const INSIGHT_PAGES = [
-  { id: "reach30", limit: "30", metrics: ["pop", "jobs", "stops"], title: (m) => `${METRICS[m].label} within 30 min of ${CITY.center}` },
-  { id: "reach15", limit: "15", metrics: ["pop", "jobs", "stops"], title: (m) => `${METRICS[m].label} within 15 min of ${CITY.center}` },
+  { id: "reach30", limit: "30", metrics: ["pop", "jobs", "stops"], title: (m) => t(`${METRICS[m].label} within 30 min of ${CITY.center}`, `${METRICS[m].label} innert 30 min ab ${CITY.center}`) },
+  { id: "reach15", limit: "15", metrics: ["pop", "jobs", "stops"], title: (m) => t(`${METRICS[m].label} within 15 min of ${CITY.center}`, `${METRICS[m].label} innert 15 min ab ${CITY.center}`) },
   {
     id: "network",
     metrics: ["railStations", "tramLines"],
-    labels: { railStations: "Rail stops", tramLines: "Tram lines" },
-    title: (m) => (m === "railStations" ? "Tram and rail stops on the map" : "Tram lines in service"),
+    labels: { railStations: t("Rail stops", "Haltestellen"), tramLines: t("Tram lines", "Tramlinien") },
+    title: (m) => (m === "railStations" ? t("Tram and rail stops on the map", "Tram- und Bahnhaltestellen auf der Karte") : t("Tram lines in service", "Tramlinien in Betrieb")),
   },
-  { id: "trip", metrics: ["minutes"], labels: { minutes: "Trip time" }, title: () => "This trip, year by year" },
+  { id: "trip", metrics: ["minutes"], labels: { minutes: t("Trip time", "Reisezeit") }, title: () => t("This trip, year by year", "Diese Fahrt, Jahr für Jahr") },
 ];
 
 const insights = { index: 0, metric: {}, page: null, trip: null };
@@ -2002,7 +2039,7 @@ function drawLineChart(container, rows, format, reference) {
   rows.forEach((row, i) => {
     const last = i === rows.length - 1;
     const label = svg("text", { x: last ? width - 4 : x(i), y: height - 8, class: "chart-tick", "text-anchor": last ? "end" : "middle" }, root);
-    label.textContent = row.draft ? `${row.year} draft` : row.year;
+    label.textContent = row.draft ? `${row.year} ${t("draft", "Entwurf")}` : row.year;
   });
   const crosshair = svg("line", { y1: pad.top - 10, y2: height - pad.bottom, class: "chart-crosshair", visibility: "hidden" }, root);
   const dots = rows.map((row, i) =>
@@ -2034,7 +2071,7 @@ function drawLineChart(container, rows, format, reference) {
     key.className = "line-key";
     key.style.background = SERIES_COLOR;
     const caption = document.createElement("span");
-    caption.textContent = `${rows[i].year}${rows[i].draft ? " (draft)" : ""}${rows[i].note ? ` · ${rows[i].note}` : ""}`;
+    caption.textContent = `${rows[i].year}${rows[i].draft ? ` (${t("draft", "Entwurf")})` : ""}${rows[i].note ? ` · ${rows[i].note}` : ""}`;
     line.append(key, caption);
     tooltip.replaceChildren(value, line);
     tooltip.hidden = false;
@@ -2076,7 +2113,7 @@ function pageRows(page, metric) {
         year: row.year,
         draft: Boolean(HISTORY.find((h) => h.year === row.year)?.draft),
         value: Math.round(row.minutes),
-        note: row.lines.map((info) => info.name).join(" → ") || "on foot",
+        note: row.lines.map((info) => info.name).join(" → ") || ON_FOOT,
       }));
   }
   if (page.id === "network") return HISTORY.map((row) => ({ year: row.year, draft: row.draft, value: row[metric], note: row.day }));
@@ -2113,20 +2150,23 @@ async function renderInsight() {
   picker.hidden = page.metrics.length < 2;
   if (page.id === "trip") {
     if (!app.to || !app.from) {
-      showInsightMessage("Click the map to set a destination: this card then follows your trip across the timetable years.");
+      showInsightMessage(t(
+        "Click the map to set a destination: this card then follows your trip across the timetable years.",
+        "Klicke auf die Karte, um ein Ziel zu setzen: Diese Karte folgt dann deiner Fahrt durch die Fahrplanjahre.",
+      ));
       return;
     }
     if (app.mode === "bike") {
-      showInsightMessage("The bike network is today's; switch to public transport to compare timetable years.");
+      showInsightMessage(BIKE_YEARS_NOTE);
       return;
     }
-    $("insLede").textContent = "Loading the timetables…";
+    $("insLede").textContent = LOADING_TIMETABLES;
     insights.trip = await tripAcrossYears();
     if (insights.page !== page) return;
   }
   const rows = pageRows(page, metric);
   if (rows.length < 2) {
-    showInsightMessage("Not enough timetable years for a chart.");
+    showInsightMessage(t("Not enough timetable years for a chart.", "Zu wenige Fahrplanjahre für ein Diagramm."));
     return;
   }
   const format = page.id === "trip" ? (v) => formatMinutes(v) : page.id === "network" ? (v) => String(v) : METRICS[metric].format;
@@ -2144,20 +2184,20 @@ async function renderInsight() {
     const change = final[i].value - final[i - 1].value;
     if (!step || Math.abs(change) > Math.abs(step.change)) step = { change, from: final[i - 1], to: final[i] };
   }
-  const noun = page.id === "trip" ? "" : ` ${(page.labels?.[metric] ?? METRICS[metric].noun).toLowerCase()}`;
+  const noun = page.id === "trip" ? "" : ` ${lowerNoun(page.labels?.[metric] ?? METRICS[metric].noun)}`;
   const strong = document.createElement("strong");
   strong.textContent = step.to.year;
   const amount = document.createElement("span");
   amount.className = `mono ${tone(step.change)}`;
   amount.textContent = signed(step.change, format) + noun;
-  $("insLede").replaceChildren("Biggest change in ", strong, " — ", amount, ` against ${step.from.year}.`);
+  $("insLede").replaceChildren(t("Biggest change in ", "Grösste Änderung "), strong, " — ", amount, t(` against ${step.from.year}.`, ` gegenüber ${step.from.year}.`));
   $("insArrow").textContent = Math.round(delta) === 0 ? "→" : delta > 0 ? "↑" : "↓";
   $("insArrow").className = `insight-arrow ${tone(delta)}`;
-  $("insRef").textContent = `${format(first.value)} in ${first.year}`;
+  $("insRef").textContent = t(`${format(first.value)} in ${first.year}`, `${format(first.value)} im Jahr ${first.year}`);
   $("insValue").textContent = format(current.value);
   $("insDelta").textContent = signed(delta, format);
   $("insDelta").className = `mono ${tone(delta)}`;
-  $("insVs").textContent = `${current.year} vs ${first.year}`;
+  $("insVs").textContent = t(`${current.year} vs ${first.year}`, `${current.year} gegenüber ${first.year}`);
   $("insChart").setAttribute("aria-label", `${page.title(metric)}: ${rows.map((row) => `${row.year} ${format(row.value)}`).join(", ")}`);
   drawLineChart($("insChart"), rows, format, first.value);
 }
@@ -2197,7 +2237,7 @@ async function init() {
   await loadYear(CITY.timetables[requested] ? requested : CITY.defaultTimetable);
   app.size.width = 0;
   resize();
-  if (new URLSearchParams(location.search).get("mode") === "bike") await setMode("bike").catch(() => toast("Could not load the cycling layer."));
+  if (new URLSearchParams(location.search).get("mode") === "bike") await setMode("bike").catch(() => toast(t("Could not load the cycling layer.", "Die Veloebene konnte nicht geladen werden.")));
   restoreFromUrl();
   loadStreets().catch((error) => console.error("streets", error));
   loadBusLines().catch((error) => console.error("bus lines", error));
@@ -2210,7 +2250,7 @@ async function init() {
         recompute();
         syncUrl();
       })
-      .catch(() => toast("Could not load the cycling layer."));
+      .catch(() => toast(t("Could not load the cycling layer.", "Die Veloebene konnte nicht geladen werden.")));
   });
   new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting && !yearsVisible) {
@@ -2221,11 +2261,11 @@ async function init() {
   setupInsights();
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;
-    if (year) switchYear(year).catch(() => toast("Could not load that timetable."));
+    if (year) switchYear(year).catch(() => toast(t("Could not load that timetable.", "Dieser Fahrplan konnte nicht geladen werden.")));
   });
 }
 
 init().catch((error) => {
   console.error(error);
-  $("tripFrom").textContent = "Could not load the network.";
+  $("tripFrom").textContent = t("Could not load the network.", "Das Netz konnte nicht geladen werden.");
 });

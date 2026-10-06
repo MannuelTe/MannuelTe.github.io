@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="${lang}">
   <head>
 ${head}
     <link rel="stylesheet" href="${base}styles.css?v=${styles_version}" />
@@ -13,14 +13,13 @@ ${header}
       <section class="hero">
         <h1>${headline}</h1>
         <p class="lede">
-          Choose any start and destination on the map below and it is coloured by the time it takes to get there or
-          to come back from there. Public transport can include buses and boats in the periphery, or be compared with biking.
+          ${ui_lede}
         </p>
         <form id="searchForm" class="search" role="search" autocomplete="off">
-          <label class="visually-hidden" for="searchInput">Starting address</label>
+          <label class="visually-hidden" for="searchInput">${ui_start_address}</label>
           <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
-          <input id="searchInput" type="search" placeholder="Start from an address… (e.g. ${search_example})" />
-          <button type="submit" class="button primary">Start here</button>
+          <input id="searchInput" type="search" placeholder="${ui_search_placeholder}" />
+          <button type="submit" class="button primary">${ui_start_here}</button>
           <ul id="searchResults" class="search-results" hidden></ul>
         </form>
       </section>
@@ -28,42 +27,42 @@ ${header}
       <section class="block" aria-labelledby="map-title">
         <header class="block-head">
           <span class="block-num">01</span>
-          <h2 id="map-title">Map</h2>
+          <h2 id="map-title">${ui_map}</h2>
         </header>
         <div class="map-card">
           <noscript>
-            <p class="noscript">This interactive map needs JavaScript to compute travel times.</p>
+            <p class="noscript">${ui_noscript}</p>
           </noscript>
           <div id="mapStage" class="map-stage">
             <canvas id="mapCanvas"></canvas>
 
             <aside id="tripPanel" class="trip-panel" aria-live="polite">
-              <p class="trip-eyebrow">Start</p>
-              <p id="tripFrom" class="trip-from">Loading the network…</p>
+              <p class="trip-eyebrow">${ui_start}</p>
+              <p id="tripFrom" class="trip-from">${ui_loading_network}</p>
               <div id="tripResult" class="trip-result" hidden>
                 <div class="trip-row">
-                  <p class="trip-eyebrow">Destination</p>
-                  <button id="removeTo" type="button" class="link-button">Remove</button>
+                  <p class="trip-eyebrow">${ui_destination}</p>
+                  <button id="removeTo" type="button" class="link-button">${ui_remove}</button>
                 </div>
                 <p id="tripTo" class="trip-to"></p>
                 <p id="tripDuration" class="trip-duration"></p>
                 <ol id="tripSteps" class="trip-steps"></ol>
                 <div class="trip-from-row">
-                  <span>Map from</span>
-                  <div id="heatFrom" class="segmented" role="group" aria-label="Where the map starts from">
-                    <button type="button" data-source="from" aria-pressed="true">Start</button>
-                    <button type="button" data-source="to" aria-pressed="false">Destination</button>
+                  <span>${ui_map_from}</span>
+                  <div id="heatFrom" class="segmented" role="group" aria-label="${ui_map_from_label}">
+                    <button type="button" data-source="from" aria-pressed="true">${ui_start}</button>
+                    <button type="button" data-source="to" aria-pressed="false">${ui_destination}</button>
                   </div>
                 </div>
               </div>
-              <p id="tripHint" class="trip-hint">Click the map to set a destination.</p>
+              <p id="tripHint" class="trip-hint">${ui_click_hint}</p>
             </aside>
 
             <div class="map-buttons">
-              <button id="zoomIn" type="button" class="icon-button" aria-label="Zoom in">+</button>
-              <button id="zoomOut" type="button" class="icon-button" aria-label="Zoom out">−</button>
-              <button id="recenter" type="button" class="icon-button" aria-label="Recentre the map">⌖</button>
-              <button id="fullscreen" type="button" class="icon-button" aria-label="Full screen">⤢</button>
+              <button id="zoomIn" type="button" class="icon-button" aria-label="${ui_zoom_in}">+</button>
+              <button id="zoomOut" type="button" class="icon-button" aria-label="${ui_zoom_out}">−</button>
+              <button id="recenter" type="button" class="icon-button" aria-label="${ui_recentre}">⌖</button>
+              <button id="fullscreen" type="button" class="icon-button" aria-label="${ui_fullscreen}">⤢</button>
             </div>
 
             <p class="map-attribution">
@@ -78,44 +77,44 @@ ${header}
 
           <div class="controls">
             <div class="control-group">
-              <span class="control-label">Mode</span>
-              <div id="modePicker" class="segmented" role="group" aria-label="Mode of travel">
-                <button type="button" data-mode="transit" aria-pressed="true">Public transport</button>
-                <button type="button" data-mode="bike" aria-pressed="false">Bike</button>
+              <span class="control-label">${ui_mode}</span>
+              <div id="modePicker" class="segmented" role="group" aria-label="${ui_mode_label}">
+                <button type="button" data-mode="transit" aria-pressed="true">${ui_transit}</button>
+                <button type="button" data-mode="bike" aria-pressed="false">${ui_bike}</button>
               </div>
             </div>
             <div class="control-group transit-only">
-              <span class="control-label">Timetable</span>
-              <div id="yearPicker" class="segmented" role="group" aria-label="Timetable year">
+              <span class="control-label">${ui_timetable}</span>
+              <div id="yearPicker" class="segmented" role="group" aria-label="${ui_timetable_year}">
 ${year_buttons}
               </div>
               <small id="yearNote" class="year-note"></small>
             </div>
             <div class="control-group transit-only">
-              <span class="control-label">Network</span>
+              <span class="control-label">${ui_network}</span>
               <label class="chip-toggle"><input type="checkbox" checked disabled /><span>${rail_label}</span></label>
               <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>${bus_label}</span></label>
             </div>
             <div class="control-group">
-              <span class="control-label">Base map</span>
-              <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>Streets</span></label>
+              <span class="control-label">${ui_base_map}</span>
+              <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>${ui_streets}</span></label>
             </div>
             <div id="isoToggles" class="control-group">
-              <span class="control-label">Isochrones</span>
+              <span class="control-label">${ui_isochrones}</span>
               <label class="chip-toggle"><input type="checkbox" value="15" checked /><span>15 min</span></label>
               <label class="chip-toggle"><input type="checkbox" value="30" checked /><span>30 min</span></label>
               <label class="chip-toggle"><input type="checkbox" value="45" /><span>45 min</span></label>
               <label class="chip-toggle"><input type="checkbox" value="60" /><span>60 min</span></label>
             </div>
             <div class="control-group">
-              <label class="control-label" for="maxRange">Scale</label>
+              <label class="control-label" for="maxRange">${ui_scale}</label>
               <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
               <output id="maxValue" for="maxRange">45 min</output>
             </div>
             <div class="control-group actions">
-              <button id="locate" type="button" class="button">My location</button>
-              <button id="swap" type="button" class="button">Swap</button>
-              <button id="share" type="button" class="button primary">Share</button>
+              <button id="locate" type="button" class="button">${ui_my_location}</button>
+              <button id="swap" type="button" class="button">${ui_swap}</button>
+              <button id="share" type="button" class="button primary">${ui_share}</button>
             </div>
           </div>
         </div>
@@ -124,13 +123,13 @@ ${year_buttons}
       <section class="block" aria-labelledby="reach-title">
         <header class="block-head">
           <span class="block-num">02</span>
-          <h2 id="reach-title">Within reach</h2>
-          <span class="block-desc">Residents and jobs inside the isochrones ticked above.</span>
+          <h2 id="reach-title">${ui_within_reach}</h2>
+          <span class="block-desc">${ui_within_reach_desc}</span>
         </header>
         <div class="card">
           <p id="reach" class="reach"></p>
           <table id="reachCounts" class="data-table reach-counts">
-            <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Jobs</th></tr></thead>
+            <thead><tr><th scope="col">${ui_travel_time}</th><th scope="col">${ui_residents}</th><th scope="col">${ui_jobs}</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -140,8 +139,8 @@ ${reach_notes}
       <section id="yearsPanel" class="block" aria-labelledby="years-title">
         <header class="block-head">
           <span class="block-num">03</span>
-          <h2 id="years-title">Across the years</h2>
-          <span class="block-desc">This start (and destination) on each timetable year, 2022 → 2027.</span>
+          <h2 id="years-title">${ui_across_years}</h2>
+          <span class="block-desc">${ui_across_years_desc}</span>
         </header>
         <div id="yearsBody" class="card years-body"></div>
       </section>
@@ -149,17 +148,17 @@ ${reach_notes}
       <section class="block" aria-labelledby="stats-title">
         <header class="block-head">
           <span class="block-num">04</span>
-          <h2 id="stats-title">${name} in numbers</h2>
-          <span class="block-desc">From ${center}, on a weekday of the ${default_year} timetable.</span>
+          <h2 id="stats-title">${ui_in_numbers}</h2>
+          <span class="block-desc">${ui_in_numbers_desc}</span>
         </header>
         <div class="stat-grid">
 ${stat_tiles}
         </div>
         <details class="expander">
-          <summary>Tram, S-Bahn and funicular lines <span class="muted">${network}</span></summary>
+          <summary>${ui_lines_summary} <span class="muted">${network}</span></summary>
           <div class="expander-body">
             <table class="data-table">
-              <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th><th scope="col">Official data</th></tr></thead>
+              <thead><tr><th scope="col">${ui_line}</th><th scope="col">${ui_stops}</th><th scope="col">${ui_every}</th><th scope="col">${ui_official_data}</th></tr></thead>
               <tbody>
 ${line_rows}
               </tbody>
@@ -171,15 +170,15 @@ ${line_rows}
       <section class="block" aria-labelledby="history-title">
         <header class="block-head">
           <span class="block-num">05</span>
-          <h2 id="history-title">The network over time</h2>
-          <span class="block-desc">The same model on each year's official timetable; residents and jobs held at today's numbers.</span>
+          <h2 id="history-title">${ui_over_time}</h2>
+          <span class="block-desc">${ui_over_time_desc}</span>
         </header>
         <div id="insights" class="insights">
           <div class="insights-head">
-            <h3>Insights <span id="insCount" class="muted"></span></h3>
+            <h3>${ui_insights} <span id="insCount" class="muted"></span></h3>
             <div class="pager">
-              <button id="insPrev" type="button" class="pager-button" aria-label="Previous insight">‹</button>
-              <button id="insNext" type="button" class="pager-button" aria-label="Next insight">›</button>
+              <button id="insPrev" type="button" class="pager-button" aria-label="${ui_prev_insight}">‹</button>
+              <button id="insNext" type="button" class="pager-button" aria-label="${ui_next_insight}">›</button>
             </div>
           </div>
           <p id="insLede" class="insights-lede" aria-live="polite"></p>
@@ -192,7 +191,7 @@ ${line_rows}
             <div class="chart-panel">
               <div class="chart-bar">
                 <span id="insRef" class="muted"></span>
-                <div id="insMetric" class="segmented" role="group" aria-label="Measure"></div>
+                <div id="insMetric" class="segmented" role="group" aria-label="${ui_measure}"></div>
               </div>
               <div id="insChart" class="chart" role="img"></div>
             </div>
@@ -202,11 +201,11 @@ ${line_rows}
             </div>
           </div>
           <details class="expander insights-table">
-            <summary>Show as table</summary>
+            <summary>${ui_show_table}</summary>
             <div class="expander-body">
               <table class="data-table">
-                <thead><tr><th scope="col">Timetable</th><th scope="col">Day</th><th scope="col">Tram lines</th><th scope="col">Rail stops</th>
-                <th scope="col">Stops within 30 min</th><th scope="col">Residents within 30 min</th><th scope="col">Jobs within 30 min</th></tr></thead>
+                <thead><tr><th scope="col">${ui_timetable}</th><th scope="col">${ui_day}</th><th scope="col">${ui_tram_lines}</th><th scope="col">${ui_rail_stops}</th>
+                <th scope="col">${ui_stops_30}</th><th scope="col">${ui_residents_30}</th><th scope="col">${ui_jobs_30}</th></tr></thead>
                 <tbody>
 ${history_rows}
                 </tbody>
@@ -221,8 +220,8 @@ ${history_notes}
       <section class="block" aria-labelledby="faq-title">
         <header class="block-head">
           <span class="block-num">06</span>
-          <h2 id="faq-title">Questions</h2>
-          <span class="block-desc">How the times are computed, and where the data comes from.</span>
+          <h2 id="faq-title">${ui_questions}</h2>
+          <span class="block-desc">${ui_questions_desc}</span>
         </header>
         <div class="faq-list">
 ${faq_html}

@@ -8,6 +8,9 @@ A Zurich fork of [À portée de tram](https://github.com/camilleroux/montpellier
 itself based on Anthony Castrio's [NYC Transit Time Cartogram](https://castrio.me/nyc/) and Jules Grandin's
 [Paris version](https://github.com/JulesGrandin/paris-temps-transport).
 
+In German at the site root (the default) and in English under `/en/`: `build_pages.py` renders both from one template,
+and `app.js` picks its texts from the page's `lang`.
+
 Features: heatmap and isochrones from a draggable start, destination on click with a detailed route, address search
 (geo.admin.ch), public transport or bike, **timetable years 2022 / 2024 / 2026 / 2027** to see the network change,
 residents and jobs within each isochrone, share link.

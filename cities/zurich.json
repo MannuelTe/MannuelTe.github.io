@@ -2,6 +2,17 @@
   "slug": "zurich",
   "name": "Zurich",
   "title": "Zurich Isochrones",
+  "de": {
+    "name": "Zürich",
+    "title": "Zürich Isochronen",
+    "titleSuffix": "Reisezeiten mit dem ÖV in Zürich",
+    "region": "Stadt Zürich und Nachbargemeinden",
+    "railNoun": "Tram und Zug",
+    "railLabel": "Tram, S-Bahn und Zug",
+    "railStations": "Tram- und Bahnhaltestellen",
+    "busNoun": "Bus und Schiff",
+    "busLabel": "Bus und Schiff"
+  },
   "network": "ZVV",
   "region": "City of Zurich and neighbouring municipalities",
   "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",

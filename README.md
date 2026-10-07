@@ -35,7 +35,7 @@ Raw sources (`data/zurich/`: national GTFS per year, boundaries, OSM, BFS grids,
 |---|---|
 | Timetables | Swiss national GTFS, [opentransportdata.swiss](https://opentransportdata.swiss/) (2026, 2027); 2022 and 2024 from the [Mobility Database](https://mobilitydatabase.org/) archive (mdb-1092, mdb-2144). Clipped to the Zurich area at fetch time (3.7 GB of stop times → 300 MB). |
 | Boundaries | [swissBOUNDARIES3D](https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d) via api3.geo.admin.ch; the 12 Stadtkreise from [Stadt Zürich Open Data](https://data.stadt-zuerich.ch/) |
-| Residents / jobs | BFS hectare grids [STATPOP 2024](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html) and [STATENT 2023](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36073031.html) |
+| Residents / jobs | BFS hectare grids [STATPOP 2024](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html) and STATENT ([data.geo.admin.ch](https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen)): the grid of each timetable year, 2022 for 2022 and 2024 for 2024–2027 |
 | Jobs in the region, by year | BFS STAT-TAB [px-x-0602010000_102](https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/) (STATENT employees per municipality, 2011 onwards), summed over the map's municipalities into `sources/zurich-jobs.json` |
 | Elevation | swisstopo terrain model sampled every 100 m via the geo.admin.ch profile service |
 | Lines, lakes, parks, cycling streets | © OpenStreetMap contributors (ODbL), via Overpass; line colours from the OSM route relations (the Swiss GTFS has none) |
@@ -79,8 +79,10 @@ the 28 cells within 600 m, times from Dijkstra on the real network, both directi
 Dijkstra on ~6,000 cells; times stay within about 5 % of a full street-network search.
 
 Residents and jobs: each BFS hectare is added to the 200 m cell its centre falls in; the BFS rounds small counts
-for privacy, so totals are approximate. In the history table, residents and jobs are held at today's numbers so
-that only the network changes.
+for privacy, so totals are approximate. Residents are held at STATPOP 2024 in every
+timetable year, so their changes are purely the network; jobs use the STATENT grid of each year (the latest
+published one for future timetables), so jobs within reach move with both the network and employment. The history
+table also shows the region's STATENT total per year (`sources/zurich-jobs.json`) for scale.
 
 ## Notes and known gaps
 

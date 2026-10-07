@@ -1456,12 +1456,12 @@ async function updateYears() {
   note.textContent = t(
     `Counted from the start on the map (${start})${app.to ? " with the same destination" : ""} on each year's timetable${
       app.includeBus ? ", buses and boats included" : ", tram and train only"
-    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs within reach held at today's numbers; jobs in the region are each year's STATENT count (the latest published where none exists yet). Changes are against the previous row.${
+    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents held at 2024; jobs, within reach and in the region, are each year's STATENT count (the latest published where none exists yet), so jobs within reach move with both the network and the jobs. Changes are against the previous row.${
       app.to ? "" : " Click the map to add a destination."
     }`,
     `Gezählt ab dem Start auf der Karte (${start})${app.to ? " mit demselben Ziel" : ""} auf dem Fahrplan jedes Jahres${
       app.includeBus ? ", Busse und Schiffe inbegriffen" : ", nur Tram und Zug"
-    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Erreichbare Einwohner und Arbeitsplätze auf heutigem Stand; Arbeitsplätze in der Region sind die STATENT-Zahl des Jahres (die letzte veröffentlichte, wo es noch keine gibt). Änderungen gegenüber der Zeile davor.${
+    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Einwohner auf Stand 2024; Arbeitsplätze, erreichbar und in der Region, sind die STATENT-Zahl des Jahres (die letzte veröffentlichte, wo es noch keine gibt), die erreichbaren Arbeitsplätze ändern sich also mit dem Netz und mit den Stellen. Änderungen gegenüber der Zeile davor.${
       app.to ? "" : " Klicke auf die Karte, um ein Ziel hinzuzufügen."
     }`,
   );

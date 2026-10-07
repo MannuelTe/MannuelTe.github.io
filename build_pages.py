@@ -14,7 +14,7 @@ from datetime import date
 from pathlib import Path
 from string import Template
 
-from cities import load_cities
+from cities import load_cities, statent_year
 
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
@@ -259,12 +259,12 @@ def city_faq(city: dict) -> list[tuple]:
         ),
         (
             t("Where do the resident and job figures come from?", "Woher stammen die Einwohner- und Arbeitsplatzzahlen?"),
-            t("From the Federal Statistical Office's hectare grids: STATPOP 2024 (permanent residents) and STATENT 2023 "
-              "(employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
+            t("From the Federal Statistical Office's hectare grids: STATPOP 2024 (permanent residents) and "
+              f"{jobs_grids(city)} (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
               "rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached "
               "within each isochrone.",
-              "Aus den Hektarrastern des Bundesamts für Statistik: STATPOP 2024 (ständige Wohnbevölkerung) und STATENT 2023 "
-              "(Beschäftigte, alle Sektoren). Jedes 100-m-Quadrat wird der 200-m-Kartenzelle zugeschlagen, in der es liegt; "
+              "Aus den Hektarrastern des Bundesamts für Statistik: STATPOP 2024 (ständige Wohnbevölkerung) und "
+              f"{jobs_grids(city)} (Beschäftigte, alle Sektoren). Jedes 100-m-Quadrat wird der 200-m-Kartenzelle zugeschlagen, in der es liegt; "
               "kleine Zahlen rundet das BFS aus Datenschutzgründen, die Summen sind also Näherungen. Die Tabelle unter der "
               "Karte summiert die Zellen innerhalb jeder Isochrone."),
         ),
@@ -276,6 +276,20 @@ def city_faq(city: dict) -> list[tuple]:
               "Beispiel die Linien 50 und 51 im Jahr 2026)."),
         ),
     ]
+
+
+def jobs_grids(city: dict) -> str:
+    """Which STATENT grid each timetable year uses, e.g. "STATENT 2022 for the 2022 timetable, 2024 for 2024–2027"."""
+    groups: dict[str, list[str]] = {}
+    for year in city["timetables"]:
+        groups.setdefault(statent_year(year), []).append(year)
+    parts = []
+    for grid, years in groups.items():
+        span = years[0] if len(years) == 1 else f"{years[0]}–{years[-1]}"
+        single = len(years) == 1
+        parts.append(f"{grid} " + t(f"for the {span} timetable{'' if single else 's'}",
+                                    f"für {'den Fahrplan' if single else 'die Fahrpläne'} {span}"))
+    return "STATENT " + ", ".join(parts)
 
 
 def regional_jobs(city: dict) -> dict:
@@ -366,12 +380,14 @@ def reach_notes(city: dict) -> str:
     residents, jobs = people(stats["population"]["total"]), people(stats["jobs"]["total"])
     region = f"{city['region'][0].lower()}{city['region'][1:]}"
     return note_expander(t("What these resident and job counts mean", "Was diese Einwohner- und Arbeitsplatzzahlen bedeuten"), [
-        t(f"Residents are the BFS STATPOP 2024 grid (permanent residents, by home address); jobs are the STATENT 2023 grid "
-          f"(employees of all sectors, counted where they work). The map covers the {region}: "
-          f"{residents} residents and {jobs} jobs in all, more than the city alone.",
+        t(f"Residents are the BFS STATPOP 2024 grid (permanent residents, by home address); jobs are the STATENT grid of "
+          f"the timetable year ({jobs_grids(city)}; employees of all sectors, counted where they work). The map covers the "
+          f"{region}: {residents} residents and {jobs} jobs in all on the {city['defaultTimetable']} timetable, more than "
+          "the city alone.",
           f"Die Einwohner stammen aus dem BFS-Raster STATPOP 2024 (ständige Wohnbevölkerung, nach Wohnadresse), die "
-          f"Arbeitsplätze aus dem Raster STATENT 2023 (Beschäftigte aller Sektoren, am Arbeitsort gezählt). Die Karte "
-          f"umfasst die {city['region']}: insgesamt {residents} Einwohner und {jobs} Arbeitsplätze, mehr als die Stadt allein."),
+          f"Arbeitsplätze aus dem STATENT-Raster des Fahrplanjahrs ({jobs_grids(city)}; Beschäftigte aller Sektoren, am "
+          f"Arbeitsort gezählt). Die Karte umfasst die {city['region']}: insgesamt {residents} Einwohner und {jobs} "
+          f"Arbeitsplätze auf dem Fahrplan {city['defaultTimetable']}, mehr als die Stadt allein."),
         t("Jobs are people employed, not full-time equivalents: a part-timer counts as one job, so in a city with much "
           "part-time work the figure overstates the amount of work. Staff are counted at the workplace their employer "
           "registers, which for firms with several sites is not always where they actually sit.",
@@ -383,10 +399,10 @@ def reach_notes(city: dict) -> str:
           "Das BFS rundet kleine Hektarwerte aus Datenschutzgründen, und jede 100-m-Hektare geht an die 200-m-Kartenzelle, "
           "in der ihr Mittelpunkt liegt; Zahlen für wenige Strassen sind also grob, Summen über eine ganze Isochrone "
           "deutlich verlässlicher."),
-        t("The grids are the same for every timetable year. Switching years changes only how far the network reaches, "
-          "not where people live or work.",
-          "Die Raster sind für jedes Fahrplanjahr dieselben. Ein Jahreswechsel ändert nur, wie weit das Netz reicht, "
-          "nicht, wo Menschen wohnen oder arbeiten."),
+        t("Switching timetable years changes how far the network reaches and, for jobs, also where people work: each "
+          "year uses its own STATENT grid. Residents stay on STATPOP 2024 in every year.",
+          "Ein Wechsel des Fahrplanjahrs ändert, wie weit das Netz reicht, und bei den Arbeitsplätzen auch, wo Menschen "
+          "arbeiten: Jedes Jahr nutzt sein eigenes STATENT-Raster. Die Einwohner bleiben in jedem Jahr auf STATPOP 2024."),
     ])
 
 
@@ -394,11 +410,15 @@ def history_notes(figures: list[dict]) -> str:
     """Why residents within 30 min of the centre move between years, the 2026 dip in particular."""
     by_year = {f["year"]: f for f in figures}
     paragraphs = [
-        t("Residents and jobs are held at the STATPOP 2024 and STATENT 2023 figures in every year, so a change in the "
-          "table is a change in the network: a fall means part of the map takes longer to reach, not that people left.",
-          "Einwohner und Arbeitsplätze bleiben in jedem Jahr auf dem Stand von STATPOP 2024 und STATENT 2023; eine "
-          "Änderung in der Tabelle ist also eine Änderung im Netz: Ein Rückgang heisst, dass ein Teil der Karte länger "
-          "braucht, nicht, dass Menschen weggezogen sind."),
+        t("Residents are held at STATPOP 2024 in every year, so a change in residents is a change in the network: a "
+          "fall means part of the map takes longer to reach, not that people left. Jobs use the STATENT grid of each "
+          "timetable year, so a change in jobs within reach combines the network and the growth or loss of jobs where "
+          "they are; set it against the region's total in the last column.",
+          "Die Einwohner bleiben in jedem Jahr auf STATPOP 2024; eine Änderung bei den Einwohnern ist also eine "
+          "Änderung im Netz: Ein Rückgang heisst, dass ein Teil der Karte länger braucht, nicht, dass Menschen "
+          "weggezogen sind. Die Arbeitsplätze stammen aus dem STATENT-Raster jedes Fahrplanjahrs; eine Änderung der "
+          "erreichbaren Arbeitsplätze verbindet also das Netz mit dem Zu- oder Abbau von Stellen vor Ort. Zum Vergleich "
+          "dient der Total der Region in der letzten Spalte."),
     ]
     region = [f["regionJobs"] for f in figures if f.get("regionJobs")]
     if region:
@@ -481,8 +501,9 @@ def sources_block(city: dict) -> str:
          f'STATPOP 2024</a> ' + t("hectare grid, Federal Statistical Office (BFS)", "Hektarraster, Bundesamt für Statistik (BFS)")
          + f'{esc(fetched(main.get("population")))}.'),
         (t("Jobs", "Arbeitsplätze"),
-         f'<a href="https://www.bfs.admin.ch/bfs/{t("en", "de")}/home/statistics/catalogues-databases.assetdetail.36073031.html">'
-         f'STATENT 2023</a> ' + t("hectare grid (employees, all sectors), BFS", "Hektarraster (Beschäftigte, alle Sektoren), BFS")
+         '<a href="https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen">'
+         f'{esc(jobs_grids(city))}</a> ' + t("hectare grids (employees, all sectors), BFS via data.geo.admin.ch",
+                                             "Hektarraster (Beschäftigte, alle Sektoren), BFS über data.geo.admin.ch")
          + f'{esc(fetched(main.get("jobs")))}.'),
         (t("Jobs in the region", "Arbeitsplätze in der Region"),
          t("BFS STAT-TAB table ", "BFS-STAT-TAB-Tabelle ")
@@ -576,8 +597,8 @@ UI = {
     "every": ("Every", "Takt"),
     "official_data": ("Official data", "Offizielle Daten"),
     "over_time": ("The network over time", "Das Netz im Wandel"),
-    "over_time_desc": ("The same model on each year's official timetable; residents and jobs held at today's numbers.",
-                       "Dasselbe Modell auf dem offiziellen Fahrplan jedes Jahres; Einwohner und Arbeitsplätze auf heutigem Stand."),
+    "over_time_desc": ("The same model on each year's official timetable; residents held at 2024, jobs from each year's STATENT.",
+                       "Dasselbe Modell auf dem offiziellen Fahrplan jedes Jahres; Einwohner auf Stand 2024, Arbeitsplätze aus dem STATENT des Jahres."),
     "insights": ("Insights", "Einblicke"),
     "prev_insight": ("Previous insight", "Vorheriger Einblick"),
     "next_insight": ("Next insight", "Nächster Einblick"),

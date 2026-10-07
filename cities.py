@@ -16,6 +16,22 @@ CITIES_DIR = ROOT / "cities"
 OSM_HALF_SIZE = (0.14, 0.20)
 PARKS_HALF_SIZE = (0.08, 0.11)
 
+# Published STATENT hectare grids (jobs, BFS via data.geo.admin.ch). Each timetable year uses the latest grid not
+# after it, so 2026 and 2027 use 2024 until newer grids come out.
+STATENT_GRID_YEARS = ("2022", "2023", "2024")
+STATENT_GRID_URL = (
+    "https://data.geo.admin.ch/ch.bfs.betriebszaehlungen/betriebszaehlungen_{year}/betriebszaehlungen_{year}_ha_2056.csv"
+)
+
+
+def statent_year(timetable_year: str) -> str:
+    """The STATENT grid year used for a timetable year."""
+    return max((y for y in STATENT_GRID_YEARS if y <= timetable_year), default=STATENT_GRID_YEARS[0])
+
+
+def statent_file(timetable_year: str) -> str:
+    return f"statent_{statent_year(timetable_year)}.csv"
+
 
 def with_defaults(raw: dict) -> dict:
     city = dict(raw)

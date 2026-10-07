@@ -20,9 +20,9 @@ import zipfile
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
-from cities import load_city
+from cities import load_city, statent_file, statent_year
 
 ROOT = Path(__file__).resolve().parent
 
@@ -994,11 +994,13 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
 
 # --- Population and jobs ------------------------------------------------------
 
-# Hectare files of the Federal Statistical Office: (zip, csv inside, column with the count).
-HECTARE_SOURCES = {
-    "pop": ("statpop.zip", "STATPOP", "BBTOT"),  # permanent residents
-    "jobs": ("statent.zip", "STATENT_", "B08EMPT"),  # employees (jobs), all sectors
-}
+# Hectare files of the Federal Statistical Office: (file, csv inside a zip or None for a plain csv, column with the
+# count). Jobs come from the STATENT grid of the timetable year (cities.statent_year).
+def hectare_sources(year: str) -> Dict[str, Tuple[str, Optional[str], str]]:
+    return {
+        "pop": ("statpop.zip", "STATPOP", "BBTOT"),  # permanent residents (STATPOP 2024 in every year)
+        "jobs": (statent_file(year), None, "B08EMPT"),  # employees (jobs), all sectors
+    }
 
 
 def lv95_to_wgs84(east: float, north: float) -> Tuple[float, float]:
@@ -1010,33 +1012,42 @@ def lv95_to_wgs84(east: float, north: float) -> Tuple[float, float]:
     return lat * 100 / 36, lon * 100 / 36
 
 
-def hectare_counts(data_dir: Path, bounds, cols: int, rows: int, mask: Sequence[int]) -> Dict[str, Dict[int, int]]:
+def read_hectares(path: Path, prefix: Optional[str]):
+    """Rows of a BFS hectare csv (semicolon separated), plain or the one starting with `prefix` inside a zip."""
+    if prefix is None:
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            yield from csv.reader(handle, delimiter=";")
+        return
+    with zipfile.ZipFile(path) as archive:
+        name = next(n for n in archive.namelist() if n.startswith(prefix) and n.endswith(".csv") and "_GMDE" not in n and "_NOLOC" not in n)
+        with archive.open(name) as handle:
+            yield from csv.reader(io.TextIOWrapper(handle, encoding="utf-8-sig"), delimiter=";")
+
+
+def hectare_counts(data_dir: Path, year: str, bounds, cols: int, rows: int, mask: Sequence[int]) -> Dict[str, Dict[int, int]]:
     """Residents and jobs per map cell: each hectare (100 m, LV95 south-west corner) goes to the cell of its centre.
     Hectares on water or outside the map are left out, so totals are those of the map."""
     min_x, min_y, max_x, max_y = bounds
     cell_w, cell_h = (max_x - min_x) / cols, (max_y - min_y) / rows
     counts: Dict[str, Dict[int, int]] = {}
-    for key, (zip_name, prefix, column) in HECTARE_SOURCES.items():
-        path = data_dir / zip_name
+    for key, (file_name, prefix, column) in hectare_sources(year).items():
+        path = data_dir / file_name
         per_cell: Dict[int, int] = defaultdict(int)
         if not path.exists():
-            print(f"  {zip_name} missing: no {key} figures (python3 fetch_data.py <city> --context-only)")
+            print(f"  {file_name} missing: no {key} figures (python3 fetch_data.py <city> --context-only)")
             counts[key] = per_cell
             continue
-        with zipfile.ZipFile(path) as archive:
-            name = next(n for n in archive.namelist() if n.startswith(prefix) and n.endswith(".csv") and "_GMDE" not in n and "_NOLOC" not in n)
-            with archive.open(name) as handle:
-                reader = csv.reader(io.TextIOWrapper(handle, encoding="utf-8-sig"), delimiter=";")
-                header = next(reader)
-                e_col, n_col, v_col = header.index("E_KOORD"), header.index("N_KOORD"), header.index(column)
-                for row in reader:
-                    lat, lon = lv95_to_wgs84(float(row[e_col]) + 50, float(row[n_col]) + 50)
-                    x, y = lonlat_to_xy(lon, lat)
-                    if not (min_x <= x < max_x and min_y <= y < max_y):
-                        continue
-                    index = mask[int((y - min_y) // cell_h) * cols + int((x - min_x) // cell_w)]
-                    if index >= 0 and row[v_col]:
-                        per_cell[index] += round(float(row[v_col]))
+        reader = read_hectares(path, prefix)
+        header = next(reader)
+        e_col, n_col, v_col = header.index("E_KOORD"), header.index("N_KOORD"), header.index(column)
+        for row in reader:
+            lat, lon = lv95_to_wgs84(float(row[e_col]) + 50, float(row[n_col]) + 50)
+            x, y = lonlat_to_xy(lon, lat)
+            if not (min_x <= x < max_x and min_y <= y < max_y):
+                continue
+            index = mask[int((y - min_y) // cell_h) * cols + int((x - min_x) // cell_w)]
+            if index >= 0 and row[v_col]:
+                per_cell[index] += round(float(row[v_col]))
         counts[key] = per_cell
     return counts
 
@@ -1210,7 +1221,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
             **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json", "osm_bike.json") if name in manifest},
         },
         "population": manifest.get("statpop.zip"),
-        "jobs": manifest.get("statent.zip"),
+        "jobs": {"statentYear": statent_year(city["year"]), **manifest.get(statent_file(city["year"]), {})},
         "elevation": manifest.get("elevation.json"),
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",
         "excludedRoutes": city.get("excludeRoutes", []),
@@ -1285,7 +1296,7 @@ def main() -> None:
         max(y for _, y in rail_points) + VIEW_PAD_METERS,
     )
     cells, mask = build_grid(land, masked_water, stations, bounds, cols, rows, terrain)
-    counts = hectare_counts(data_dir, bounds, cols, rows, mask)
+    counts = hectare_counts(data_dir, year, bounds, cols, rows, mask)
     for key, per_cell in counts.items():
         for index, value in per_cell.items():
             cells[index][key] = value

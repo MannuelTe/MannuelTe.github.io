@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-06T17:17:48+00:00",
+  "builtAt": "2026-10-07T20:10:55+00:00",
   "referenceDate": "2022-10-25",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -88,11 +88,12 @@
     "sha256": "af09dda6c013a30b5de1b567298fa7e791ff6fecb8339da1067eada3f217c053"
   },
   "jobs": {
-    "source": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36073031/master",
+    "statentYear": "2022",
+    "source": "https://data.geo.admin.ch/ch.bfs.betriebszaehlungen/betriebszaehlungen_2022/betriebszaehlungen_2022_ha_2056.csv",
     "how": "download",
-    "fetchedAt": "2026-10-05T18:37:54+00:00",
-    "bytes": 13614222,
-    "sha256": "768dce5cba6200e4d94dc79080d86b466132da564b379fd627fc03269470a512"
+    "fetchedAt": "2026-10-07T20:09:49+00:00",
+    "bytes": 351492474,
+    "sha256": "8cd647e33e201a266ea5dead59d262cc99842ade74df6426d21bf3f88486a48d"
   },
   "elevation": {
     "source": "https://api3.geo.admin.ch/rest/services/profile.json (COMB terrain model), 100 m LV95 grid",
@@ -418,10 +419,10 @@
       "15": 63043
     },
     "jobs": {
-      "total": 761616,
-      "45": 728721,
-      "30": 601177,
-      "15": 230312
+      "total": 745860,
+      "45": 713904,
+      "30": 589282,
+      "15": 225478
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 49,

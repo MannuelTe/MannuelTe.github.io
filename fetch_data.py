@@ -23,7 +23,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cities import load_city
+from cities import STATENT_GRID_URL, load_city, statent_year
 
 ROOT = Path(__file__).resolve().parent
 USER_AGENT = "zurich-temps-transport/0.1 (build script; github.com/MannuelTe/MannuelTe.github.io)"
@@ -44,10 +44,10 @@ KREISE_URL = (
 )
 
 
-# Hectare grids of the Federal Statistical Office: residents (STATPOP) and employees (STATENT).
+# Hectare grid of residents (STATPOP) from the Federal Statistical Office; the jobs grids (STATENT, one per year)
+# are listed in cities.py.
 BFS_ASSETS = {
     "statpop.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",  # STATPOP 2024
-    "statent.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36073031/master",  # STATENT 2023
 }
 # Employees per municipality and year (STATENT 2011 onwards), BFS STAT-TAB: the region's job total in each year.
 STATENT_MUNICIPAL_URL = "https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0602010000_102/px-x-0602010000_102.px"
@@ -337,8 +337,13 @@ def fetch_bike_network(city: dict, out: Path) -> None:
     record(out, "osm_bike.json", f"Overpass API: {query}")
 
 
-def fetch_bfs(out: Path) -> None:
+def fetch_bfs(city: dict, out: Path) -> None:
     for name, url in BFS_ASSETS.items():
+        print(f"BFS hectare grid {name}…")
+        download_to(url, out / name)
+        record(out, name, url)
+    for year in sorted({statent_year(y) for y in city["timetables"]}):
+        name, url = f"statent_{year}.csv", STATENT_GRID_URL.format(year=year)
         print(f"BFS hectare grid {name}…")
         download_to(url, out / name)
         record(out, name, url)
@@ -390,7 +395,7 @@ def main() -> None:
         return
     fetch_boundaries(city, out)
     fetch_osm(city, out)
-    fetch_bfs(out)
+    fetch_bfs(city, out)
     fetch_regional_jobs(city)
     fetch_elevation(city, out)
     fetch_bike_network(city, out)

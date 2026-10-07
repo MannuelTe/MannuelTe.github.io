@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-07T20:11:50+00:00",
+  "builtAt": "2026-10-07T20:32:09+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -425,23 +425,23 @@
     "busLines": 166,
     "center": "Zürich HB",
     "within15": 34,
-    "within30": 86,
+    "within30": 88,
     "population": {
       "total": 717159,
-      "45": 630357,
-      "30": 420895,
-      "15": 86900
+      "45": 642729,
+      "30": 424359,
+      "15": 88222
     },
     "jobs": {
       "total": 767020,
-      "45": 726471,
-      "30": 599919,
-      "15": 239493
+      "45": 729231,
+      "30": 615490,
+      "15": 241705
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 51,
-    "runnerUpStation": "Reppischhof",
-    "runnerUpMinutes": 47,
+    "runnerUpStation": "Adliswil (Luftseilbahnstation)",
+    "runnerUpMinutes": 46,
     "ogTrip": {
       "name": "Kappeli",
       "lat": 47.38466,

@@ -24,6 +24,8 @@ python3 -m http.server 8000 --directory site
 
 Separate steps: `fetch_data.py zurich [year …]`, `build_data.py zurich <year>`, `build_bike.py zurich`,
 `build_pages.py`. `node tools/check_trips.mjs zurich` probes trips from the centre to the termini and flags odd speeds.
+`python3 tools/validate_trips.py zurich [year] [--pairs N]` compares random stop-to-stop times with the real
+timetable (transport.opendata.ch), waits included on both sides.
 
 Raw sources (`data/zurich/`: national GTFS per year, boundaries, OSM, BFS grids, elevation) are not committed;
 `fetch_data.py` downloads them again. Only the computed bundles (`site/data/*.json`) and their provenance

@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-07T20:11:14+00:00",
+  "builtAt": "2026-10-07T20:31:55+00:00",
   "referenceDate": "2024-10-22",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -425,23 +425,23 @@
     "busLines": 168,
     "center": "Zürich HB",
     "within15": 34,
-    "within30": 85,
+    "within30": 87,
     "population": {
       "total": 717159,
-      "45": 638151,
-      "30": 421777,
-      "15": 78497
+      "45": 651690,
+      "30": 424785,
+      "15": 78939
     },
     "jobs": {
       "total": 767020,
-      "45": 729085,
-      "30": 596321,
-      "15": 239618
+      "45": 732357,
+      "30": 620717,
+      "15": 240103
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 48,
-    "runnerUpStation": "Reppischhof",
-    "runnerUpMinutes": 47,
+    "runnerUpStation": "Adliswil (Luftseilbahnstation)",
+    "runnerUpMinutes": 43,
     "ogTrip": {
       "name": "Goldauerstrasse",
       "lat": 47.38625,

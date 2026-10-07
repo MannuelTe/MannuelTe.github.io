@@ -766,7 +766,7 @@ def extract_network(data_dir: Path, city: dict):
             "name": row.get("route_short_name") or row.get("route_long_name") or route_id,
         }
     end_edges = split_terminating(complexes, edges, waits, route_info, segment_trips, segment_ends)
-    add_trunks(complexes, edges, waits, toward, route_info, group_of, window_minutes)
+    add_trunks(complexes, edges, end_edges, waits, toward, route_info, group_of, window_minutes)
     edges.update(end_edges)
     rail_shape_ids = {
         trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
@@ -805,7 +805,7 @@ def is_alias(info: dict) -> bool:
     return bool(info.get("trunkOf") or info.get("endOf"))
 
 
-def add_trunks(complexes, edges, waits, toward: Counter, route_info: Dict[str, dict], group_of: Dict[str, str], window_minutes: float) -> None:
+def add_trunks(complexes, edges, end_edges, waits, toward: Counter, route_info: Dict[str, dict], group_of: Dict[str, str], window_minutes: float) -> None:
     """Common lines, done so that branches stay honest.
 
     Where a set of lines runs the same consecutive stops (S-Bahn HB → Hardbrücke → Altstetten, tram trunks), a rider
@@ -813,13 +813,23 @@ def add_trunks(complexes, edges, waits, toward: Counter, route_info: Dict[str, d
     …") with its own states, ride edges only on the stops that every line of the set serves in a row, and a wait of
     half the combined headway. Where the lines split, the trunk ends and the rider changes to the specific line,
     waiting for that line. Routing takes the better of the two: wait for one's own line from the start, or take the
-    first train and change where the lines part. The lines themselves keep their own waits."""
+    first train and change where the lines part. The lines themselves keep their own waits.
+
+    Segments into a terminus (`end_edges`, see split_terminating) count too: most S2, S16, IC and IR trains end at
+    Zürich Flughafen, and the rider from Oerlikon still takes whichever comes first. If any line of the set ends at
+    the second stop, the trunk arrives there in an arrive-only end state as well."""
+    ride: Dict[Tuple[int, int, str], float] = dict(edges)
+    ending = set()
+    for (a, b, end_id), minutes in end_edges.items():
+        route_id = route_info[end_id]["endOf"]
+        ride[(a, b, route_id)] = minutes
+        ending.add((a, b, route_id))
     line_edges: Dict[str, set] = defaultdict(set)
-    for a, b, route_id in edges:
+    for a, b, route_id in ride:
         line_edges[route_id].add((a, b))
     sets = set()
     by_pair: Dict[Tuple[int, int, str], set] = defaultdict(set)
-    for a, b, route_id in edges:
+    for a, b, route_id in ride:
         by_pair[(a, b, group_of.get(route_id, "bus"))].add(route_id)
     for lines in by_pair.values():
         if len(lines) >= 2:
@@ -840,9 +850,17 @@ def add_trunks(complexes, edges, waits, toward: Counter, route_info: Dict[str, d
             "trunkOf": ordered,
         }
         for a, b in common:
-            edges[(a, b, trunk_id)] = statistics.median(edges[(a, b, r)] for r in lines)
+            minutes = statistics.median(ride[(a, b, r)] for r in lines)
             complexes[a]["routes"].add(trunk_id)
-            complexes[b]["routes"].add(trunk_id)
+            if any((a, b, r) in ending for r in lines):
+                end_id = f"end:{trunk_id}"
+                route_info.setdefault(end_id, {**route_info[trunk_id], "endOf": trunk_id})
+                end_edges[(a, b, end_id)] = minutes
+                complexes[b]["routes"].add(end_id)
+                waits[(b, end_id)] = MAX_WAIT  # nothing departs from an end state
+            else:
+                edges[(a, b, trunk_id)] = minutes
+                complexes[b]["routes"].add(trunk_id)
             departures = sum(toward[(a, b, r)] for r in lines)
             if departures:
                 wait = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / departures / 2.0)), 2)

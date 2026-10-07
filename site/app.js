@@ -1384,6 +1384,13 @@ async function tripAcrossYears() {
   );
 }
 
+/** The region's jobs in a timetable year (STATENT), with the STATENT year when it is an earlier one. */
+function regionJobsCell(year) {
+  const entry = (CITY.history ?? []).find((row) => row.year === year)?.regionJobs;
+  if (!entry) return "–";
+  return compact.format(entry.total) + (entry.year === year ? "" : ` (${entry.year})`);
+}
+
 async function updateYears() {
   if (app.from && insights.page?.id === "trip") renderInsight().catch((error) => console.error(error));
   if (!yearsVisible || !app.from) return;
@@ -1400,7 +1407,7 @@ async function updateYears() {
   table.innerHTML = `<thead><tr><th scope="col">${t("Timetable", "Fahrplan")}</th>${
     app.to ? `<th scope="col">${t("This trip", "Diese Fahrt")}</th><th scope="col">${t("Lines", "Linien")}</th>` : ""
   }
-    <th scope="col">${t("Residents within 30 min", "Einwohner innert 30 min")}</th><th scope="col">${t("Jobs within 30 min", "Arbeitsplätze innert 30 min")}</th></tr></thead>`;
+    <th scope="col">${t("Residents within 30 min", "Einwohner innert 30 min")}</th><th scope="col">${t("Jobs within 30 min", "Arbeitsplätze innert 30 min")}</th><th scope="col">${t("Jobs in the region", "Arbeitsplätze in der Region")}</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   rows.forEach((row, k) => {
     const tr = document.createElement("tr");
@@ -1439,6 +1446,7 @@ async function updateYears() {
     const change = (value, before) => (before == null ? "" : ` (${value - before >= 0 ? "+" : "−"}${compact.format(Math.abs(value - before))})`);
     cell(compact.format(row.pop) + change(row.pop, previous?.pop));
     cell(compact.format(row.jobs) + change(row.jobs, previous?.jobs));
+    cell(regionJobsCell(row.year));
     tbody.append(tr);
   });
   table.append(tbody);
@@ -1448,12 +1456,12 @@ async function updateYears() {
   note.textContent = t(
     `Counted from the start on the map (${start})${app.to ? " with the same destination" : ""} on each year's timetable${
       app.includeBus ? ", buses and boats included" : ", tram and train only"
-    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs held at today's numbers; changes are against the previous row.${
+    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and jobs within reach held at today's numbers; jobs in the region are each year's STATENT count (the latest published where none exists yet). Changes are against the previous row.${
       app.to ? "" : " Click the map to add a destination."
     }`,
     `Gezählt ab dem Start auf der Karte (${start})${app.to ? " mit demselben Ziel" : ""} auf dem Fahrplan jedes Jahres${
       app.includeBus ? ", Busse und Schiffe inbegriffen" : ", nur Tram und Zug"
-    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Einwohner und Arbeitsplätze auf heutigem Stand; Änderungen gegenüber der Zeile davor.${
+    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Erreichbare Einwohner und Arbeitsplätze auf heutigem Stand; Arbeitsplätze in der Region sind die STATENT-Zahl des Jahres (die letzte veröffentlichte, wo es noch keine gibt). Änderungen gegenüber der Zeile davor.${
       app.to ? "" : " Klicke auf die Karte, um ein Ziel hinzuzufügen."
     }`,
   );
@@ -1928,7 +1936,7 @@ async function switchYear(year) {
 // One series per chart. The mark is a lighter step of Zürich blue: #0F05A0 itself is too dark for a data mark
 // (OKLab L 0.33, below the 0.43–0.77 band); #3b32d4 passes lightness, chroma and contrast on the chart surface.
 const SERIES_COLOR = "#3b32d4";
-const CHART_SURFACE = "#f6f7f9";
+const CHART_SURFACE = "#ffffff";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const HISTORY = CITY.history ?? [];
@@ -2193,7 +2201,10 @@ async function renderInsight() {
   $("insLede").replaceChildren(t("Biggest change in ", "Grösste Änderung "), strong, " — ", amount, t(` against ${step.from.year}.`, ` gegenüber ${step.from.year}.`));
   $("insArrow").textContent = Math.round(delta) === 0 ? "→" : delta > 0 ? "↑" : "↓";
   $("insArrow").className = `insight-arrow ${tone(delta)}`;
-  $("insRef").textContent = t(`${format(first.value)} in ${first.year}`, `${format(first.value)} im Jahr ${first.year}`);
+  const region = metric === "jobs" ? HISTORY.find((row) => row.year === current.year)?.regionJobs : null;
+  $("insRef").textContent = t(`${format(first.value)} in ${first.year}`, `${format(first.value)} im Jahr ${first.year}`) + (
+    region ? t(` · ${compact.format(region.total)} in the region (${region.year})`, ` · ${compact.format(region.total)} in der Region (${region.year})`) : ""
+  );
   $("insValue").textContent = format(current.value);
   $("insDelta").textContent = signed(delta, format);
   $("insDelta").className = `mono ${tone(delta)}`;

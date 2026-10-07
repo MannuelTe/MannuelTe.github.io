@@ -49,6 +49,8 @@ BFS_ASSETS = {
     "statpop.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",  # STATPOP 2024
     "statent.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36073031/master",  # STATENT 2023
 }
+# Employees per municipality and year (STATENT 2011 onwards), BFS STAT-TAB: the region's job total in each year.
+STATENT_MUNICIPAL_URL = "https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0602010000_102/px-x-0602010000_102.px"
 
 
 def bbox(values) -> str:
@@ -342,6 +344,38 @@ def fetch_bfs(out: Path) -> None:
         record(out, name, url)
 
 
+def fetch_regional_jobs(city: dict) -> None:
+    """Employees in the map's municipalities for every STATENT year, into sources/<city>-jobs.json (committed)."""
+    print("BFS STATENT employees by municipality…")
+    meta = json.loads(download(STATENT_MUNICIPAL_URL))
+    places = next(v for v in meta["variables"] if v["code"] == "Gemeinde")
+    names = set(city["municipalities"])
+    codes = [code for code, label in zip(places["values"], places["valueTexts"]) if label.partition(" ")[2] in names]
+    if len(codes) != len(names):
+        raise RuntimeError(f"STATENT: found {len(codes)} of {len(names)} municipalities")
+    query = {
+        "query": [
+            {"code": "Gemeinde", "selection": {"filter": "item", "values": codes}},
+            {"code": "Wirtschaftssektor", "selection": {"filter": "item", "values": ["999"]}},  # all sectors
+            {"code": "Beobachtungseinheit", "selection": {"filter": "item", "values": ["2"]}},  # employees
+        ],
+        "response": {"format": "json-stat2"},
+    }
+    data = json.loads(download(STATENT_MUNICIPAL_URL, json.dumps(query).encode()))
+    years = list(data["dimension"]["Jahr"]["category"]["index"])
+    width = len(codes)  # values run year by year, municipality fastest
+    totals = {year: sum(v or 0 for v in data["value"][i * width:(i + 1) * width]) for i, year in enumerate(years)}
+    out = ROOT / "sources" / f"{city['slug']}-jobs.json"
+    out.write_text(json.dumps({
+        "source": STATENT_MUNICIPAL_URL,
+        "table": "px-x-0602010000_102",
+        "measure": "employees, all sectors, summed over the map's municipalities",
+        "municipalities": len(codes),
+        "fetchedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "employees": totals,
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -357,6 +391,7 @@ def main() -> None:
     fetch_boundaries(city, out)
     fetch_osm(city, out)
     fetch_bfs(out)
+    fetch_regional_jobs(city)
     fetch_elevation(city, out)
     fetch_bike_network(city, out)
 

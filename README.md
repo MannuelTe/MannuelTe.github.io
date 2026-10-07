@@ -36,6 +36,7 @@ Raw sources (`data/zurich/`: national GTFS per year, boundaries, OSM, BFS grids,
 | Timetables | Swiss national GTFS, [opentransportdata.swiss](https://opentransportdata.swiss/) (2026, 2027); 2022 and 2024 from the [Mobility Database](https://mobilitydatabase.org/) archive (mdb-1092, mdb-2144). Clipped to the Zurich area at fetch time (3.7 GB of stop times → 300 MB). |
 | Boundaries | [swissBOUNDARIES3D](https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d) via api3.geo.admin.ch; the 12 Stadtkreise from [Stadt Zürich Open Data](https://data.stadt-zuerich.ch/) |
 | Residents / jobs | BFS hectare grids [STATPOP 2024](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html) and [STATENT 2023](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36073031.html) |
+| Jobs in the region, by year | BFS STAT-TAB [px-x-0602010000_102](https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/) (STATENT employees per municipality, 2011 onwards), summed over the map's municipalities into `sources/zurich-jobs.json` |
 | Elevation | swisstopo terrain model sampled every 100 m via the geo.admin.ch profile service |
 | Lines, lakes, parks, cycling streets | © OpenStreetMap contributors (ODbL), via Overpass; line colours from the OSM route relations (the Swiss GTFS has none) |
 | Address search | geo.admin.ch search service, live in the browser |

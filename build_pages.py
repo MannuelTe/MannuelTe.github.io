@@ -23,7 +23,6 @@ GITHUB_URL = "https://github.com/MannuelTe/MannuelTe.github.io"
 UPSTREAM_URL = "https://github.com/camilleroux/montpellier-temps-transport"
 AUTHOR_NAME = "Manuel Trachsler"
 AUTHOR_URL = "https://manueltrachsler.ch"
-AUTHOR_GITHUB = "https://github.com/MannuelTe"
 SITE_NAMES = {"en": "Zurich Isochrones", "de": "Zürich Isochronen"}
 LANGS = ("de", "en")  # German first: it is the default page at the site root
 LANG = "de"  # the language being rendered, set by main() before each page
@@ -159,7 +158,6 @@ def footer(city: dict) -> str:
           <p class="footer-author">{t("Made by", "Gemacht von")} <a href="{AUTHOR_URL}">{esc(AUTHOR_NAME)}</a></p>
           <nav class="footer-links" aria-label="Footer">
             <a href="{AUTHOR_URL}">manueltrachsler.ch</a>
-            <a class="github-link" href="{AUTHOR_GITHUB}" rel="noopener" aria-label="GitHub" title="GitHub">{GITHUB_ICON}</a>
             <a href="{GITHUB_URL}" rel="noopener">{t("Source", "Quellcode")}</a>
             <a href="{GITHUB_URL}/issues" rel="noopener">{t("Report an error", "Fehler melden")}</a>
           </nav>
@@ -280,9 +278,34 @@ def city_faq(city: dict) -> list[tuple]:
     ]
 
 
+def regional_jobs(city: dict) -> dict:
+    """Per timetable year, the region's jobs in that year's STATENT, or in the latest one published before it."""
+    path = ROOT / "sources" / f"{city['slug']}-jobs.json"
+    if not path.exists():
+        print(f"  regional jobs skipped: run fetch_data.py {city['slug']} --context-only first")
+        return {}
+    employees = json.loads(path.read_text(encoding="utf-8"))["employees"]
+    out = {}
+    for year in city["timetables"]:
+        known = [y for y in employees if y <= year]
+        if known:
+            out[year] = {"year": max(known), "total": employees[max(known)]}
+    return out
+
+
+def regional_jobs_source(city: dict) -> dict | None:
+    path = ROOT / "sources" / f"{city['slug']}-jobs.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def region_jobs_cell(entry: dict | None) -> str:
+    return f'{people(entry["total"])} <span class="muted">({entry["year"]})</span>' if entry else "–"
+
+
 def history(city: dict) -> tuple[str, str, dict]:
     """One row per timetable year, from sources/<city>-<year>.json, and the year picker's config."""
     rows, timetables, figures = [], {}, []
+    region_jobs = regional_jobs(city)
     for year, timetable in city["timetables"].items():
         path = ROOT / "sources" / f"{city['slug']}-{year}.json"
         if not path.exists():
@@ -308,11 +331,13 @@ def history(city: dict) -> tuple[str, str, dict]:
             "within30": stats["within30"],
             "railStations": stats["railStations"],
             "tramLines": len(trams),
+            "regionJobs": region_jobs.get(year),
         })
         rows.append(
             f"            <tr><td><strong>{year}</strong>{t(' (draft)', ' (Entwurf)') if timetable.get('draft') else ''}</td>"
             f"<td>{long_date(sources['referenceDate'])}</td><td>{len(trams)}</td><td>{stats['railStations']}</td>"
-            f"<td>{stats['within30']}%</td><td>{people(stats['population'].get('30', 0))}</td><td>{people(stats['jobs'].get('30', 0))}</td></tr>"
+            f"<td>{stats['within30']}%</td><td>{people(stats['population'].get('30', 0))}</td><td>{people(stats['jobs'].get('30', 0))}</td>"
+            f"<td>{region_jobs_cell(region_jobs.get(year))}</td></tr>"
         )
     note = t(
         "2022: before the Limmattalbahn's second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and "
@@ -375,6 +400,19 @@ def history_notes(figures: list[dict]) -> str:
           "Änderung in der Tabelle ist also eine Änderung im Netz: Ein Rückgang heisst, dass ein Teil der Karte länger "
           "braucht, nicht, dass Menschen weggezogen sind."),
     ]
+    region = [f["regionJobs"] for f in figures if f.get("regionJobs")]
+    if region:
+        first, last = region[0], region[-1]
+        gain = thousands(last["total"] - first["total"])
+        paragraphs.append(t(
+            f"For scale, \"Jobs in the region\" is the actual STATENT count for the map's municipalities in each year, or the "
+            f"latest published year where none exists yet (STATENT {last['year']} is the newest): the region went from "
+            f"{thousands(first['total'])} jobs in {first['year']} to {thousands(last['total'])} in {last['year']}, +{gain}.",
+            f"Zum Vergleich ist «Arbeitsplätze in der Region» die tatsächliche STATENT-Zahl der Gemeinden auf der Karte im "
+            f"jeweiligen Jahr, oder das letzte veröffentlichte Jahr, wo es noch keine gibt (STATENT {last['year']} ist die "
+            f"neueste): Die Region ging von {thousands(first['total'])} Arbeitsplätzen {first['year']} auf "
+            f"{thousands(last['total'])} {last['year']}, +{gain}.",
+        ))
     if "2024" in by_year and "2026" in by_year:
         before, after = by_year["2024"], by_year["2026"]
         pop_change = after["population"]["30"] - before["population"]["30"]
@@ -446,6 +484,13 @@ def sources_block(city: dict) -> str:
          f'<a href="https://www.bfs.admin.ch/bfs/{t("en", "de")}/home/statistics/catalogues-databases.assetdetail.36073031.html">'
          f'STATENT 2023</a> ' + t("hectare grid (employees, all sectors), BFS", "Hektarraster (Beschäftigte, alle Sektoren), BFS")
          + f'{esc(fetched(main.get("jobs")))}.'),
+        (t("Jobs in the region", "Arbeitsplätze in der Region"),
+         t("BFS STAT-TAB table ", "BFS-STAT-TAB-Tabelle ")
+         + '<a href="https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/">'
+         'px-x-0602010000_102</a> '
+         + t("(STATENT employees by municipality and year), summed over the map's municipalities",
+             "(STATENT-Beschäftigte nach Gemeinde und Jahr), summiert über die Gemeinden auf der Karte")
+         + f'{esc(fetched(regional_jobs_source(city)))}.'),
         (t("Elevation", "Höhe"),
          t("swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the ",
            "Terrainmodell von swisstopo (swissALTI3D / DHM25), alle 100 m abgefragt über den ")
@@ -544,6 +589,7 @@ UI = {
     "stops_30": ("Stops within 30 min", "Haltestellen innert 30 min"),
     "residents_30": ("Residents within 30 min", "Einwohner innert 30 min"),
     "jobs_30": ("Jobs within 30 min", "Arbeitsplätze innert 30 min"),
+    "jobs_region": ("Jobs in the region", "Arbeitsplätze in der Region"),
     "questions": ("Questions", "Fragen"),
     "questions_desc": ("How the times are computed, and where the data comes from.",
                        "Wie die Zeiten berechnet werden und woher die Daten stammen."),
@@ -587,7 +633,7 @@ def render_page(template: Template, city: dict) -> str:
     table_lines = [line for line in stats["lines"] if any(c.isdigit() for c in line["name"])]
     trams = [line for line in table_lines if line["mode"] == "tram"]
     fastest = min(trams or table_lines, key=lambda line: line["headway"])
-    # Two rows of four: the network, then the people; each column has its own colour.
+    # One row of four about the network; the people counts are in « Within reach » above.
     tiles = [
         (f"{stats['within30']}%", t(f"of the {city['railStations']} within 30 min of {center}",
                                             f"der {city['railStations']} innert 30 min ab {center}")),
@@ -596,12 +642,6 @@ def render_page(template: Template, city: dict) -> str:
                                              f"zwischen zwei Trams der Linie {fastest['name']}, der dichteste Takt")),
         (f"{stats['farthestMinutes']} min", t(f"from {center} to {stats['farthestStation']}, the farthest stop",
                                               f"von {center} nach {stats['farthestStation']}, die entfernteste Haltestelle")),
-        (people(stats["population"]["total"]), t("residents on the map (STATPOP 2024)", "Einwohner auf der Karte (STATPOP 2024)")),
-        (people(stats["jobs"]["total"]), t("jobs on the map (STATENT 2023)", "Arbeitsplätze auf der Karte (STATENT 2023)")),
-        (people(stats["population"].get("30", 0)), t(f"residents within 30 min of {center} by tram and train",
-                                                     f"Einwohner innert 30 min ab {center} mit Tram und Zug")),
-        (people(stats["jobs"].get("30", 0)), t(f"jobs within 30 min of {center} by tram and train",
-                                               f"Arbeitsplätze innert 30 min ab {center} mit Tram und Zug")),
     ]
     stat_html = [f'          <div class="stat"><strong>{esc(value)}</strong><span>{esc(label)}</span></div>' for value, label in tiles]
     if stats.get("runnerUpStation"):

@@ -1,5 +1,5 @@
-/* How far is it in Zurich? — styled after beautifului.dev: a framed column on a hatched ground, flat neutral cards,
-   numbered blocks, hairline rings instead of shadows. Accents: white and Zürich blue (Stadt Zürich corporate blue). */
+/* How far is it in Zurich? — minimal: one white column, hairlines instead of boxes, a single accent (Zürich blue,
+   Stadt Zürich corporate blue); colour is kept for the map and the data. */
 
 :root {
   --blue: #0f05a0;
@@ -10,9 +10,9 @@
   --ink-soft: #4a4d57;
   --muted: #8a8d96;
   --faint: #b6b8bf;
-  --ground: #f4f4f5;
-  --frame: #fafafa;
-  --card: #f1f2f4;
+  --ground: #ffffff;
+  --frame: #ffffff;
+  --card: #f5f6f8;
   --white: #ffffff;
   --ring: #e3e4e8;
   --ring-strong: #d6d8de;
@@ -33,7 +33,6 @@
 body {
   margin: 0;
   background-color: var(--ground);
-  background-image: repeating-linear-gradient(135deg, rgba(31, 33, 40, 0.045) 0 1px, transparent 1px 9px);
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -68,8 +67,6 @@ a:hover {
   min-height: 100vh;
   margin: 0 auto;
   background: var(--frame);
-  border-left: 1px dashed var(--dash);
-  border-right: 1px dashed var(--dash);
 }
 
 .topbar {
@@ -81,8 +78,8 @@ a:hover {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 24px;
-  border-bottom: 1px dashed var(--dash);
-  background: rgba(250, 250, 250, 0.88);
+  border-bottom: 1px solid var(--ring);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -121,15 +118,11 @@ a:hover {
 }
 
 .topbar-links .topbar-pill {
-  margin-left: 6px;
-  background: var(--white);
-  box-shadow: 0 0 0 1px var(--ring), 0 0 4px rgba(0, 0, 0, 0.04);
   color: var(--ink);
   font-weight: 500;
 }
 
-.topbar-links .github-link,
-.footer-links .github-link {
+.topbar-links .github-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -137,10 +130,6 @@ a:hover {
 
 .topbar-links .github-link {
   padding: 5px 7px;
-}
-
-.footer-links .github-link {
-  padding: 4px 8px;
 }
 
 .page {
@@ -421,8 +410,7 @@ output {
 
 .block {
   margin: 0 -24px;
-  padding: 28px 24px 32px;
-  border-top: 1px dashed var(--dash);
+  padding: 40px 24px;
 }
 
 .block-head {
@@ -433,15 +421,9 @@ output {
   margin-bottom: 14px;
 }
 
-.block-num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--faint);
-}
-
 .block-head h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -453,8 +435,8 @@ output {
 .card,
 .map-card {
   border-radius: var(--radius);
-  background: var(--card);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--ring);
 }
 
 .card {
@@ -537,7 +519,7 @@ output {
 .trip-result {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed var(--dash);
+  border-top: 1px solid var(--ring);
 }
 
 .trip-row {
@@ -600,7 +582,7 @@ output {
   gap: 8px;
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed var(--dash);
+  border-top: 1px solid var(--ring);
   color: var(--muted);
   font-size: 12px;
 }
@@ -716,7 +698,7 @@ output {
 
 .data-table td {
   padding: 8px;
-  border-bottom: 1px dashed var(--dash);
+  border-bottom: 1px solid var(--ring);
 }
 
 .data-table tr:last-child td {
@@ -751,38 +733,18 @@ output {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 24px;
 }
 
-/* One colour per column: the network on the first row, the people on the second. */
 .stat {
-  --tone: var(--blue);
-  --tone-soft: var(--blue-soft);
   display: grid;
   gap: 2px;
-  padding: 14px 16px;
-  border-radius: var(--radius);
-  background: var(--tone-soft);
-  box-shadow: inset 3px 0 0 var(--tone);
-}
-
-.stat:nth-child(4n + 2) {
-  --tone: #1a7f4b;
-  --tone-soft: #e5f3ea;
-}
-
-.stat:nth-child(4n + 3) {
-  --tone: #a35a00;
-  --tone-soft: #fcefdc;
-}
-
-.stat:nth-child(4n + 4) {
-  --tone: #b2362c;
-  --tone-soft: #fbe8e6;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--ring);
 }
 
 .stat strong {
-  color: var(--tone);
+  color: var(--ink);
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.035em;
@@ -843,16 +805,14 @@ output {
 /* --- Expanders ------------------------------------------------------------------------- */
 
 .expander {
-  margin-top: 8px;
-  border-radius: var(--radius);
-  background: var(--card);
+  border-bottom: 1px solid var(--ring);
 }
 
 .expander summary {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px 0;
   font-weight: 500;
   list-style: none;
   cursor: pointer;
@@ -882,7 +842,7 @@ output {
 }
 
 .expander-body {
-  padding: 0 16px 14px 30px;
+  padding: 0 0 14px 14px;
   color: var(--ink-soft);
 }
 
@@ -899,8 +859,11 @@ output {
   gap: 6px;
 }
 
-.faq-list .expander {
-  margin-top: 0;
+.faq-list,
+.card + .expander,
+.stat-grid + .expander {
+  margin-top: 12px;
+  border-top: 1px solid var(--ring);
 }
 
 .sources dl {
@@ -929,7 +892,7 @@ output {
 
 .site-footer {
   padding: 24px;
-  border-top: 1px dashed var(--dash);
+  border-top: 1px solid var(--ring);
   color: var(--muted);
   font-size: 12.5px;
 }
@@ -969,24 +932,17 @@ output {
 }
 
 .footer-links a {
-  padding: 4px 11px;
-  border-radius: 999px;
-  background: var(--white);
-  box-shadow: 0 0 0 1px var(--ring);
+  padding: 4px 6px;
   color: var(--ink-soft);
-  font-weight: 500;
   text-decoration: none;
 }
 
 .footer-links a:hover {
   color: var(--blue);
-  box-shadow: 0 0 0 1px var(--blue-ring);
 }
 
 .footer-credits {
   max-width: 820px;
-  padding-top: 12px;
-  border-top: 1px solid var(--ring);
   line-height: 1.6;
 }
 
@@ -1071,9 +1027,6 @@ output {
   --good: #1a7f4b;
   --bad: #c4352b;
   max-width: 720px;
-  padding: 16px 18px 18px;
-  border-radius: var(--radius);
-  background: var(--card);
 }
 
 .insights-head {
@@ -1145,10 +1098,7 @@ output {
 }
 
 .insight-card {
-  padding: 14px;
-  border-radius: 12px;
-  background: var(--white);
-  box-shadow: 0 0 0 1px var(--ring), 0 1px 4px rgba(0, 0, 0, 0.03);
+  padding: 4px 0 0;
 }
 
 .insight-title {
@@ -1182,7 +1132,7 @@ output {
 .chart-panel {
   overflow: hidden;
   border-radius: 10px;
-  background: #f6f7f9;
+  background: var(--white);
   box-shadow: 0 0 0 1px var(--ring);
 }
 

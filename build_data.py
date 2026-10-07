@@ -55,6 +55,11 @@ MIN_WAIT = 1.0
 MAX_WAIT = 15.0
 # Daytime window used to measure headways and ride times (weekday, 7h–20h).
 SERVICE_WINDOW = (7 * 3600, 20 * 3600)
+# Pooled rides (add_pools): lines of these wait groups that reach the same later stop by different routes.
+POOL_GROUPS = ("rail", "tram")
+POOL_MAX_RIDE = 30.0  # minutes from boarding to the shared stop
+POOL_SLACK = 3.0  # a line joins the pool if its ride is at most this much slower than the fastest
+POOL_MIN_GAIN = 2.0  # keep a pool only if it beats the best single line (wait + ride) by this much
 MIN_RING_DISTANCE = 45.0
 MIN_LINE_DISTANCE = 25.0
 MIN_PARK_AREA = 20_000.0
@@ -727,10 +732,24 @@ def extract_network(data_dir: Path, city: dict):
     # Trips per segment, and how many of them end at its second stop (a terminus such as Bellevue for the 912).
     segment_trips: Counter = Counter()
     segment_ends: Counter = Counter()
+    # Rides from each stop to every later stop of the trip, for pooling lines that reach it by different routes.
+    pool_rides: Dict[Tuple[int, int, str], List[float]] = defaultdict(list)
     for trip_id, sequence in stop_times.items():
         trip = trips[trip_id]
         route_id = trip["route_id"]
         sequence.sort()
+        if group_of.get(route_id) in POOL_GROUPS:
+            for k, (_, stop_a, _, dep_a) in enumerate(sequence):
+                if not window_start <= dep_a < window_end:
+                    continue
+                a = complex_of[stop_a]
+                for _, stop_c, arr_c, _ in sequence[k + 2:]:  # the next stop is covered by trunks
+                    minutes = (arr_c - dep_a) / 60.0
+                    if minutes > POOL_MAX_RIDE:
+                        break
+                    c = complex_of[stop_c]
+                    if c != a:
+                        pool_rides[(a, c, route_id)].append(minutes)
         last = len(sequence) - 2
         for k, ((_, stop_a, _, dep_a), (_, stop_b, arr_b, _)) in enumerate(zip(sequence, sequence[1:])):
             a, b = complex_of[stop_a], complex_of[stop_b]
@@ -767,6 +786,7 @@ def extract_network(data_dir: Path, city: dict):
         }
     end_edges = split_terminating(complexes, edges, waits, route_info, segment_trips, segment_ends)
     add_trunks(complexes, edges, end_edges, waits, toward, route_info, group_of, window_minutes)
+    add_pools(complexes, end_edges, waits, own_waits, pool_rides, route_info, group_of, window_minutes)
     edges.update(end_edges)
     rail_shape_ids = {
         trip["shape_id"] for trip in trips.values() if route_info.get(trip["route_id"], {}).get("rail") and trip.get("shape_id")
@@ -869,6 +889,55 @@ def add_trunks(complexes, edges, end_edges, waits, toward: Counter, route_info: 
             waits.setdefault((station, trunk_id), MAX_WAIT)  # last stop of the trunk: alighting only
 
 
+def add_pools(complexes, end_edges, waits, own_waits, pool_rides, route_info: Dict[str, dict], group_of: Dict[str, str], window_minutes: float) -> None:
+    """Lines that reach the same later stop by different routes (S5 via Hardbrücke and S14 non-stop from HB to
+    Hedingen; IC, S2, S16 and S24 from HB to the airport). Trunks only pool lines over the same consecutive stops, so
+    a rider was charged the wait of one line where in fact they take whichever comes first.
+
+    For each boarding stop a and later stop c, the lines whose ride a → c is within POOL_SLACK of the fastest form a
+    pooled route: one ride straight to c (the departure-weighted mean of their rides), half the combined headway as
+    wait, arriving in an arrive-only end state (the lines part after c). Kept only where it beats waiting for the
+    best single line by POOL_MIN_GAIN, which leaves out the many pairs where nothing changes."""
+    by_pair: Dict[Tuple[int, int, str], Dict[str, List[float]]] = defaultdict(dict)
+    for (a, c, route_id), samples in pool_rides.items():
+        by_pair[(a, c, group_of[route_id])][route_id] = samples
+    added = 0
+    for (a, c, group), lines in sorted(by_pair.items()):
+        if len(lines) < 2:
+            continue
+        rides = {r: statistics.median(samples) for r, samples in lines.items()}
+        fastest = min(rides.values())
+        pool = sorted((r for r in rides if rides[r] <= fastest + POOL_SLACK), key=lambda r: (len(route_info[r]["name"]), route_info[r]["name"]))
+        if len(pool) < 2:
+            continue
+        departures = sum(len(lines[r]) for r in pool)
+        wait = round(min(MAX_WAIT, max(MIN_WAIT, window_minutes / departures / 2.0)), 2)
+        ride = sum(rides[r] * len(lines[r]) for r in pool) / departures
+        best_single = min(own_waits.get((a, r), MAX_WAIT) + rides[r] for r in rides)
+        if wait + ride > best_single - POOL_MIN_GAIN:
+            continue
+        names = [route_info[r]["name"] for r in pool]
+        pool_id = f"pool:{a}:{c}:" + "+".join(pool)
+        end_id = f"end:{pool_id}"
+        first = route_info[pool[0]]
+        route_info[pool_id] = {
+            "mode": first["mode"],
+            "rail": all(route_info[r]["rail"] for r in pool),
+            "color": first["color"] if len({route_info[r]["color"] for r in pool}) == 1 else MODE_COLORS.get(first["mode"], "#888888"),
+            "name": "/".join(names) if len(names) <= 3 else "/".join(names[:2]) + f" +{len(names) - 2}",
+            "trunkOf": pool,
+            "pool": True,
+        }
+        route_info[end_id] = {**route_info[pool_id], "endOf": pool_id}
+        complexes[a]["routes"].add(pool_id)
+        complexes[c]["routes"].add(end_id)
+        waits[(a, pool_id)] = wait
+        waits[(c, end_id)] = MAX_WAIT  # nothing departs from an end state
+        end_edges[(a, c, end_id)] = max(MIN_RIDE_MINUTES, ride)
+        added += 1
+    print(f"  {added} pooled rides")
+
+
 def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, dict], access_minutes: Dict[str, float], terrain: "Terrain"):
     route_states: List[dict] = []
     station_states: List[List[int]] = [[] for _ in complexes]
@@ -906,10 +975,12 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
     # Changing line inside a stop: short walk plus waiting for the next vehicle. Nothing boards an end state, so
     # no change leads into one.
     boardable = [not route_info[state["routeId"]].get("endOf") for state in route_states]
+    # A pooled ride is only boarded: one never changes out of it at its boarding stop.
+    pooled = [bool(route_info[state["routeId"]].get("pool")) for state in route_states]
     for states in station_states:
         for src in states:
             for dst in states:
-                if src != dst and boardable[dst]:
+                if src != dst and boardable[dst] and not pooled[src]:
                     add_edge(src, dst, transfer(src, dst, TRANSFER_WALK))
 
     # Walking to a nearby stop with another name.
@@ -925,7 +996,7 @@ def build_graph(complexes: Sequence[dict], edges, waits, route_info: Dict[str, d
                 continue
             for src in station_states[i]:
                 for dst in station_states[j]:
-                    if boardable[dst] and route_states[src]["routeId"] != route_states[dst]["routeId"]:
+                    if boardable[dst] and not pooled[src] and route_states[src]["routeId"] != route_states[dst]["routeId"]:
                         add_edge(src, dst, transfer(src, dst, walk))
     return route_states, station_states, adjacency
 

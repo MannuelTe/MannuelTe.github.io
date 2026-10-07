@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-07T20:31:55+00:00",
+  "builtAt": "2026-10-07T21:15:50+00:00",
   "referenceDate": "2024-10-22",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -425,17 +425,17 @@
     "busLines": 168,
     "center": "Zürich HB",
     "within15": 34,
-    "within30": 87,
+    "within30": 88,
     "population": {
       "total": 717159,
-      "45": 651690,
-      "30": 424785,
+      "45": 656025,
+      "30": 429785,
       "15": 78939
     },
     "jobs": {
       "total": 767020,
-      "45": 732357,
-      "30": 620717,
+      "45": 734631,
+      "30": 624360,
       "15": 240103
     },
     "farthestStation": "Felsenegg",

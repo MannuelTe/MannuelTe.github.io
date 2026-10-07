@@ -58,6 +58,9 @@ Public transport (a weekday in late autumn, 7:00–20:00, per timetable year):
   waiting for one's own line from the start or taking the first train and changing at the split, so shared corridors
   are fast and branch stops are not (an earlier version gave every line the pooled wait, which made single-line
   branches look 15 minutes closer: 524k residents within 30 min of HB against 415k now);
+- **pooled rides:** lines that reach the same later stop by different routes (S5 via Hardbrücke and S14 non-stop
+  from HB to Hedingen; IC, S2, S16 and S24 from HB to the airport) also get a ride "any of them to that stop", with
+  half the combined headway as wait, where that beats waiting for the best single line by 2 min or more;
 - **termini:** where most trips on a segment end at the next stop (the 912/916 inbound at Bellevue), the ride arrives
   in an arrive-only state; going on means changing vehicle, with the change time and the outbound wait, instead of
   riding through the terminus;

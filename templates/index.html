@@ -12,9 +12,8 @@ ${header}
     <main class="page">
       <section class="hero">
         <h1>${headline}</h1>
-        <p class="lede">
-          ${ui_lede}
-        </p>
+        <p class="lede">${ui_lede}</p>
+        <p class="lede">${ui_lede_map}</p>
       </section>
 
       <section class="block" aria-labelledby="map-title">
@@ -284,13 +283,12 @@ ${line_rows}
       </section>
 
       <section class="block" aria-labelledby="faq-title">
-        <header class="block-head">
-          <h2 id="faq-title">${ui_questions}</h2>
-          <span class="block-desc">${ui_questions_desc}</span>
-        </header>
-        <div class="faq-list">
+        <details class="expander faq-all">
+          <summary class="block-head"><h2 id="faq-title">${ui_questions}</h2><span class="block-desc">${ui_questions_desc}</span></summary>
+          <div class="expander-body faq-list">
 ${faq_html}
-        </div>
+          </div>
+        </details>
       </section>
     </main>
 

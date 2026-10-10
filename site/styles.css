@@ -139,8 +139,8 @@ a:hover {
 /* --- Hero --------------------------------------------------------------------- */
 
 .hero {
-  max-width: 760px;
   padding: 48px 0 32px;
+  text-align: center;
 }
 
 h1 {
@@ -152,10 +152,14 @@ h1 {
 }
 
 .lede {
-  max-width: 620px;
-  margin: 0;
+  max-width: 760px;
+  margin: 0 auto;
   color: var(--ink-soft);
   font-size: 15px;
+}
+
+.lede + .lede {
+  margin-top: 12px;
 }
 
 /* --- Buttons and controls -------------------------------------------------------- */
@@ -979,7 +983,7 @@ output {
   transition: transform 0.15s;
 }
 
-.expander[open] summary::before {
+.expander[open] > summary::before {
   transform: translateY(-3px) rotate(45deg);
 }
 
@@ -1003,6 +1007,33 @@ output {
 .faq-list {
   display: grid;
   gap: 6px;
+}
+
+/* « Questions »: the section heading is the expander, the questions and data sources open under it. */
+.faq-all {
+  border-bottom: 0;
+}
+
+.faq-all > summary.block-head {
+  align-items: center;
+  margin-bottom: 0;
+  padding: 0 0 12px;
+}
+
+.faq-all > summary h2 {
+  margin: 0;
+}
+
+.faq-all > summary:hover h2 {
+  color: var(--blue);
+}
+
+.faq-all > .expander-body {
+  padding: 0;
+}
+
+.faq-all .expander:last-child {
+  border-bottom: 0;
 }
 
 .faq-list,
@@ -1114,6 +1145,10 @@ output {
 /* --- Small screens --------------------------------------------------------------------------- */
 
 @media (max-width: 720px) {
+  .hero {
+    text-align: left;
+  }
+
   .topbar {
     padding: 10px 16px;
   }

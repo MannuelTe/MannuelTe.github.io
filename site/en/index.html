@@ -117,7 +117,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="../styles.css?v=da956fd4" />
+    <link rel="stylesheet" href="../styles.css?v=eda10024" />
   </head>
   <body>
     <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "222e838e", "draft": false, "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "282c4fc2", "draft": false, "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "44c632cd", "draft": false, "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "a46f2e0a", "draft": true, "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2026", "history": [{"year": "2022", "draft": false, "day": "Tuesday 25 October 2022", "population": {"total": 717159, "45": 663291, "30": 420460, "15": 62452}, "jobs": {"total": 745860, "45": 722700, "30": 614290, "15": 224188}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14, "regionJobs": {"year": "2022", "total": 744728}}, {"year": "2024", "draft": false, "day": "Tuesday 22 October 2024", "population": {"total": 717159, "45": 656025, "30": 429785, "15": 78939}, "jobs": {"total": 767020, "45": 734631, "30": 624360, "15": 240103}, "within15": 34, "within30": 88, "railStations": 289, "tramLines": 16, "regionJobs": {"year": "2024", "total": 766117}}, {"year": "2026", "draft": false, "day": "Tuesday 20 October 2026", "population": {"total": 717159, "45": 645758, "30": 418346, "15": 81684}, "jobs": {"total": 767020, "45": 733297, "30": 620804, "15": 242314}, "within15": 34, "within30": 85, "railStations": 286, "tramLines": 19, "regionJobs": {"year": "2024", "total": 766117}}, {"year": "2027", "draft": true, "day": "Tuesday 23 November 2027", "population": {"total": 717159, "45": 646908, "30": 429677, "15": 88222}, "jobs": {"total": 767020, "45": 731613, "30": 630007, "15": 241705}, "within15": 34, "within30": 89, "railStations": 280, "tramLines": 16, "regionJobs": {"year": "2024", "total": 766117}}], "center": "Zürich HB", "bikeVersion": "d16caca8", "streetsVersion": "6767497f", "busesVersion": "ebd60ce7", "h3Version": "89cb8803", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
@@ -137,9 +137,8 @@
     <main class="page">
       <section class="hero">
         <h1>Zurich&#x27;s public transport: a big step up to 2024, flat since</h1>
-        <p class="lede">
-          From the average place on the map, public transport reached 16.5 % more residents within 30 minutes in 2024 than in 2022. Since then the average has hardly moved (−0.2 % to 2026): about as many places gained as lost, and in 2026 construction work holds the network back. The map below colours Zurich by travel time from Zürich HB, walking and waiting included: switch between 2022, 2024, 2026 and 2027, drag the start anywhere or click to set a destination.
-        </p>
+        <p class="lede">From 2022 to 2024, Zurich became clearly better connected: in those two years, about 17 % more residents came within a 30-minute public transport trip. Since then the average has barely changed. Major construction projects are slowing down how well the city and its agglomeration are connected.</p>
+        <p class="lede">The map below colours Zurich by travel time from Zürich HB, walking and waiting included: switch between 2022, 2024, 2026 and 2027, drag the start anywhere or click to set a destination.</p>
       </section>
 
       <section class="block" aria-labelledby="map-title">
@@ -466,11 +465,9 @@
       </section>
 
       <section class="block" aria-labelledby="faq-title">
-        <header class="block-head">
-          <h2 id="faq-title">Questions</h2>
-          <span class="block-desc">How the times are computed, and where the data comes from.</span>
-        </header>
-        <div class="faq-list">
+        <details class="expander faq-all">
+          <summary class="block-head"><h2 id="faq-title">Questions</h2><span class="block-desc">How the times are computed, and where the data comes from.</span></summary>
+          <div class="expander-body faq-list">
         <details class="expander faq"><summary>How long does it take to cross Zurich by public transport?</summary><div class="expander-body"><p>From Zürich HB, 34% of the 286 tram and rail stops on the map are less than 15 minutes away and 85% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 58 minutes.</p></div></details>
         <details class="expander faq"><summary>Where do the timetables come from?</summary><div class="expander-body"><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 5 October 2026 and valid until 12 December 2026. Times are those of Tuesday 20 October 2026, between 7:00 and 20:00.</p></div></details>
         <details class="expander faq"><summary>Are buses included?</summary><div class="expander-body"><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></div></details>
@@ -497,7 +494,8 @@
             </dl>
           </div>
         </details>
-        </div>
+          </div>
+        </details>
       </section>
     </main>
 

@@ -452,26 +452,29 @@ def trend_tiles(city: dict, trend: list[dict]) -> str:
             f'        <p class="trend-note">{esc(note)}</p>')
 
 
-def hero_lede(city: dict, trend: list[dict], years: list[str]) -> str:
-    center = city["stats"]["center"]
+def hero_lede(city: dict, trend: list[dict]) -> str:
+    """The takeaway: a big step up to the second timetable year, flat since."""
     if not trend:
-        return t(f"The map colours {city['name']} by travel time from {center} by public transport.",
-                 f"Die Karte färbt {city['name']} nach der Reisezeit ab {center} mit dem ÖV.")
-    first, rest = trend[0], trend[1:]
-    since = rest[0]
+        return ""
+    first = trend[0]
+    gain = round(first["change"])
     return t(
-        f"From the average place on the map, public transport reached {percent(first['change']).lstrip('+')} more residents within "
-        f"30 minutes in {first['to']} than in {first['from']}. Since then the average has hardly moved "
-        f"({percent(since['change'])} to {since['to']}): about as many places gained as lost, and in {since['to']} "
-        f"construction work holds the network back. The map below colours {city['name']} by travel time from {center}, "
-        f"walking and waiting included: switch between {', '.join(years[:-1])} and {years[-1]}, drag the start anywhere "
-        "or click to set a destination.",
-        f"Vom durchschnittlichen Ort auf der Karte erreichte man mit dem ÖV {first['to']} innert 30 Minuten "
-        f"{percent(first['change']).lstrip('+')} mehr Einwohner als {first['from']}. Seither hat sich der Mittelwert kaum bewegt "
-        f"({percent(since['change'])} bis {since['to']}): Etwa gleich viele Orte gewannen, wie verloren, und "
-        f"{since['to']} bremsen Bauarbeiten das Netz. Die Karte unten färbt {city['name']} nach der Reisezeit ab "
-        f"{center}, Fussweg und Wartezeit inbegriffen: Wechsle zwischen {', '.join(years[:-1])} und {years[-1]}, ziehe "
-        "den Start an einen beliebigen Ort oder klicke für ein Ziel.",
+        f"From {first['from']} to {first['to']}, {city['name']} became clearly better connected: in those two years, about "
+        f"{gain} % more residents came within a 30-minute public transport trip. Since then the average has barely "
+        "changed. Major construction projects are slowing down how well the city and its agglomeration are connected.",
+        f"Von {first['from']} bis {first['to']} ist {city['name']} klar vernetzter geworden: Rund {gain} % mehr Einwohner "
+        "wurden in diesen zwei Jahren durch ÖV-Fahrten von 30 Minuten erschlossen. Seitdem hat sich der Mittelwert kaum "
+        "verändert. Grossprojekte bremsen die Vernetzung der Stadt und der Agglomeration.",
+    )
+
+
+def hero_map_lede(city: dict, years: list[str]) -> str:
+    center = city["stats"]["center"]
+    return t(
+        f"The map below colours {city['name']} by travel time from {center}, walking and waiting included: switch between "
+        f"{', '.join(years[:-1])} and {years[-1]}, drag the start anywhere or click to set a destination.",
+        f"Die Karte unten färbt {city['name']} nach der Reisezeit ab {center}, Fussweg und Wartezeit inbegriffen: Wechsle "
+        f"zwischen {', '.join(years[:-1])} und {years[-1]}, ziehe den Start an einen beliebigen Ort oder klicke für ein Ziel.",
     )
 
 
@@ -851,7 +854,8 @@ def render_page(template: Template, city: dict) -> str:
         "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
         "headline": esc(t(f"{city['name']}'s public transport: a big step up to 2024, flat since",
                           f"ÖV in {city['name']}: ein grosser Schritt bis 2024, seither Stillstand")),
-        "ui_lede": esc(hero_lede(city, trend, list(timetables))),
+        "ui_lede": esc(hero_lede(city, trend)),
+        "ui_lede_map": esc(hero_map_lede(city, list(timetables))),
         "ui_in_numbers": esc(t(f"{city['name']} in numbers", f"{city['name']} in Zahlen")),
         "ui_in_numbers_desc": esc(t(f"From {center}, on a weekday of the {city['defaultTimetable']} timetable.",
                                     f"Ab {center}, an einem Werktag des Fahrplans {city['defaultTimetable']}.")),

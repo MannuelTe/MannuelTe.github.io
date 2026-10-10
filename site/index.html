@@ -117,7 +117,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="./styles.css?v=da956fd4" />
+    <link rel="stylesheet" href="./styles.css?v=eda10024" />
   </head>
   <body>
     <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zürich", "timetables": {"2022": {"version": "222e838e", "draft": false, "label": "Fahrplan 2022, Dienstag, 25. Oktober 2022"}, "2024": {"version": "282c4fc2", "draft": false, "label": "Fahrplan 2024, Dienstag, 22. Oktober 2024"}, "2026": {"version": "44c632cd", "draft": false, "label": "Fahrplan 2026, Dienstag, 20. Oktober 2026"}, "2027": {"version": "a46f2e0a", "draft": true, "label": "Fahrplanentwurf 2027, Dienstag, 23. November 2027"}}, "defaultTimetable": "2026", "history": [{"year": "2022", "draft": false, "day": "Dienstag, 25. Oktober 2022", "population": {"total": 717159, "45": 663291, "30": 420460, "15": 62452}, "jobs": {"total": 745860, "45": 722700, "30": 614290, "15": 224188}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14, "regionJobs": {"year": "2022", "total": 744728}}, {"year": "2024", "draft": false, "day": "Dienstag, 22. Oktober 2024", "population": {"total": 717159, "45": 656025, "30": 429785, "15": 78939}, "jobs": {"total": 767020, "45": 734631, "30": 624360, "15": 240103}, "within15": 34, "within30": 88, "railStations": 289, "tramLines": 16, "regionJobs": {"year": "2024", "total": 766117}}, {"year": "2026", "draft": false, "day": "Dienstag, 20. Oktober 2026", "population": {"total": 717159, "45": 645758, "30": 418346, "15": 81684}, "jobs": {"total": 767020, "45": 733297, "30": 620804, "15": 242314}, "within15": 34, "within30": 85, "railStations": 286, "tramLines": 19, "regionJobs": {"year": "2024", "total": 766117}}, {"year": "2027", "draft": true, "day": "Dienstag, 23. November 2027", "population": {"total": 717159, "45": 646908, "30": 429677, "15": 88222}, "jobs": {"total": 767020, "45": 731613, "30": 630007, "15": 241705}, "within15": 34, "within30": 89, "railStations": 280, "tramLines": 16, "regionJobs": {"year": "2024", "total": 766117}}], "center": "Zürich HB", "bikeVersion": "d16caca8", "streetsVersion": "6767497f", "busesVersion": "ebd60ce7", "h3Version": "89cb8803", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "Tram und Zug", "railStations": "Tram- und Bahnhaltestellen", "busNoun": "Bus und Schiff", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
@@ -137,9 +137,8 @@
     <main class="page">
       <section class="hero">
         <h1>ÖV in Zürich: ein grosser Schritt bis 2024, seither Stillstand</h1>
-        <p class="lede">
-          Vom durchschnittlichen Ort auf der Karte erreichte man mit dem ÖV 2024 innert 30 Minuten 16,5 % mehr Einwohner als 2022. Seither hat sich der Mittelwert kaum bewegt (−0,2 % bis 2026): Etwa gleich viele Orte gewannen, wie verloren, und 2026 bremsen Bauarbeiten das Netz. Die Karte unten färbt Zürich nach der Reisezeit ab Zürich HB, Fussweg und Wartezeit inbegriffen: Wechsle zwischen 2022, 2024, 2026 und 2027, ziehe den Start an einen beliebigen Ort oder klicke für ein Ziel.
-        </p>
+        <p class="lede">Von 2022 bis 2024 ist Zürich klar vernetzter geworden: Rund 17 % mehr Einwohner wurden in diesen zwei Jahren durch ÖV-Fahrten von 30 Minuten erschlossen. Seitdem hat sich der Mittelwert kaum verändert. Grossprojekte bremsen die Vernetzung der Stadt und der Agglomeration.</p>
+        <p class="lede">Die Karte unten färbt Zürich nach der Reisezeit ab Zürich HB, Fussweg und Wartezeit inbegriffen: Wechsle zwischen 2022, 2024, 2026 und 2027, ziehe den Start an einen beliebigen Ort oder klicke für ein Ziel.</p>
       </section>
 
       <section class="block" aria-labelledby="map-title">
@@ -466,11 +465,9 @@
       </section>
 
       <section class="block" aria-labelledby="faq-title">
-        <header class="block-head">
-          <h2 id="faq-title">Fragen</h2>
-          <span class="block-desc">Wie die Zeiten berechnet werden und woher die Daten stammen.</span>
-        </header>
-        <div class="faq-list">
+        <details class="expander faq-all">
+          <summary class="block-head"><h2 id="faq-title">Fragen</h2><span class="block-desc">Wie die Zeiten berechnet werden und woher die Daten stammen.</span></summary>
+          <div class="expander-body faq-list">
         <details class="expander faq"><summary>Wie lange dauert es, Zürich mit dem ÖV zu durchqueren?</summary><div class="expander-body"><p>Ab Zürich HB sind 34% der 286 Tram- und Bahnhaltestellen auf der Karte weniger als 15 Minuten entfernt und 85% weniger als 30 Minuten, Fussweg und Wartezeit inbegriffen. Am weitesten entfernt ist Felsenegg mit rund 58 Minuten.</p></div></details>
         <details class="expander faq"><summary>Woher stammen die Fahrpläne?</summary><div class="expander-body"><p>Aus dem offiziellen Schweizer Fahrplan von opentransportdata.swiss (GTFS), auf den Raum Zürich zugeschnitten, heruntergeladen am 5. Oktober 2026 und gültig bis 12. Dezember 2026. Die Zeiten sind jene von Dienstag, 20. Oktober 2026, zwischen 7 und 20 Uhr.</p></div></details>
         <details class="expander faq"><summary>Sind Busse enthalten?</summary><div class="expander-body"><p>Ja, als Option: «Bus und Schiff» unter der Karte ankreuzen. Standardmässig zählen nur Tram, S-Bahn und Züge, die Standseilbahnen und die Luftseilbahn Adliswil–Felsenegg. Wartezeiten an selten bedienten Haltestellen sind auf 15 Minuten begrenzt.</p></div></details>
@@ -497,7 +494,8 @@
             </dl>
           </div>
         </details>
-        </div>
+          </div>
+        </details>
       </section>
     </main>
 

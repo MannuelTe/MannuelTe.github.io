@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import statistics
 from datetime import date
 from pathlib import Path
 from string import Template
@@ -143,6 +144,7 @@ def header(base: str, home: str | None = None) -> str:
       <a class="brand" href="{home}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {esc(SITE_NAMES[LANG])}</a>
       <nav class="topbar-links" aria-label="{t("Main navigation", "Hauptnavigation")}">
         <a href="{home}#map-title">{t("Map", "Karte")}</a>
+        <a href="{home}#hex-title">{t("Everywhere", "Überall")}</a>
         <a href="{home}#history-title">{t("Over time", "Im Wandel")}</a>
         <a href="{home}#faq-title">{t("Questions", "Fragen")}</a>
         <a class="topbar-pill lang-switch" href="{switch}" hreflang="{other}" lang="{other}" title="{t("Deutsch", "English")}">{other.upper()}</a>
@@ -406,10 +408,137 @@ def reach_notes(city: dict) -> str:
     ])
 
 
-def history_notes(figures: list[dict]) -> str:
+def network_trend(city: dict) -> list[dict]:
+    """Residents within 30 min of the average starting point (every hexagon, with buses), year on year."""
+    path = SITE / "data" / f"{city['slug']}-h3.json"
+    if not path.exists():
+        return []
+    h3 = json.loads(path.read_text(encoding="utf-8"))
+    values = {year: h3["values"]["all"][year]["pop"]["30"] for year in h3["years"]}
+    trend = []
+    for before, after in zip(h3["years"], h3["years"][1:]):
+        a, b = values[before], values[after]
+        relative = [(y - x) / x for x, y in zip(a, b) if x]
+        trend.append({
+            "from": before,
+            "to": after,
+            "draft": bool(city["timetables"][after].get("draft")),
+            "change": 100 * (sum(b) / sum(a) - 1),
+            "up": round(100 * sum(r > 0.05 for r in relative) / len(relative)),
+            "down": round(100 * sum(r < -0.05 for r in relative) / len(relative)),
+        })
+    return trend
+
+
+def percent(value: float) -> str:
+    """+16.5 % / +16,5 %, with a real minus sign."""
+    return f"{'+' if value >= 0 else '−'}{num(round(abs(value), 1))} %"
+
+
+def trend_tiles(city: dict, trend: list[dict]) -> str:
+    if not trend:
+        return ""
+    tiles = []
+    for step in trend:
+        span = f"{step['from']} → {step['to']}" + (t(" (draft)", " (Entwurf)") if step["draft"] else "")
+        label = t(f"{span}: {step['up']} % of places reach over 5 % more, {step['down']} % over 5 % less",
+                  f"{span}: {step['up']} % der Orte erreichen über 5 % mehr, {step['down']} % über 5 % weniger")
+        tiles.append(f'          <div class="stat"><strong>{esc(percent(step["change"]))}</strong><span>{esc(label)}</span></div>')
+    note = t("Residents within 30 min of the average starting point, with buses (all hexagons of « Reach from everywhere » "
+             f"above). The insights below measure from {city['stats']['center']} only, where the 2026 construction work weighs more.",
+             "Einwohner innert 30 min vom durchschnittlichen Startpunkt aus, mit Bus (alle Sechsecke von «Erreichbarkeit von "
+             f"überall» oben). Die Einblicke darunter messen nur ab {city['stats']['center']}, wo die Bauarbeiten 2026 stärker ins Gewicht fallen.")
+    return ('        <div class="stat-grid trend-grid">\n' + "\n".join(tiles) + "\n        </div>\n"
+            f'        <p class="trend-note">{esc(note)}</p>')
+
+
+def hero_lede(city: dict, trend: list[dict], years: list[str]) -> str:
+    center = city["stats"]["center"]
+    if not trend:
+        return t(f"The map colours {city['name']} by travel time from {center} by public transport.",
+                 f"Die Karte färbt {city['name']} nach der Reisezeit ab {center} mit dem ÖV.")
+    first, rest = trend[0], trend[1:]
+    since = rest[0]
+    return t(
+        f"From the average place on the map, public transport reached {percent(first['change']).lstrip('+')} more residents within "
+        f"30 minutes in {first['to']} than in {first['from']}. Since then the average has hardly moved "
+        f"({percent(since['change'])} to {since['to']}): about as many places gained as lost, and in {since['to']} "
+        f"construction work holds the network back. The map below colours {city['name']} by travel time from {center}, "
+        f"walking and waiting included: switch between {', '.join(years[:-1])} and {years[-1]}, drag the start anywhere "
+        "or click to set a destination.",
+        f"Vom durchschnittlichen Ort auf der Karte erreichte man mit dem ÖV {first['to']} innert 30 Minuten "
+        f"{percent(first['change']).lstrip('+')} mehr Einwohner als {first['from']}. Seither hat sich der Mittelwert kaum bewegt "
+        f"({percent(since['change'])} bis {since['to']}): Etwa gleich viele Orte gewannen, wie verloren, und "
+        f"{since['to']} bremsen Bauarbeiten das Netz. Die Karte unten färbt {city['name']} nach der Reisezeit ab "
+        f"{center}, Fussweg und Wartezeit inbegriffen: Wechsle zwischen {', '.join(years[:-1])} und {years[-1]}, ziehe "
+        "den Start an einen beliebigen Ort oder klicke für ein Ziel.",
+    )
+
+
+def hex_notes(city: dict) -> str:
+    """How the hexagon maps are computed."""
+    path = SITE / "data" / f"{city['slug']}-h3.json"
+    if not path.exists():
+        print(f"  hexagon maps skipped: run build_h3.py {city['slug']} first")
+        return ""
+    h3 = json.loads(path.read_text(encoding="utf-8"))
+    count = len(h3["hexes"])
+    # How much the buses add inside the city: median over the Kreise hexagons, 30 min, default timetable.
+    year = city["defaultTimetable"]
+    rail, every = h3["values"]["rail"][year]["pop"]["30"], h3["values"]["all"][year]["pop"]["30"]
+    gains = sorted(every[i] / rail[i] - 1 for i, c in enumerate(h3["commune"])
+                   if c >= 0 and h3["communeNames"][c].startswith("Kreis") and rail[i])
+    bus_gain = round(100 * statistics.median(gains)) if gains else 0
+    return note_expander(t("How these maps are made", "Wie diese Karten entstehen"), [
+        t(f"The map is cut into {thousands(count)} hexagons of the H3 grid (resolution 9, about 0.1 km² each). From the "
+          "centre of each one, the same model as the map at the top computes the travel time to every 200 m cell, on "
+          "each timetable year: walk to the nearest stations, wait, ride, change, walk on, or walk the whole way.",
+          f"Die Karte ist in {thousands(count)} Sechsecke des H3-Rasters geteilt (Auflösung 9, je rund 0,1 km²). Vom "
+          "Mittelpunkt jedes Sechsecks berechnet dasselbe Modell wie die Karte oben die Reisezeit zu jeder 200-m-Zelle, "
+          "für jedes Fahrplanjahr: zu Fuss zu den nächsten Haltestellen, warten, fahren, umsteigen, weitergehen, oder "
+          "den ganzen Weg zu Fuss."),
+        t("A hexagon's colour is the number of residents (STATPOP 2024, the same in every year) or the land area within "
+          "the chosen travel time. Because residents are held fixed, every change between two years comes from the network.",
+          "Die Farbe eines Sechsecks ist die Zahl der Einwohner (STATPOP 2024, in jedem Jahr gleich) oder die Landfläche "
+          "innerhalb der gewählten Reisezeit. Weil die Einwohner fest bleiben, kommt jede Änderung zwischen zwei Jahren "
+          "vom Netz."),
+        t("« With buses » uses every line in the timetable, city buses, regional buses and lake boats included, as "
+          "with « Bus and boat » ticked on the map. Inside the city the buses matter most: from the median hexagon in "
+          f"the twelve Kreise they add {bus_gain}% more residents within 30 minutes ({year}). The other choice is the map's "
+          "default network, tram, S-Bahn and train only.",
+          "«Mit Bus» nutzt alle Linien im Fahrplan, Stadtbusse, Regionalbusse und Schiffe inbegriffen, wie mit "
+          "angekreuztem «Bus und Schiff» auf der Karte. In der Stadt zählen die Busse am meisten: Vom mittleren "
+          f"Sechseck in den zwölf Kreisen aus bringen sie {bus_gain}% mehr Einwohner innert 30 Minuten ({year}). Die andere "
+          "Wahl ist das Standardnetz der Karte, nur Tram, S-Bahn und Zug."),
+        t("The colour classes stay the same across years, so two years can be compared by eye. The change map counts "
+          "small differences as « about the same ».",
+          "Die Farbklassen bleiben über die Jahre gleich, so lassen sich zwei Jahre direkt vergleichen. Die "
+          "Änderungskarte zählt kleine Unterschiede als «etwa gleich»."),
+    ])
+
+
+def history_notes(figures: list[dict], trend: list[dict]) -> str:
     """Why residents within 30 min of the centre move between years, the 2026 dip in particular."""
     by_year = {f["year"]: f for f in figures}
-    paragraphs = [
+    paragraphs = []
+    if trend:
+        first, rest = trend[0], trend[1:]
+        flat = ", ".join(f"{percent(step['change'])} {step['from']}→{step['to']}" for step in rest)
+        paragraphs.append(t(
+            f"Across the whole map, almost all the gain came between {first['from']} and {first['to']} "
+            f"({percent(first['change'])} residents within 30 min of the average starting point); after that the "
+            f"average barely moves ({flat}). That period includes the Limmattalbahn's second stage (December 2022). "
+            "Since 2024 about as many places gained as lost: the 2026 timetable has the SZU construction and tram "
+            "diversions described below, and 2027 is a draft with fewer trips than the final timetable, so the plateau "
+            "is not yet a decline.",
+            f"Über die ganze Karte kam fast der gesamte Zuwachs zwischen {first['from']} und {first['to']} "
+            f"({percent(first['change'])} Einwohner innert 30 min vom durchschnittlichen Startpunkt); danach bewegt sich "
+            f"der Mittelwert kaum noch ({flat}). In diesen Zeitraum fällt die zweite Etappe der Limmattalbahn "
+            "(Dezember 2022). Seit 2024 gewannen etwa gleich viele Orte, wie verloren: Der Fahrplan 2026 enthält die "
+            "unten beschriebenen SZU-Bauarbeiten und Tram-Umleitungen, und 2027 ist ein Entwurf mit weniger Kursen als "
+            "der endgültige Fahrplan; das Plateau ist also noch kein Rückgang.",
+        ))
+    paragraphs += [
         t("Residents are held at STATPOP 2024 in every year, so a change in residents is a change in the network: a "
           "fall means part of the map takes longer to reach, not that people left. Jobs use the STATENT grid of each "
           "timetable year, so a change in jobs within reach combines the network and the growth or loss of jobs where "
@@ -529,10 +658,11 @@ def sources_block(city: dict) -> str:
            "GTFS has no line shapes); shown with « Bus and boat ».",
            "Aus den Bus- und Trolleybus-Routenrelationen von OpenStreetMap, über die Liniennummer dem Fahrplan zugeordnet "
            "(das Schweizer GTFS enthält keine Linienverläufe); sichtbar mit «Bus und Schiff».")),
-        (t("Address search", "Adresssuche"),
-         t("Live queries to the ", "Live-Abfragen an den ")
-         + f'<a href="https://api3.geo.admin.ch/services/sdiservices.html#search">{t("geo.admin.ch search service", "Suchdienst von geo.admin.ch")}</a> '
-         + t("(swisstopo) from your browser.", "(swisstopo) aus deinem Browser.")),
+        (t("Hexagons", "Sechsecke"),
+         t('<a href="https://h3geo.org/">H3</a> grid (Apache 2.0), resolution 9, via the h3 Python library; reach '
+           'computed by build_h3.py from the same timetables.',
+           '<a href="https://h3geo.org/">H3</a>-Raster (Apache 2.0), Auflösung 9, über die Python-Bibliothek h3; die '
+           'Erreichbarkeit berechnet build_h3.py aus denselben Fahrplänen.')),
         (t("Method", "Methode"),
          t(f'Fork of <a href="{UPSTREAM_URL}">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, '
            f'dates) in <a href="{GITHUB_URL}/tree/main/sources">sources/</a>.',
@@ -552,8 +682,6 @@ def sources_block(city: dict) -> str:
 
 # Fixed page text in English and German, substituted into templates/index.html as ${ui_<key>}.
 UI = {
-    "start_address": ("Starting address", "Startadresse"),
-    "start_here": ("Start here", "Hier starten"),
     "map": ("Map", "Karte"),
     "noscript": ("This interactive map needs JavaScript to compute travel times.",
                  "Diese interaktive Karte braucht JavaScript, um die Reisezeiten zu berechnen."),
@@ -597,8 +725,8 @@ UI = {
     "every": ("Every", "Takt"),
     "official_data": ("Official data", "Offizielle Daten"),
     "over_time": ("The network over time", "Das Netz im Wandel"),
-    "over_time_desc": ("The same model on each year's official timetable; residents held at 2024, jobs from each year's STATENT.",
-                       "Dasselbe Modell auf dem offiziellen Fahrplan jedes Jahres; Einwohner auf Stand 2024, Arbeitsplätze aus dem STATENT des Jahres."),
+    "over_time_desc": ("A big step up to 2024, flat since. Same model on each year's official timetable; residents held at 2024.",
+                       "Bis 2024 ein grosser Schritt, seither flach. Dasselbe Modell auf dem offiziellen Fahrplan jedes Jahres; Einwohner auf Stand 2024."),
     "insights": ("Insights", "Einblicke"),
     "prev_insight": ("Previous insight", "Vorheriger Einblick"),
     "next_insight": ("Next insight", "Nächster Einblick"),
@@ -611,6 +739,15 @@ UI = {
     "residents_30": ("Residents within 30 min", "Einwohner innert 30 min"),
     "jobs_30": ("Jobs within 30 min", "Arbeitsplätze innert 30 min"),
     "jobs_region": ("Jobs in the region", "Arbeitsplätze in der Region"),
+    "everywhere": ("Reach from everywhere", "Erreichbarkeit von überall"),
+    "everywhere_desc": ("Every hexagon is a starting point: what you reach from there by public transport.",
+                        "Jedes Sechseck ist ein Startpunkt: was man von dort mit dem ÖV erreicht."),
+    "all_lines": ("With buses", "Mit Bus"),
+    "area": ("Area", "Fläche"),
+    "from_year": ("From", "Von"),
+    "to_year": ("To", "Bis"),
+    "hex_hint": ("Click a hexagon to start the map at the top from there.",
+                 "Klicke auf ein Sechseck, um die Karte oben von dort aus zu zeigen."),
     "questions": ("Questions", "Fragen"),
     "questions_desc": ("How the times are computed, and where the data comes from.",
                        "Wie die Zeiten berechnet werden und woher die Daten stammen."),
@@ -628,10 +765,10 @@ def render_page(template: Template, city: dict) -> str:
     stats = city["stats"]
     center = stats["center"]
     description = t(
-        f"Travel time map of {city['name']} by tram, S-Bahn and bus: pick a starting point and the whole city is coloured "
-        "by how long it takes to get there.",
-        f"Reisezeitkarte von {city['name']} mit Tram, S-Bahn und Bus: Wähle einen Startpunkt, und die ganze Stadt wird "
-        "danach eingefärbt, wie lange es bis dorthin dauert.",
+        f"How public transport in {city['name']} changed from 2022 to 2027: travel time maps by tram, S-Bahn and bus, "
+        "and the residents within reach of every place on the map, year by year.",
+        f"Wie sich der ÖV in {city['name']} von 2022 bis 2027 verändert hat: Reisezeitkarten mit Tram, S-Bahn und Bus "
+        "und die erreichbaren Einwohner von jedem Ort der Karte aus, Jahr für Jahr.",
     )
     faq = city_faq(city)
     graph = [
@@ -683,6 +820,7 @@ def render_page(template: Template, city: dict) -> str:
         for line in table_lines
     )
     history_rows, history_note, timetables, figures = history(city)
+    trend = network_trend(city)
     year_buttons = "\n".join(
         f'              <button type="button" data-year="{year}" aria-pressed="{str(year == city["defaultTimetable"]).lower()}">{year}</button>'
         for year in timetables
@@ -697,6 +835,7 @@ def render_page(template: Template, city: dict) -> str:
         "bikeVersion": short_hash(SITE / "data" / f"{city['slug']}-bike.json"),
         "streetsVersion": short_hash(SITE / "data" / f"{city['slug']}-streets.json"),
         "busesVersion": short_hash(SITE / "data" / f"{city['slug']}-buses.json"),
+        "h3Version": short_hash(SITE / "data" / f"{city['slug']}-h3.json"),
         "defaultFrom": city["defaultFrom"],
         "railNoun": city["railNoun"],
         "railStations": city["railStations"],
@@ -710,16 +849,9 @@ def render_page(template: Template, city: dict) -> str:
         "footer": footer(city),
         "base": base,
         "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
-        "headline": esc(city["title"]),
-        "ui_lede": esc(t(
-            "Choose any start and destination on the map below and it is coloured by the time it takes to get there or "
-            "to come back from there. Public transport can include buses and boats in the periphery, or be compared with biking.",
-            "Wähle auf der Karte unten einen beliebigen Start und ein Ziel: Die Karte färbt sich nach der Zeit, die es "
-            "braucht, um dorthin oder von dort zurück zu kommen. Der ÖV kann in der Agglomeration auch Busse und Schiffe "
-            "einbeziehen oder mit dem Velo verglichen werden.",
-        )),
-        "ui_search_placeholder": esc(t(f"Start from an address… (e.g. {city['searchExample']})",
-                                       f"Von einer Adresse starten… (z. B. {city['searchExample']})")),
+        "headline": esc(t(f"{city['name']}'s public transport: a big step up to 2024, flat since",
+                          f"ÖV in {city['name']}: ein grosser Schritt bis 2024, seither Stillstand")),
+        "ui_lede": esc(hero_lede(city, trend, list(timetables))),
         "ui_in_numbers": esc(t(f"{city['name']} in numbers", f"{city['name']} in Zahlen")),
         "ui_in_numbers_desc": esc(t(f"From {center}, on a weekday of the {city['defaultTimetable']} timetable.",
                                     f"Ab {center}, an einem Werktag des Fahrplans {city['defaultTimetable']}.")),
@@ -733,7 +865,9 @@ def render_page(template: Template, city: dict) -> str:
         "history_rows": history_rows,
         "history_note": esc(history_note),
         "reach_notes": reach_notes(city),
-        "history_notes": history_notes(figures),
+        "history_notes": history_notes(figures, trend),
+        "trend_tiles": trend_tiles(city, trend),
+        "hex_notes": hex_notes(city),
         "faq_html": faq_block(faq) + "\n" + sources_block(city),
         "styles_version": short_hash(SITE / "styles.css"),
         "app_version": short_hash(SITE / "app.js"),

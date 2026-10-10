@@ -15,13 +15,6 @@ ${header}
         <p class="lede">
           ${ui_lede}
         </p>
-        <form id="searchForm" class="search" role="search" autocomplete="off">
-          <label class="visually-hidden" for="searchInput">${ui_start_address}</label>
-          <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
-          <input id="searchInput" type="search" placeholder="${ui_search_placeholder}" />
-          <button type="submit" class="button primary">${ui_start_here}</button>
-          <ul id="searchResults" class="search-results" hidden></ul>
-        </form>
       </section>
 
       <section class="block" aria-labelledby="map-title">
@@ -119,21 +112,6 @@ ${year_buttons}
         </div>
       </section>
 
-      <section class="block" aria-labelledby="reach-title">
-        <header class="block-head">
-          <h2 id="reach-title">${ui_within_reach}</h2>
-          <span class="block-desc">${ui_within_reach_desc}</span>
-        </header>
-        <div class="card">
-          <p id="reach" class="reach"></p>
-          <table id="reachCounts" class="data-table reach-counts">
-            <thead><tr><th scope="col">${ui_travel_time}</th><th scope="col">${ui_residents}</th><th scope="col">${ui_jobs}</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-${reach_notes}
-      </section>
-
       <section id="yearsPanel" class="block" aria-labelledby="years-title">
         <header class="block-head">
           <h2 id="years-title">${ui_across_years}</h2>
@@ -142,25 +120,81 @@ ${reach_notes}
         <div id="yearsBody" class="card years-body"></div>
       </section>
 
-      <section class="block" aria-labelledby="stats-title">
+      <section id="hexPanel" class="block" aria-labelledby="hex-title">
         <header class="block-head">
-          <h2 id="stats-title">${ui_in_numbers}</h2>
-          <span class="block-desc">${ui_in_numbers_desc}</span>
+          <h2 id="hex-title">${ui_everywhere}</h2>
+          <span class="block-desc">${ui_everywhere_desc}</span>
         </header>
-        <div class="stat-grid">
-${stat_tiles}
-        </div>
-        <details class="expander">
-          <summary>${ui_lines_summary} <span class="muted">${network}</span></summary>
-          <div class="expander-body">
-            <table class="data-table">
-              <thead><tr><th scope="col">${ui_line}</th><th scope="col">${ui_stops}</th><th scope="col">${ui_every}</th><th scope="col">${ui_official_data}</th></tr></thead>
-              <tbody>
-${line_rows}
-              </tbody>
-            </table>
+        <div class="controls hex-controls">
+          <div class="control-group">
+            <span class="control-label">${ui_network}</span>
+            <div id="hexNetwork" class="segmented" role="group" aria-label="${ui_network}">
+              <button type="button" data-network="all" aria-pressed="true">${ui_all_lines}</button>
+              <button type="button" data-network="rail" aria-pressed="false">${rail_label}</button>
+            </div>
           </div>
-        </details>
+          <div class="control-group">
+            <span class="control-label">${ui_measure}</span>
+            <div id="hexMetric" class="segmented" role="group" aria-label="${ui_measure}">
+              <button type="button" data-metric="pop" aria-pressed="true">${ui_residents}</button>
+              <button type="button" data-metric="area" aria-pressed="false">${ui_area}</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">${ui_travel_time}</span>
+            <div id="hexLimit" class="segmented" role="group" aria-label="${ui_travel_time}">
+              <button type="button" data-limit="15" aria-pressed="false">15 min</button>
+              <button type="button" data-limit="30" aria-pressed="true">30 min</button>
+              <button type="button" data-limit="45" aria-pressed="false">45 min</button>
+            </div>
+          </div>
+        </div>
+        <div class="hex-grid">
+          <figure class="card hex-card">
+            <figcaption class="hex-head">
+              <strong id="hexTitleA"></strong>
+              <div class="control-group">
+                <span class="control-label">${ui_timetable}</span>
+                <div id="hexYear" class="segmented" role="group" aria-label="${ui_timetable_year}"></div>
+              </div>
+            </figcaption>
+            <div class="hex-stage">
+              <canvas id="hexMapA" role="img"></canvas>
+              <div class="map-buttons hex-buttons">
+                <button type="button" class="icon-button" data-hex-zoom="in" aria-label="${ui_zoom_in}">+</button>
+                <button type="button" class="icon-button" data-hex-zoom="out" aria-label="${ui_zoom_out}">−</button>
+                <button type="button" class="icon-button" data-hex-zoom="reset" aria-label="${ui_recentre}">⌖</button>
+              </div>
+              <div class="hex-card-tip" role="status" hidden></div>
+            </div>
+            <div id="hexLegendA" class="hex-legend" aria-hidden="true"></div>
+            <p id="hexSummaryA" class="hex-summary"></p>
+          </figure>
+          <figure class="card hex-card">
+            <figcaption class="hex-head">
+              <strong id="hexTitleB"></strong>
+              <div class="control-group">
+                <span class="control-label">${ui_from_year}</span>
+                <div id="hexFrom" class="segmented" role="group" aria-label="${ui_from_year}"></div>
+                <span class="control-label">${ui_to_year}</span>
+                <div id="hexTo" class="segmented" role="group" aria-label="${ui_to_year}"></div>
+              </div>
+            </figcaption>
+            <div class="hex-stage">
+              <canvas id="hexMapB" role="img"></canvas>
+              <div class="map-buttons hex-buttons">
+                <button type="button" class="icon-button" data-hex-zoom="in" aria-label="${ui_zoom_in}">+</button>
+                <button type="button" class="icon-button" data-hex-zoom="out" aria-label="${ui_zoom_out}">−</button>
+                <button type="button" class="icon-button" data-hex-zoom="reset" aria-label="${ui_recentre}">⌖</button>
+              </div>
+              <div class="hex-card-tip" role="status" hidden></div>
+            </div>
+            <div id="hexLegendB" class="hex-legend" aria-hidden="true"></div>
+            <p id="hexSummaryB" class="hex-summary"></p>
+          </figure>
+        </div>
+        <p class="hex-hint">${ui_hex_hint}</p>
+${hex_notes}
       </section>
 
       <section class="block" aria-labelledby="history-title">
@@ -168,6 +202,7 @@ ${line_rows}
           <h2 id="history-title">${ui_over_time}</h2>
           <span class="block-desc">${ui_over_time_desc}</span>
         </header>
+${trend_tiles}
         <div id="insights" class="insights">
           <div class="insights-head">
             <h3>${ui_insights} <span id="insCount" class="muted"></span></h3>
@@ -210,6 +245,42 @@ ${history_rows}
           </details>
         </div>
 ${history_notes}
+      </section>
+
+      <section class="block" aria-labelledby="reach-title">
+        <header class="block-head">
+          <h2 id="reach-title">${ui_within_reach}</h2>
+          <span class="block-desc">${ui_within_reach_desc}</span>
+        </header>
+        <div class="card">
+          <p id="reach" class="reach"></p>
+          <table id="reachCounts" class="data-table reach-counts">
+            <thead><tr><th scope="col">${ui_travel_time}</th><th scope="col">${ui_residents}</th><th scope="col">${ui_jobs}</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+${reach_notes}
+      </section>
+
+      <section class="block" aria-labelledby="stats-title">
+        <header class="block-head">
+          <h2 id="stats-title">${ui_in_numbers}</h2>
+          <span class="block-desc">${ui_in_numbers_desc}</span>
+        </header>
+        <div class="stat-grid">
+${stat_tiles}
+        </div>
+        <details class="expander">
+          <summary>${ui_lines_summary} <span class="muted">${network}</span></summary>
+          <div class="expander-body">
+            <table class="data-table">
+              <thead><tr><th scope="col">${ui_line}</th><th scope="col">${ui_stops}</th><th scope="col">${ui_every}</th><th scope="col">${ui_official_data}</th></tr></thead>
+              <tbody>
+${line_rows}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
       <section class="block" aria-labelledby="faq-title">

@@ -8,7 +8,6 @@ const t = (en, de) => (LANG === "de" ? de : en);
 const LOCALE = t("en", "de-CH");
 // One bundle per timetable year (network history): data/<city>-<year>.json.
 const dataUrl = (year) => new URL(`./data/${CITY.slug}-${year}.json?v=${CITY.timetables[year].version}`, import.meta.url);
-const GEOCODER_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer";
 
 const DEFAULT_FROM = CITY.defaultFrom;
 const MODE_LABELS = {
@@ -964,7 +963,7 @@ function drawMarker(point, color, label) {
   const left = clamp(x - width / 2, 6, app.size.width - width - 6);
   const top = y - 42;
   ctx.beginPath();
-  ctx.roundRect(left, top, width, 22, 7);
+  ctx.rect(left, top, width, 22);
   ctx.fillStyle = color;
   ctx.fill();
   ctx.fillStyle = "#fff";
@@ -1763,131 +1762,575 @@ $("share").addEventListener("click", async () => {
   }
 });
 
-// --- Address search (geo.admin.ch, swisstopo) --------------------------------
+// --- Reach from everywhere: H3 hexagons, one starting point each (build_h3.py) ----------------------------
 
-const searchInput = $("searchInput");
-const searchResults = $("searchResults");
-let searchTimer = null;
-let searchController = null;
+const hexUrl = () => new URL(`./data/${CITY.slug}-h3.json?v=${CITY.h3Version}`, import.meta.url);
+// Reach: light → dark, pale gold to the indigo of Zürich blue (lightness falls at every step). Change: red (loss)
+// and blue (gain) around a neutral grey, so the two maps never share a colour.
+const HEX_SEQUENTIAL = ["#fcf0b4", "#fdc97a", "#f99a5e", "#e8665f", "#c4407f", "#8a2a96", "#3a0f8c"];
+const HEX_LOSS = ["#a32422", "#e34948", "#f6b8b1"];
+const HEX_GAIN = ["#9ec5f4", "#3987e5", "#184f95"];
+const HEX_NEUTRAL = "#f0efec";
 
-function normalize(text) {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+const hex = {
+  data: null,
+  network: "all",
+  metric: "pop",
+  limit: "30",
+  year: CITY.defaultTimetable,
+  from: Object.keys(CITY.timetables)[0],
+  to: CITY.defaultTimetable,
+  centres: null,
+  maps: {},
+  hover: -1, // the hexagon under the pointer, outlined on both maps
+};
+
+/** A hexagon's value: residents, or km² of land, within the chosen time. */
+function hexValues(year) {
+  const values = hex.data.values[hex.network][year];
+  return hex.metric === "pop" ? values.pop[hex.limit] : values.cells[hex.limit].map((n) => n * hex.data.cellKm2);
 }
 
-/** Arrêts de tram dont le nom contient tous les mots tapés. */
-function searchStops(query) {
-  const words = normalize(query).split(" ");
-  return app.data.stations
-    .filter((station) => station.rail && words.every((word) => normalize(station.name).includes(word)))
-    .slice(0, 3)
-    .map((station) => ({
-      label: station.name,
-      context: `Stop · ${station.routes
-        .filter((id) => app.data.routeInfo[id]?.rail)
-        .map((id) => routeLabel(id))
-        .join(", ")}`,
-      point: station.point,
-    }));
+function hexFormat(value) {
+  if (hex.metric === "pop") return new Intl.NumberFormat(LOCALE).format(Math.round(value));
+  return `${km2Number(value)} km²`;
 }
 
-async function searchAddress(query) {
-  const stops = searchStops(query);
-  searchController?.abort();
-  searchController = new AbortController();
-  // The search box only filters with a bounding box in Swiss coordinates (LV95); results still carry lat/lon.
-  const params = new URLSearchParams({
-    searchText: query,
-    type: "locations",
-    origins: "address,gazetteer,zipcode",
-    limit: "8",
-    sr: "2056",
-    bbox: CITY.searchBbox.join(","),
+/** Areas with a decimal comma in German, like the rest of the page (de-CH formatting would give a point). */
+function km2Number(value) {
+  const digits = Math.abs(value) < 1 ? 2 : Math.abs(value) < 10 ? 1 : 0;
+  const text = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: digits }).format(value);
+  return LANG === "de" ? text.replace(".", ",") : text;
+}
+
+function hexFormatShort(value) {
+  if (hex.metric === "pop") return new Intl.NumberFormat(LOCALE).format(value);
+  return `${km2Number(value)} km²`;
+}
+
+/** Rounded to two significant digits, so legend breaks read as round numbers. */
+function nice(value) {
+  if (!value) return 0;
+  const step = 10 ** (Math.floor(Math.log10(Math.abs(value))) - 1);
+  return Math.round(value / step) * step;
+}
+
+function quantile(sorted, q) {
+  return sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
+}
+
+/** Class breaks shared by every year (and every pair of years), so maps can be compared by eye. */
+function hexBreaks() {
+  const years = hex.data.years;
+  const all = years.flatMap((year) => hexValues(year)).sort((a, b) => a - b);
+  const sequential = [];
+  for (let k = 1; k < HEX_SEQUENTIAL.length; k += 1) {
+    const value = nice(quantile(all, k / HEX_SEQUENTIAL.length));
+    if (!sequential.length || value > sequential.at(-1)) sequential.push(value);
+  }
+  const changes = [];
+  years.forEach((a, i) => years.slice(i + 1).forEach((b) => {
+    const before = hexValues(a);
+    hexValues(b).forEach((value, k) => changes.push(Math.abs(value - before[k])));
+  }));
+  // Thresholds from the places that changed at all (many do not, at 15 min), and never below one unit:
+  // one resident, or one 200 m cell of land.
+  const moved = changes.filter((value) => value > 0).sort((a, b) => a - b);
+  const unit = hex.metric === "pop" ? 1 : hex.data.cellKm2;
+  const diverging = [];
+  for (const q of [0.3, 0.7, 0.92]) {
+    const value = Math.max(unit, nice(quantile(moved, q)), (diverging.at(-1) ?? 0) + unit);
+    diverging.push(Math.round(value / unit) * unit);
+  }
+  return { sequential, diverging };
+}
+
+function sequentialColor(value, breaks) {
+  let k = 0;
+  while (k < breaks.length && value >= breaks[k]) k += 1;
+  return HEX_SEQUENTIAL[k];
+}
+
+function changeColor(delta, [t1, t2, t3]) {
+  if (Math.abs(delta) < t1) return HEX_NEUTRAL;
+  const arm = delta > 0 ? HEX_GAIN : HEX_LOSS;
+  const size = Math.abs(delta);
+  const step = size >= t3 ? 2 : size >= t2 ? 1 : 0;
+  return delta > 0 ? arm[step] : arm[2 - step];
+}
+
+// Both maps share one view: panning or zooming one moves the other, so a place can be compared side by side.
+const HEX_MAX_ZOOM = 12;
+const hexView = { zoom: 1, cx: 0, cy: 0 };
+const hexPointers = new Map();
+let hexGesture = null; // { map, start: [x, y], view, distance, moved }
+let hexFrame = false;
+
+function requestHexDraw() {
+  if (hexFrame) return;
+  hexFrame = true;
+  requestAnimationFrame(() => {
+    hexFrame = false;
+    Object.values(hex.maps).forEach(drawHexMap);
   });
-  let payload = { results: [] };
-  try {
-    const response = await fetch(`${GEOCODER_URL}?${params}`, { signal: searchController.signal });
-    payload = await response.json();
-  } catch (error) {
-    if (error.name === "AbortError" || !stops.length) throw error;
-  }
-  // Labels come as HTML (« Bahnhofstrasse 1 <b>8001 Zürich</b> »): street first, the bold part as context.
-  const plain = (html) => new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
-  const addresses = (payload.results ?? [])
-    .map(({ attrs }) => {
-      const [street, place] = attrs.label.split("<b>");
-      const title = plain(street) || plain(attrs.label);
-      return { label: title, context: place ? plain(`<b>${place}`) : attrs.origin, point: toWorld(attrs.lat, attrs.lon) };
-    })
-    .filter((result) => isOnLand(result.point));
-  return [...stops, ...addresses].slice(0, 7);
 }
 
-function showResults(results) {
-  searchResults.replaceChildren(
-    ...results.map((result) => {
-      const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = result.label;
-      const context = document.createElement("small");
-      context.textContent = result.context;
-      button.append(context);
-      button.addEventListener("click", () => chooseResult(result));
-      item.append(button);
-      return item;
-    }),
-  );
-  searchResults.hidden = !results.length;
+function resetHexView() {
+  if (hex.maps.A) setHexHover(-1);
+  const [minX, minY, maxX, maxY] = hex.data.bounds;
+  Object.assign(hexView, { zoom: 1, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 });
+  requestHexDraw();
 }
 
-function chooseResult(result) {
-  searchResults.hidden = true;
-  searchInput.value = result.label;
-  setFrom(result.point, result.label);
-  const [sx, sy] = project(result.point);
-  if (sx < 0 || sy < 0 || sx > app.size.width || sy > app.size.height) {
-    [app.view.cx, app.view.cy] = result.point;
-    requestRender();
-  }
+/** Keep the centre over the map: never pan the hexagons out of sight. */
+function clampHexView() {
+  const [minX, minY, maxX, maxY] = hex.data.bounds;
+  hexView.zoom = clamp(hexView.zoom, 1, HEX_MAX_ZOOM);
+  hexView.cx = clamp(hexView.cx, minX, maxX);
+  hexView.cy = clamp(hexView.cy, minY, maxY);
 }
 
-searchInput.addEventListener("input", () => {
-  clearTimeout(searchTimer);
-  const query = searchInput.value.trim();
-  if (query.length < 3) {
-    searchResults.hidden = true;
+/** Pixels per metre at zoom 1: the whole map fits the canvas width. */
+function hexFitScale(width) {
+  const [minX, , maxX] = hex.data.bounds;
+  return (width - 8) / (maxX - minX);
+}
+
+function hexToWorld(map, px, py) {
+  const { scale, width, height } = map.transform;
+  return [hexView.cx + (px - width / 2) / scale, hexView.cy - (py - height / 2) / scale];
+}
+
+function zoomHexAt(map, factor, px, py) {
+  setHexHover(-1);
+  const before = hexToWorld(map, px, py);
+  hexView.zoom *= factor;
+  clampHexView();
+  const scale = hexFitScale(map.transform.width) * hexView.zoom;
+  hexView.cx = before[0] - (px - map.transform.width / 2) / scale;
+  hexView.cy = before[1] + (py - map.transform.height / 2) / scale;
+  clampHexView();
+  requestHexDraw();
+}
+
+function localPoint(map, event) {
+  const rect = map.canvas.getBoundingClientRect();
+  return [event.clientX - rect.left, event.clientY - rect.top];
+}
+
+function setHexHover(index, source = null, event = null) {
+  if (index === hex.hover) {
+    if (source && index >= 0) placeHexCard(source, event);
     return;
   }
-  searchTimer = setTimeout(async () => {
-    try {
-      showResults(await searchAddress(query));
-    } catch (error) {
-      if (error.name !== "AbortError") searchResults.hidden = true;
-    }
-  }, 250);
-});
-
-$("searchForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const query = searchInput.value.trim();
-  if (query.length < 3) return;
-  try {
-    const results = await searchAddress(query);
-    if (results.length) chooseResult(results[0]);
-    else toast(t("No address found on the map.", "Keine Adresse auf der Karte gefunden."));
-  } catch (error) {
-    if (error.name !== "AbortError") toast(t("The address search is not responding.", "Die Adresssuche antwortet nicht."));
+  hex.hover = index;
+  requestHexDraw();
+  if (index < 0 || !source) {
+    hideHexCards();
+    return;
   }
-});
+  showHexCard(source, index, event);
+}
 
-document.addEventListener("click", (event) => {
-  if (!$("searchForm").contains(event.target)) searchResults.hidden = true;
-});
+function setupHexMap(key) {
+  const canvasEl = $(`hexMap${key}`);
+  const stageEl = canvasEl.parentElement;
+  const map = { key, canvas: canvasEl, stage: stageEl, card: stageEl.querySelector(".hex-card-tip"), transform: null };
+  new ResizeObserver(() => drawHexMap(map)).observe(stageEl);
+
+  canvasEl.addEventListener("pointerdown", (event) => {
+    canvasEl.setPointerCapture(event.pointerId);
+    hexPointers.set(event.pointerId, localPoint(map, event));
+    const points = [...hexPointers.values()];
+    hexGesture = {
+      map,
+      start: points.length === 1 ? points[0] : [(points[0][0] + points[1][0]) / 2, (points[0][1] + points[1][1]) / 2],
+      view: { ...hexView },
+      distance: points.length === 2 ? Math.hypot(points[0][0] - points[1][0], points[0][1] - points[1][1]) : 0,
+      moved: hexGesture?.moved || points.length > 1,
+    };
+  });
+  canvasEl.addEventListener("pointermove", (event) => {
+    const point = localPoint(map, event);
+    if (!hexPointers.has(event.pointerId)) {
+      if (event.pointerType === "mouse") setHexHover(hexAt(map, point), map, event);
+      return;
+    }
+    hexPointers.set(event.pointerId, point);
+    const gesture = hexGesture;
+    if (!gesture || gesture.map !== map) return;
+    const points = [...hexPointers.values()];
+    const centre = points.length === 1 ? points[0] : [(points[0][0] + points[1][0]) / 2, (points[0][1] + points[1][1]) / 2];
+    const dx = centre[0] - gesture.start[0];
+    const dy = centre[1] - gesture.start[1];
+    if (!gesture.moved && Math.hypot(dx, dy) < CLICK_SLOP[pointerKind(event)]) return;
+    gesture.moved = true;
+    setHexHover(-1);
+    Object.assign(hexView, gesture.view);
+    if (points.length === 2 && gesture.distance) {
+      const distance = Math.hypot(points[0][0] - points[1][0], points[0][1] - points[1][1]);
+      hexView.zoom = gesture.view.zoom * (distance / gesture.distance);
+      clampHexView();
+    }
+    const scale = hexFitScale(map.transform.width) * hexView.zoom;
+    const startScale = hexFitScale(map.transform.width) * gesture.view.zoom;
+    // Keep the world point first under the fingers (or the cursor) under them.
+    const anchor = [gesture.view.cx + (gesture.start[0] - map.transform.width / 2) / startScale,
+                    gesture.view.cy - (gesture.start[1] - map.transform.height / 2) / startScale];
+    hexView.cx = anchor[0] - (centre[0] - map.transform.width / 2) / scale;
+    hexView.cy = anchor[1] + (centre[1] - map.transform.height / 2) / scale;
+    clampHexView();
+    requestHexDraw();
+  });
+  const end = (event) => {
+    if (!hexPointers.has(event.pointerId)) return;
+    hexPointers.delete(event.pointerId);
+    const gesture = hexGesture;
+    if (hexPointers.size) {
+      // One finger lifted from a pinch: carry on panning with the other.
+      const [point] = hexPointers.values();
+      hexGesture = { map, start: point, view: { ...hexView }, distance: 0, moved: true };
+      return;
+    }
+    hexGesture = null;
+    if (event.type !== "pointerup" || !gesture || gesture.moved) return;
+    const index = hexAt(map, localPoint(map, event));
+    if (index < 0) return;
+    if (event.pointerType !== "mouse" && hex.hover !== index) {
+      // Touch: a first tap shows the card, a second tap on the same hexagon moves the map's start there.
+      setHexHover(index, map, event);
+      return;
+    }
+    if (setFrom(hex.centres[index])) {
+      setHexHover(-1);
+      requestRender();
+      // Not smooth: the sections above re-render for the new start and would cut a smooth scroll short.
+      stage.scrollIntoView({ block: "center" });
+    }
+  };
+  canvasEl.addEventListener("pointerup", end);
+  canvasEl.addEventListener("pointercancel", end);
+  canvasEl.addEventListener("pointerleave", (event) => {
+    if (event.pointerType === "mouse" && !hexPointers.size) setHexHover(-1);
+  });
+  canvasEl.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const [x, y] = localPoint(map, event);
+    zoomHexAt(map, Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), x, y);
+  }, { passive: false });
+  canvasEl.addEventListener("dblclick", (event) => {
+    const [x, y] = localPoint(map, event);
+    zoomHexAt(map, 2, x, y);
+  });
+  const centre = () => [map.transform.width / 2, map.transform.height / 2];
+  stageEl.querySelector("[data-hex-zoom='in']").addEventListener("click", () => zoomHexAt(map, 1.6, ...centre()));
+  stageEl.querySelector("[data-hex-zoom='out']").addEventListener("click", () => zoomHexAt(map, 1 / 1.6, ...centre()));
+  stageEl.querySelector("[data-hex-zoom='reset']").addEventListener("click", resetHexView);
+  hex.maps[key] = map;
+}
+
+/** The hexagon under a canvas point: the nearest centre, within a hexagon's reach. */
+function hexAt(map, [px, py]) {
+  if (!map.transform || !hex.data) return -1;
+  const [x, y] = hexToWorld(map, px, py);
+  let best = -1;
+  let bestDistance = 260 ** 2; // metres²: a little more than a resolution-9 hexagon's radius
+  hex.centres.forEach(([cx, cy], index) => {
+    const d = (cx - x) ** 2 + (cy - y) ** 2;
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = index;
+    }
+  });
+  return best;
+}
+
+function hexPlace(index) {
+  const commune = hex.data.commune[index];
+  return commune >= 0 ? hex.data.communeNames[commune] : "";
+}
+
+function hexLabel() {
+  const what = hex.metric === "pop" ? t("Residents", "Einwohner") : t("Area", "Fläche");
+  return t(`${what} within ${hex.limit} min`, `${what} innert ${hex.limit} min`);
+}
+
+/** The hover card: the change between the two compared years is the headline, the values come second. */
+function showHexCard(source, index, event) {
+  const before = hexValues(hex.from)[index];
+  const after = hexValues(hex.to)[index];
+  const now = hexValues(hex.year)[index];
+  const delta = after - before;
+  const [t1] = hex.breaks.diverging;
+  const direction = Math.abs(delta) < t1 ? "flat" : delta > 0 ? "up" : "down";
+  const arrow = { up: "▲", down: "▼", flat: "■" }[direction];
+  const percent = before ? delta / before : 0;
+  const percentText = before
+    ? `${percent > 0 ? "+" : percent < 0 ? "−" : "±"}${new Intl.NumberFormat(LOCALE, { maximumFractionDigits: Math.abs(percent) < 0.1 ? 1 : 0 }).format(Math.abs(percent) * 100)} %`
+    : "";
+  const verdict = {
+    up: t("reaches more", "erreicht mehr"),
+    down: t("reaches less", "erreicht weniger"),
+    flat: t("about the same", "etwa gleich"),
+  }[direction];
+  const top = Math.max(before, after, 1);
+  const card = source.card;
+  card.innerHTML = `
+    <div class="tip-place">${hexPlace(index) || "—"}</div>
+    <div class="tip-label">${hexLabel()}, ${hex.from} → ${hex.to}</div>
+    <div class="tip-delta" data-direction="${direction}"><span class="tip-arrow" aria-hidden="true">${arrow}</span>${signed(delta, hexFormat)}</div>
+    <div class="tip-verdict">${percentText ? `${percentText} · ` : ""}${verdict}</div>
+    <div class="tip-bars">
+      <span class="tip-year">${hex.from}</span><span class="tip-bar"><i style="width:${(100 * before) / top}%"></i></span><span class="tip-value">${hexFormat(before)}</span>
+      <span class="tip-year">${hex.to}</span><span class="tip-bar" data-direction="${direction}"><i style="width:${(100 * after) / top}%"></i></span><span class="tip-value">${hexFormat(after)}</span>
+    </div>
+    ${hex.year !== hex.from && hex.year !== hex.to ? `<div class="tip-foot">${hex.year}: ${hexFormat(now)}</div>` : ""}
+    <div class="tip-foot">${t("Click to start the map here", "Klicken, um die Karte hier zu starten")}</div>`;
+  hideHexCards(source);
+  card.hidden = false;
+  placeHexCard(source, event);
+}
+
+function placeHexCard(source, event) {
+  const card = source.card;
+  if (card.hidden) return;
+  const rect = source.stage.getBoundingClientRect();
+  const x = event ? event.clientX - rect.left : rect.width / 2;
+  const y = event ? event.clientY - rect.top : rect.height / 2;
+  const width = card.offsetWidth;
+  const height = card.offsetHeight;
+  // Beside the cursor, on the side with room, so the hexagon itself stays visible.
+  const left = x + 18 + width < rect.width ? x + 18 : x - 18 - width;
+  card.style.left = `${clamp(left, 4, rect.width - width - 4)}px`;
+  card.style.top = `${clamp(y - height / 2, 4, Math.max(4, rect.height - height - 4))}px`;
+}
+
+function hideHexCards(except = null) {
+  Object.values(hex.maps).forEach((map) => {
+    if (map !== except) map.card.hidden = true;
+  });
+}
+
+function drawHexMap(map) {
+  if (!hex.data) return;
+  const { data } = hex;
+  const width = map.stage.clientWidth;
+  if (!width) return;
+  const [minX, minY, maxX, maxY] = data.bounds;
+  const fit = hexFitScale(width);
+  const height = Math.round((maxY - minY) * fit + 8);
+  const scale = fit * hexView.zoom;
+  const dpr = window.devicePixelRatio || 1;
+  if (map.canvas.width !== Math.round(width * dpr) || map.canvas.height !== Math.round(height * dpr)) {
+    map.canvas.width = Math.round(width * dpr);
+    map.canvas.height = Math.round(height * dpr);
+    map.canvas.style.height = `${height}px`;
+  }
+  map.transform = { scale, width, height };
+  const g = map.canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, width, height);
+  const px = ([x, y]) => [(x - hexView.cx) * scale + width / 2, (hexView.cy - y) * scale + height / 2];
+  const trace = (ring) => {
+    ring.forEach((point, i) => {
+      const [x, y] = px(point);
+      if (i) g.lineTo(x, y);
+      else g.moveTo(x, y);
+    });
+    g.closePath();
+  };
+  // Only the hexagons in sight, once zoomed in.
+  const margin = 400;
+  const [left, top] = hexToWorld(map, 0, 0);
+  const [right, bottom] = hexToWorld(map, width, height);
+  const visible = (i) => {
+    const [cx, cy] = hex.centres[i];
+    return cx > left - margin && cx < right + margin && cy < top + margin && cy > bottom - margin;
+  };
+
+  let color;
+  if (map.key === "A") {
+    const values = hexValues(hex.year);
+    color = (i) => sequentialColor(values[i], hex.breaks.sequential);
+  } else {
+    const before = hexValues(hex.from);
+    const after = hexValues(hex.to);
+    color = (i) => changeColor(after[i] - before[i], hex.breaks.diverging);
+  }
+  // A thin surface-coloured gap between hexagons keeps neighbouring classes apart.
+  g.lineWidth = Math.min(1.5, 0.6 * Math.sqrt(hexView.zoom));
+  g.strokeStyle = "#ffffff";
+  data.hexes.forEach((ring, i) => {
+    if (hexView.zoom > 1 && !visible(i)) return;
+    g.beginPath();
+    trace(ring);
+    g.fillStyle = color(i);
+    g.fill();
+    g.stroke();
+  });
+  g.fillStyle = COLORS.water;
+  for (const ring of data.lakes) {
+    g.beginPath();
+    trace(ring);
+    g.fill();
+  }
+  g.lineWidth = 0.8;
+  g.strokeStyle = "rgba(31, 33, 40, 0.28)";
+  for (const ring of data.communes) {
+    g.beginPath();
+    trace(ring);
+    g.stroke();
+  }
+  if (hexView.zoom >= 2.5) {
+    // Zoomed in: name the Kreise and municipalities, as on the map at the top.
+    g.font = "600 11px Inter, sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    data.communeNames.forEach((name, c) => {
+      const members = hex.centres.filter((_, i) => data.commune[i] === c);
+      if (!members.length) return;
+      const [x, y] = px(members.reduce(([sx, sy], [mx, my]) => [sx + mx / members.length, sy + my / members.length], [0, 0]));
+      if (x < 0 || y < 0 || x > width || y > height) return;
+      g.lineWidth = 3;
+      g.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      g.strokeText(name.toUpperCase(), x, y);
+      g.fillStyle = "#1f2128";
+      g.fillText(name.toUpperCase(), x, y);
+    });
+  }
+  if (hex.hover >= 0) {
+    // The same hexagon is outlined on both maps.
+    g.beginPath();
+    trace(data.hexes[hex.hover]);
+    g.lineWidth = 3;
+    g.strokeStyle = "#ffffff";
+    g.stroke();
+    g.lineWidth = 1.6;
+    g.strokeStyle = "#1f2128";
+    g.stroke();
+  }
+}
+
+function drawHexLegends() {
+  // Numbers only on the keys, the unit once at the end, so each legend fits on one line.
+  const short = (value) => (hex.metric === "pop" ? new Intl.NumberFormat(LOCALE).format(value) : km2Number(value));
+  const legend = (id, keys) => {
+    const items = keys.map(([colorValue, text]) => {
+      const item = document.createElement("span");
+      item.className = "hex-key";
+      item.style.setProperty("--swatch", colorValue);
+      item.textContent = text;
+      return item;
+    });
+    if (hex.metric === "area") {
+      const unit = document.createElement("span");
+      unit.className = "hex-unit";
+      unit.textContent = "km²";
+      items.push(unit);
+    }
+    $(id).replaceChildren(...items);
+  };
+  const seq = hex.breaks.sequential;
+  legend("hexLegendA", HEX_SEQUENTIAL.slice(0, seq.length + 1).map((colorValue, k) =>
+    [colorValue, k === 0 ? `< ${short(seq[0])}` : `${short(seq[k - 1])}+`]));
+  const [t1, t2, t3] = hex.breaks.diverging;
+  legend("hexLegendB", [
+    [HEX_LOSS[0], `≤ −${short(t3)}`],
+    [HEX_LOSS[1], `−${short(t2)}`],
+    [HEX_LOSS[2], `−${short(t1)}`],
+    [HEX_NEUTRAL, t("about the same", "etwa gleich")],
+    [HEX_GAIN[0], `+${short(t1)}`],
+    [HEX_GAIN[1], `+${short(t2)}`],
+    [HEX_GAIN[2], `≥ +${short(t3)}`],
+  ]);
+}
+
+function median(values) {
+  return quantile([...values].sort((a, b) => a - b), 0.5);
+}
+
+function updateHexText() {
+  const label = hexLabel();
+  const unit = hex.metric === "pop" ? t("residents", "Einwohner") : t("of land", "Land");
+  $("hexTitleA").textContent = label;
+  $("hexTitleB").textContent = t(`Change, ${hex.from} → ${hex.to}`, `Veränderung ${hex.from} → ${hex.to}`);
+  const now = median(hexValues(hex.year));
+  const first = hex.data.years[0];
+  const then = median(hexValues(first));
+  const amount = (value) => (hex.metric === "pop" ? `${hexFormat(value)} ${unit}` : hexFormat(value));
+  const since = hex.year === first ? "" : ` (${first}: ${hexFormat(then)})`;
+  $("hexSummaryA").textContent = t(`From the median starting point: ${amount(now)} within ${hex.limit} min${since}.`,
+                                   `Vom mittleren Startpunkt aus: ${amount(now)} innert ${hex.limit} min${since}.`);
+  const before = hexValues(hex.from);
+  const after = hexValues(hex.to);
+  const [t1] = hex.breaks.diverging;
+  const gain = after.filter((value, i) => value - before[i] >= t1).length / after.length;
+  const loss = after.filter((value, i) => before[i] - value >= t1).length / after.length;
+  const percent = (share) => `${Math.round(share * 100)} %`;
+  $("hexSummaryB").textContent =
+    hex.from === hex.to
+      ? t("Pick two different years.", "Wähle zwei verschiedene Jahre.")
+      : t(`${percent(gain)} of starting points reach more, ${percent(loss)} reach less (by ${hexFormatShort(t1)} or more).`,
+          `${percent(gain)} der Startpunkte erreichen mehr, ${percent(loss)} weniger (um ${hexFormatShort(t1)} oder mehr).`);
+  $("hexMapA").setAttribute("aria-label", `${label}, ${hex.year}. ${$("hexSummaryA").textContent}`);
+  $("hexMapB").setAttribute("aria-label", `${$("hexTitleB").textContent}. ${$("hexSummaryB").textContent}`);
+}
+
+function setPressed(group, attribute, value) {
+  for (const button of $(group).querySelectorAll("button")) button.setAttribute("aria-pressed", String(button.dataset[attribute] === value));
+}
+
+function updateHexMaps({ rescale = true } = {}) {
+  if (!hex.data) return;
+  if (rescale) hex.breaks = hexBreaks();
+  setPressed("hexNetwork", "network", hex.network);
+  setPressed("hexMetric", "metric", hex.metric);
+  setPressed("hexLimit", "limit", hex.limit);
+  setPressed("hexYear", "year", hex.year);
+  setPressed("hexFrom", "year", hex.from);
+  setPressed("hexTo", "year", hex.to);
+  drawHexLegends();
+  updateHexText();
+  setHexHover(-1);
+  requestHexDraw();
+}
+
+function yearButtons(group) {
+  $(group).replaceChildren(
+    ...Object.keys(CITY.timetables).map((year) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.year = year;
+      button.textContent = year;
+      return button;
+    }),
+  );
+}
+
+async function setupHexPanel() {
+  for (const group of ["hexYear", "hexFrom", "hexTo"]) yearButtons(group);
+  setupHexMap("A");
+  setupHexMap("B");
+  const on = (group, attribute, apply) =>
+    $(group).addEventListener("click", (event) => {
+      const value = event.target.closest("button")?.dataset[attribute];
+      if (value) apply(value);
+    });
+  on("hexNetwork", "network", (value) => { hex.network = value; updateHexMaps(); });
+  on("hexMetric", "metric", (value) => { hex.metric = value; updateHexMaps(); });
+  on("hexLimit", "limit", (value) => { hex.limit = value; updateHexMaps(); });
+  on("hexYear", "year", (value) => { hex.year = value; updateHexMaps({ rescale: false }); });
+  on("hexFrom", "year", (value) => { hex.from = value; updateHexMaps({ rescale: false }); });
+  on("hexTo", "year", (value) => { hex.to = value; updateHexMaps({ rescale: false }); });
+  const response = await fetch(hexUrl());
+  hex.data = await response.json();
+  hex.centres = hex.data.hexes.map((ring) => {
+    const n = ring.length;
+    return ring.reduce(([sx, sy], [x, y]) => [sx + x / n, sy + y / n], [0, 0]);
+  });
+  resetHexView();
+  updateHexMaps();
+}
 
 // --- Démarrage ----------------------------------------------------------------
 
@@ -2270,6 +2713,13 @@ async function init() {
     }
   }, { rootMargin: "200px" }).observe($("yearsPanel"));
   setupInsights();
+  let hexStarted = false;
+  new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !hexStarted) {
+      hexStarted = true;
+      setupHexPanel().catch((error) => console.error("hexagons", error));
+    }
+  }, { rootMargin: "400px" }).observe($("hexPanel"));
   $("yearPicker").addEventListener("click", (event) => {
     const year = event.target.closest("button")?.dataset.year;
     if (year) switchYear(year).catch(() => toast(t("Could not load that timetable.", "Dieser Fahrplan konnte nicht geladen werden.")));

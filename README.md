@@ -11,9 +11,10 @@ itself based on Anthony Castrio's [NYC Transit Time Cartogram](https://castrio.m
 In German at the site root (the default) and in English under `/en/`: `build_pages.py` renders both from one template,
 and `app.js` picks its texts from the page's `lang`.
 
-Features: heatmap and isochrones from a draggable start, destination on click with a detailed route, address search
-(geo.admin.ch), public transport or bike, **timetable years 2022 / 2024 / 2026 / 2027** to see the network change,
-residents and jobs within each isochrone, share link.
+Features: heatmap and isochrones from a draggable start, destination on click with a detailed route, public transport
+or bike, **timetable years 2022 / 2024 / 2026 / 2027** to see the network change, residents and jobs within each
+isochrone, share link, and **reach from everywhere**: two H3 hexagon maps of the residents (or land area) reachable
+within 15/30/45 min from every point on the map, in one year and as the change between two years.
 
 ## Run
 
@@ -23,7 +24,8 @@ python3 -m http.server 8000 --directory site
 ```
 
 Separate steps: `fetch_data.py zurich [year …]`, `build_data.py zurich <year>`, `build_bike.py zurich`,
-`build_pages.py`. `node tools/check_trips.mjs zurich` probes trips from the centre to the termini and flags odd speeds.
+`build_h3.py zurich`, `build_pages.py`. `build_h3.py` needs `numpy`, `scipy` and `h3` (`pip install "h3>=4"`); it reads
+only the bundles in `site/data/` and takes about a minute. `node tools/check_trips.mjs zurich` probes trips from the centre to the termini and flags odd speeds.
 `python3 tools/validate_trips.py zurich [year] [--pairs N]` compares random stop-to-stop times with the real
 timetable (transport.opendata.ch), waits included on both sides.
 
@@ -41,7 +43,6 @@ Raw sources (`data/zurich/`: national GTFS per year, boundaries, OSM, BFS grids,
 | Jobs in the region, by year | BFS STAT-TAB [px-x-0602010000_102](https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/) (STATENT employees per municipality, 2011 onwards), summed over the map's municipalities into `sources/zurich-jobs.json` |
 | Elevation | swisstopo terrain model sampled every 100 m via the geo.admin.ch profile service |
 | Lines, lakes, parks, cycling streets | © OpenStreetMap contributors (ODbL), via Overpass; line colours from the OSM route relations (the Swiss GTFS has none) |
-| Address search | geo.admin.ch search service, live in the browser |
 
 The page has a **Data sources** expander with the exact feeds, validity periods and download dates.
 
@@ -82,6 +83,13 @@ contraflow where `oneway:bicycle=no`, 20 km/h on the flat, slower uphill (≈10 
 for Küsnacht, Zumikon, Stallikon and the edges of Kloten and Dietikon. It is folded onto the 200 m grid (each cell →
 the 28 cells within 600 m, times from Dijkstra on the real network, both directions), so the browser only runs
 Dijkstra on ~6,000 cells; times stay within about 5 % of a full street-network search.
+
+Reach from everywhere (`build_h3.py`): the map's land is cut into H3 hexagons (resolution 9, ≈0.1 km², about 2,460
+of them). From each hexagon's centre the same model as the browser (seeding, waits, Tobler walking, lakes) gives the
+time to every 200 m cell, for each timetable year and two networks: all lines with buses and boats, and rail only
+(the map's default). Dijkstra runs in batches with one virtual source node per origin (scipy). The result,
+`site/data/<city>-h3.json`, holds per hexagon the residents and the number of land cells within 15/30/45 min. Checks:
+from Zürich HB it reproduces the page's figures (rail only) and the browser with « Bus and boat » ticked.
 
 Residents and jobs: each BFS hectare is added to the 200 m cell its centre falls in; the BFS rounds small counts
 for privacy, so totals are approximate. Residents are held at STATPOP 2024 in every

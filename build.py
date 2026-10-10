@@ -42,6 +42,7 @@ def main() -> None:
         for year in load_city(slug)["timetables"]:
             run("build_data.py", slug, year)
         run("build_bike.py", slug)
+        run("build_h3.py", slug)
     run("build_pages.py")
     print()
     for slug in slugs:

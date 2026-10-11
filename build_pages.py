@@ -15,7 +15,7 @@ from datetime import date
 from pathlib import Path
 from string import Template
 
-from cities import load_cities, statent_year
+from cities import load_cities, statent_year, statpop_year
 
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
@@ -260,13 +260,15 @@ def city_faq(city: dict) -> list[tuple]:
               "GIS_playground_ZH."),
         ),
         (
-            t("Where do the resident and job figures come from?", "Woher stammen die Einwohner- und Arbeitsplatzzahlen?"),
-            t("From the Federal Statistical Office's hectare grids: STATPOP 2024 (permanent residents) and "
-              f"{jobs_grids(city)} (employees, all sectors). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
+            t("Where do the resident and full-time job figures come from?", "Woher stammen die Einwohner- und Vollzeitstellen-Zahlen?"),
+            t(f"From the Federal Statistical Office's hectare grids, each timetable year with its own: {residents_grids(city)} "
+              f"(permanent residents) and {jobs_grids(city)} (full-time equivalents, all sectors; newer grids are not "
+              "published yet). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
               "rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached "
               "within each isochrone.",
-              "Aus den Hektarrastern des Bundesamts für Statistik: STATPOP 2024 (ständige Wohnbevölkerung) und "
-              f"{jobs_grids(city)} (Beschäftigte, alle Sektoren). Jedes 100-m-Quadrat wird der 200-m-Kartenzelle zugeschlagen, in der es liegt; "
+              f"Aus den Hektarrastern des Bundesamts für Statistik, jedes Fahrplanjahr mit seinem eigenen: {residents_grids(city)} "
+              f"(ständige Wohnbevölkerung) und {jobs_grids(city)} (Vollzeitäquivalente, alle Sektoren; neuere Raster sind "
+              "noch nicht veröffentlicht). Jedes 100-m-Quadrat wird der 200-m-Kartenzelle zugeschlagen, in der es liegt; "
               "kleine Zahlen rundet das BFS aus Datenschutzgründen, die Summen sind also Näherungen. Die Tabelle unter der "
               "Karte summiert die Zellen innerhalb jeder Isochrone."),
         ),
@@ -280,27 +282,35 @@ def city_faq(city: dict) -> list[tuple]:
     ]
 
 
-def jobs_grids(city: dict) -> str:
-    """Which STATENT grid each timetable year uses, e.g. "STATENT 2022 for the 2022 timetable, 2024 for 2024–2027"."""
+def grids(city: dict, grid_year, name: str) -> str:
+    """Which grid each timetable year uses, e.g. "STATENT 2022 for the 2022 timetable, 2024 for 2024–2027"."""
     groups: dict[str, list[str]] = {}
     for year in city["timetables"]:
-        groups.setdefault(statent_year(year), []).append(year)
+        groups.setdefault(grid_year(year), []).append(year)
     parts = []
     for grid, years in groups.items():
         span = years[0] if len(years) == 1 else f"{years[0]}–{years[-1]}"
         single = len(years) == 1
         parts.append(f"{grid} " + t(f"for the {span} timetable{'' if single else 's'}",
                                     f"für {'den Fahrplan' if single else 'die Fahrpläne'} {span}"))
-    return "STATENT " + ", ".join(parts)
+    return f"{name} " + ", ".join(parts)
+
+
+def jobs_grids(city: dict) -> str:
+    return grids(city, statent_year, "STATENT")
+
+
+def residents_grids(city: dict) -> str:
+    return grids(city, statpop_year, "STATPOP")
 
 
 def regional_jobs(city: dict) -> dict:
-    """Per timetable year, the region's jobs in that year's STATENT, or in the latest one published before it."""
+    """Per timetable year, the region's full-time equivalent jobs in that year's STATENT, or the latest one before it."""
     path = ROOT / "sources" / f"{city['slug']}-jobs.json"
     if not path.exists():
         print(f"  regional jobs skipped: run fetch_data.py {city['slug']} --context-only first")
         return {}
-    employees = json.loads(path.read_text(encoding="utf-8"))["employees"]
+    employees = json.loads(path.read_text(encoding="utf-8"))["fte"]
     out = {}
     for year in city["timetables"]:
         known = [y for y in employees if y <= year]
@@ -357,14 +367,17 @@ def history(city: dict) -> tuple[str, str, dict]:
         )
     note = t(
         "2022: before the Limmattalbahn's second stage (tram 20 to Killwangen, December 2022). 2026: the SZU lines S4 and "
-        "S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal and "
-        "Uetliberg 10–15 minutes further from HB, and trams run diversions for construction work (temporary lines 50 "
-        "and 51); most other stops got slightly faster. 2027: first published version of the timetable, with fewer "
+        "S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal stops "
+        "about 10 minutes further from HB and the S10 stops in town (Giesshübel, Triemli) 11–12 minutes; Uetliberg "
+        "itself barely changes. Trams run diversions for construction work (temporary lines 50 and 51). Of the 314 "
+        "tram and rail stops, 215 changed by a minute or less. 2027: first published version of the timetable, with fewer "
         "trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed.",
         "2022: vor der zweiten Etappe der Limmattalbahn (Tram 20 bis Killwangen, Dezember 2022). 2026: Die SZU-Linien S4 "
         "und S10 beginnen in Zürich Selnau statt in Zürich HB (Bauarbeiten auf dem Abschnitt HB–Selnau); dadurch liegen "
-        "Sihltal und Uetliberg 10–15 Minuten weiter vom HB entfernt, und die Trams fahren Umleitungen wegen Bauarbeiten "
-        "(provisorische Linien 50 und 51); die meisten anderen Haltestellen wurden etwas schneller. 2027: erste "
+        "die Haltestellen im Sihltal rund 10 Minuten weiter vom HB entfernt und jene der S10 in der Stadt (Giesshübel, "
+        "Triemli) 11–12 Minuten; der Uetliberg selbst ändert sich kaum. Die Trams fahren Umleitungen wegen Bauarbeiten "
+        "(provisorische Linien 50 und 51). Von den 314 Tram- und Bahnhaltestellen änderten sich 215 um höchstens eine "
+        "Minute. 2027: erste "
         "veröffentlichte Fassung des Fahrplans, mit weniger Kursen als die endgültige. 2022 und 2024 stammen aus dem "
         "Archiv des Schweizer Datensatzes in der Mobility Database.",
     )
@@ -381,40 +394,41 @@ def reach_notes(city: dict) -> str:
     stats = city["stats"]
     residents, jobs = people(stats["population"]["total"]), people(stats["jobs"]["total"])
     region = f"{city['region'][0].lower()}{city['region'][1:]}"
-    return note_expander(t("What these resident and job counts mean", "Was diese Einwohner- und Arbeitsplatzzahlen bedeuten"), [
-        t(f"Residents are the BFS STATPOP 2024 grid (permanent residents, by home address); jobs are the STATENT grid of "
-          f"the timetable year ({jobs_grids(city)}; employees of all sectors, counted where they work). The map covers the "
-          f"{region}: {residents} residents and {jobs} jobs in all on the {city['defaultTimetable']} timetable, more than "
-          "the city alone.",
-          f"Die Einwohner stammen aus dem BFS-Raster STATPOP 2024 (ständige Wohnbevölkerung, nach Wohnadresse), die "
-          f"Arbeitsplätze aus dem STATENT-Raster des Fahrplanjahrs ({jobs_grids(city)}; Beschäftigte aller Sektoren, am "
-          f"Arbeitsort gezählt). Die Karte umfasst die {city['region']}: insgesamt {residents} Einwohner und {jobs} "
-          f"Arbeitsplätze auf dem Fahrplan {city['defaultTimetable']}, mehr als die Stadt allein."),
-        t("Jobs are people employed, not full-time equivalents: a part-timer counts as one job, so in a city with much "
-          "part-time work the figure overstates the amount of work. Staff are counted at the workplace their employer "
-          "registers, which for firms with several sites is not always where they actually sit.",
-          "Arbeitsplätze sind Beschäftigte, keine Vollzeitäquivalente: Eine Teilzeitstelle zählt als ein Arbeitsplatz, in "
-          "einer Stadt mit viel Teilzeitarbeit überzeichnet die Zahl also die Arbeitsmenge. Gezählt wird am Arbeitsort, "
-          "den der Arbeitgeber meldet; bei Firmen mit mehreren Standorten ist das nicht immer der tatsächliche."),
+    return note_expander(t("What these resident and full-time job counts mean", "Was diese Einwohner- und Vollzeitstellen-Zahlen bedeuten"), [
+        t(f"Both move with the timetable year. Residents are the BFS STATPOP grid ({residents_grids(city)}; permanent "
+          f"residents, by home address); full-time jobs the STATENT grid ({jobs_grids(city)}; full-time equivalents of all "
+          f"sectors, counted where people work). The map covers the {region}: {residents} residents and {jobs} full-time "
+          f"jobs in all on the {city['defaultTimetable']} timetable, more than the city alone.",
+          f"Beide gehen mit dem Fahrplanjahr. Die Einwohner stammen aus dem BFS-Raster STATPOP ({residents_grids(city)}; "
+          f"ständige Wohnbevölkerung, nach Wohnadresse), die Vollzeitstellen aus dem STATENT-Raster ({jobs_grids(city)}; "
+          f"Vollzeitäquivalente aller Sektoren, am Arbeitsort gezählt). Die Karte umfasst die {city['region']}: insgesamt "
+          f"{residents} Einwohner und {jobs} Vollzeitstellen auf dem Fahrplan {city['defaultTimetable']}, mehr als die Stadt allein."),
+        t("Full-time jobs are full-time equivalents: two half-time posts count as one. Staff are counted at the workplace "
+          "their employer registers, which for firms with several sites is not always where they actually sit.",
+          "Vollzeitstellen sind Vollzeitäquivalente: Zwei Halbtagsstellen zählen als eine. Gezählt wird am Arbeitsort, den "
+          "der Arbeitgeber meldet; bei Firmen mit mehreren Standorten ist das nicht immer der tatsächliche."),
         t("The BFS rounds small hectare counts for privacy, and each 100 m hectare goes to the 200 m map cell its centre "
           "falls in, so figures for a few streets are rough; totals over a whole isochrone hold up much better.",
           "Das BFS rundet kleine Hektarwerte aus Datenschutzgründen, und jede 100-m-Hektare geht an die 200-m-Kartenzelle, "
           "in der ihr Mittelpunkt liegt; Zahlen für wenige Strassen sind also grob, Summen über eine ganze Isochrone "
           "deutlich verlässlicher."),
-        t("Switching timetable years changes how far the network reaches and, for jobs, also where people work: each "
-          "year uses its own STATENT grid. Residents stay on STATPOP 2024 in every year.",
-          "Ein Wechsel des Fahrplanjahrs ändert, wie weit das Netz reicht, und bei den Arbeitsplätzen auch, wo Menschen "
-          "arbeiten: Jedes Jahr nutzt sein eigenes STATENT-Raster. Die Einwohner bleiben in jedem Jahr auf STATPOP 2024."),
+        t("Switching timetable years changes how far the network reaches and also where people live and work. Where two "
+          "timetables share a grid (full-time jobs from 2024 on, residents from 2026 on), the difference between them is "
+          "the network alone.",
+          "Ein Wechsel des Fahrplanjahrs ändert, wie weit das Netz reicht, und auch, wo Menschen wohnen und arbeiten. Wo "
+          "zwei Fahrpläne dasselbe Raster nutzen (Vollzeitstellen ab 2024, Einwohner ab 2026), ist der Unterschied allein "
+          "das Netz."),
     ])
 
 
 def network_trend(city: dict) -> list[dict]:
-    """Residents within 30 min of the average starting point (every hexagon, with buses), year on year."""
+    """Residents and full-time jobs within 30 min of the average starting point (every hexagon, with buses), year on year."""
     path = SITE / "data" / f"{city['slug']}-h3.json"
     if not path.exists():
         return []
     h3 = json.loads(path.read_text(encoding="utf-8"))
     values = {year: h3["values"]["all"][year]["pop"]["30"] for year in h3["years"]}
+    jobs = {year: h3["values"]["all"][year]["jobs"]["30"] for year in h3["years"]}
     trend = []
     for before, after in zip(h3["years"], h3["years"][1:]):
         a, b = values[before], values[after]
@@ -424,6 +438,8 @@ def network_trend(city: dict) -> list[dict]:
             "to": after,
             "draft": bool(city["timetables"][after].get("draft")),
             "change": 100 * (sum(b) / sum(a) - 1),
+            "jobs": 100 * (sum(jobs[after]) / sum(jobs[before]) - 1),
+            "growth": 100 * (h3["totals"][after]["pop"] / h3["totals"][before]["pop"] - 1),
             "up": round(100 * sum(r > 0.05 for r in relative) / len(relative)),
             "down": round(100 * sum(r < -0.05 for r in relative) / len(relative)),
         })
@@ -432,7 +448,8 @@ def network_trend(city: dict) -> list[dict]:
 
 def percent(value: float) -> str:
     """+16.5 % / +16,5 %, with a real minus sign."""
-    return f"{'+' if value >= 0 else '−'}{num(round(abs(value), 1))} %"
+    text = f"{abs(value):.1f}"
+    return f"{'+' if value >= 0 else '−'}{text.replace('.', ',') if LANG == 'de' else text} %"
 
 
 def trend_tiles(city: dict, trend: list[dict]) -> str:
@@ -441,13 +458,20 @@ def trend_tiles(city: dict, trend: list[dict]) -> str:
     tiles = []
     for step in trend:
         span = f"{step['from']} → {step['to']}" + (t(" (draft)", " (Entwurf)") if step["draft"] else "")
-        label = t(f"{span}: {step['up']} % of places reach over 5 % more, {step['down']} % over 5 % less",
-                  f"{span}: {step['up']} % der Orte erreichen über 5 % mehr, {step['down']} % über 5 % weniger")
-        tiles.append(f'          <div class="stat"><strong>{esc(percent(step["change"]))}</strong><span>{esc(label)}</span></div>')
-    note = t("Residents within 30 min of the average starting point, with buses (all hexagons of « Reach from everywhere » "
-             f"above). The insights below measure from {city['stats']['center']} only, where the 2026 construction work weighs more.",
-             "Einwohner innert 30 min vom durchschnittlichen Startpunkt aus, mit Bus (alle Sechsecke von «Erreichbarkeit von "
-             f"überall» oben). Die Einblicke darunter messen nur ab {city['stats']['center']}, wo die Bauarbeiten 2026 stärker ins Gewicht fallen.")
+        places = t(f"{step['up']} % of places reach over 5 % more residents, {step['down']} % over 5 % fewer",
+                   f"{step['up']} % der Orte erreichen über 5 % mehr Einwohner, {step['down']} % über 5 % weniger")
+        tiles.append(
+            f'          <div class="stat trend-stat"><span class="trend-period">{esc(span)}</span>'
+            f'<div class="trend-pair"><div><strong>{esc(percent(step["change"]))}</strong><span>{t("Residents", "Einwohner")}</span></div>'
+            f'<div><strong>{esc(percent(step["jobs"]))}</strong><span>{t("Full-time jobs", "Vollzeitstellen")}</span></div></div>'
+            f'<span>{esc(places)}</span></div>'
+        )
+    note = t("Within 30 min of the average starting point, with buses (all hexagons of « Reach from everywhere » above), "
+             "each year with its own residents and full-time jobs. The insights below measure from "
+             f"{city['stats']['center']} only, where the 2026 construction work weighs more.",
+             "Innert 30 min vom durchschnittlichen Startpunkt aus, mit Bus (alle Sechsecke von «Erreichbarkeit von überall» "
+             "oben), jedes Jahr mit seinen eigenen Einwohnern und Vollzeitstellen. Die Einblicke darunter messen nur ab "
+             f"{city['stats']['center']}, wo die Bauarbeiten 2026 stärker ins Gewicht fallen.")
     return ('        <div class="stat-grid trend-grid">\n' + "\n".join(tiles) + "\n        </div>\n"
             f'        <p class="trend-note">{esc(note)}</p>')
 
@@ -457,13 +481,13 @@ def hero_lede(city: dict, trend: list[dict]) -> str:
     if not trend:
         return ""
     first = trend[0]
-    gain = round(first["change"])
+    gain, jobs = round(first["change"]), round(first["jobs"])
     return t(
         f"From {first['from']} to {first['to']}, {city['name']} became clearly better connected: in those two years, about "
-        f"{gain} % more residents came within a 30-minute public transport trip. Since then the average has barely "
+        f"{gain} % more residents and {jobs} % more full-time jobs came within a 30-minute public transport trip. Since then the average has barely "
         "changed. Major construction projects are slowing down how well the city and its agglomeration are connected.",
         f"Von {first['from']} bis {first['to']} ist {city['name']} klar vernetzter geworden: Rund {gain} % mehr Einwohner "
-        "wurden in diesen zwei Jahren durch ÖV-Fahrten von 30 Minuten erschlossen. Seitdem hat sich der Mittelwert kaum "
+        f"und {jobs} % mehr Vollzeitstellen wurden in diesen zwei Jahren durch ÖV-Fahrten von 30 Minuten erschlossen. Seitdem hat sich der Mittelwert kaum "
         "verändert. Grossprojekte bremsen die Vernetzung der Stadt und der Agglomeration.",
     )
 
@@ -500,18 +524,21 @@ def hex_notes(city: dict) -> str:
           "Mittelpunkt jedes Sechsecks berechnet dasselbe Modell wie die Karte oben die Reisezeit zu jeder 200-m-Zelle, "
           "für jedes Fahrplanjahr: zu Fuss zu den nächsten Haltestellen, warten, fahren, umsteigen, weitergehen, oder "
           "den ganzen Weg zu Fuss."),
-        t("A hexagon's colour is the number of residents (STATPOP 2024, the same in every year) or the land area within "
-          "the chosen travel time. Because residents are held fixed, every change between two years comes from the network.",
-          "Die Farbe eines Sechsecks ist die Zahl der Einwohner (STATPOP 2024, in jedem Jahr gleich) oder die Landfläche "
-          "innerhalb der gewählten Reisezeit. Weil die Einwohner fest bleiben, kommt jede Änderung zwischen zwei Jahren "
-          "vom Netz."),
+        t("A hexagon's colour is the number of residents or of full-time jobs within the chosen travel "
+          f"time. Residents and full-time jobs are those of each timetable year ({residents_grids(city)}; "
+          f"{jobs_grids(city)}), so a change between two years combines the network with people moving and jobs "
+          "appearing or going.",
+          "Die Farbe eines Sechsecks ist die Zahl der Einwohner oder der Vollzeitstellen innerhalb der "
+          f"gewählten Reisezeit. Einwohner und Vollzeitstellen sind jene des Fahrplanjahrs ({residents_grids(city)}; "
+          f"{jobs_grids(city)}); eine Änderung zwischen zwei Jahren verbindet also das Netz mit Zu- und Wegzug und mit "
+          "neuen oder verschwundenen Stellen."),
         t("« With buses » uses every line in the timetable, city buses, regional buses and lake boats included, as "
           "with « Bus and boat » ticked on the map. Inside the city the buses matter most: from the median hexagon in "
-          f"the twelve Kreise they add {bus_gain}% more residents within 30 minutes ({year}). The other choice is the map's "
+          f"the twelve Kreise they add {bus_gain} % more residents within 30 minutes ({year}). The other choice is the map's "
           "default network, tram, S-Bahn and train only.",
           "«Mit Bus» nutzt alle Linien im Fahrplan, Stadtbusse, Regionalbusse und Schiffe inbegriffen, wie mit "
           "angekreuztem «Bus und Schiff» auf der Karte. In der Stadt zählen die Busse am meisten: Vom mittleren "
-          f"Sechseck in den zwölf Kreisen aus bringen sie {bus_gain}% mehr Einwohner innert 30 Minuten ({year}). Die andere "
+          f"Sechseck in den zwölf Kreisen aus bringen sie {bus_gain} % mehr Einwohner innert 30 Minuten ({year}). Die andere "
           "Wahl ist das Standardnetz der Karte, nur Tram, S-Bahn und Zug."),
         t("The colour classes stay the same across years, so two years can be compared by eye. The change map counts "
           "small differences as « about the same ».",
@@ -529,62 +556,69 @@ def history_notes(figures: list[dict], trend: list[dict]) -> str:
         flat = ", ".join(f"{percent(step['change'])} {step['from']}→{step['to']}" for step in rest)
         paragraphs.append(t(
             f"Across the whole map, almost all the gain came between {first['from']} and {first['to']} "
-            f"({percent(first['change'])} residents within 30 min of the average starting point); after that the "
+            f"({percent(first['change'])} residents and {percent(first['jobs'])} full-time jobs within 30 min of the average "
+            f"starting point, most of it the network: the map's residents grew {percent(first['growth']).lstrip('+')}); after that the "
             f"average barely moves ({flat}). That period includes the Limmattalbahn's second stage (December 2022). "
-            "Since 2024 about as many places gained as lost: the 2026 timetable has the SZU construction and tram "
-            "diversions described below, and 2027 is a draft with fewer trips than the final timetable, so the plateau "
-            "is not yet a decline.",
+            f"Since then gains and losses roughly cancel out: by {rest[0]['to']}, {rest[0]['up']} % of places reach over 5 % "
+            f"more residents and {rest[0]['down']} % over 5 % fewer. The {rest[0]['to']} timetable has the SZU construction "
+            "and tram diversions described below, and 2027 is a draft with fewer trips than the final timetable, so the "
+            "plateau is not yet a decline.",
             f"Über die ganze Karte kam fast der gesamte Zuwachs zwischen {first['from']} und {first['to']} "
-            f"({percent(first['change'])} Einwohner innert 30 min vom durchschnittlichen Startpunkt); danach bewegt sich "
+            f"({percent(first['change'])} Einwohner und {percent(first['jobs'])} Vollzeitstellen innert 30 min vom "
+            f"durchschnittlichen Startpunkt, das meiste davon das Netz: Die Einwohner der Karte wuchsen um {percent(first['growth']).lstrip('+')}); danach bewegt sich "
             f"der Mittelwert kaum noch ({flat}). In diesen Zeitraum fällt die zweite Etappe der Limmattalbahn "
-            "(Dezember 2022). Seit 2024 gewannen etwa gleich viele Orte, wie verloren: Der Fahrplan 2026 enthält die "
-            "unten beschriebenen SZU-Bauarbeiten und Tram-Umleitungen, und 2027 ist ein Entwurf mit weniger Kursen als "
-            "der endgültige Fahrplan; das Plateau ist also noch kein Rückgang.",
+            f"(Dezember 2022). Seither heben sich Gewinne und Verluste etwa auf: Bis {rest[0]['to']} erreichen "
+            f"{rest[0]['up']} % der Orte über 5 % mehr Einwohner und {rest[0]['down']} % über 5 % weniger. Der Fahrplan "
+            f"{rest[0]['to']} enthält die unten beschriebenen SZU-Bauarbeiten und Tram-Umleitungen, und 2027 ist ein "
+            "Entwurf mit weniger Kursen als der endgültige Fahrplan; das Plateau ist also noch kein Rückgang.",
         ))
     paragraphs += [
-        t("Residents are held at STATPOP 2024 in every year, so a change in residents is a change in the network: a "
-          "fall means part of the map takes longer to reach, not that people left. Jobs use the STATENT grid of each "
-          "timetable year, so a change in jobs within reach combines the network and the growth or loss of jobs where "
-          "they are; set it against the region's total in the last column.",
-          "Die Einwohner bleiben in jedem Jahr auf STATPOP 2024; eine Änderung bei den Einwohnern ist also eine "
-          "Änderung im Netz: Ein Rückgang heisst, dass ein Teil der Karte länger braucht, nicht, dass Menschen "
-          "weggezogen sind. Die Arbeitsplätze stammen aus dem STATENT-Raster jedes Fahrplanjahrs; eine Änderung der "
-          "erreichbaren Arbeitsplätze verbindet also das Netz mit dem Zu- oder Abbau von Stellen vor Ort. Zum Vergleich "
-          "dient der Total der Region in der letzten Spalte."),
+        t("Residents and full-time jobs are those of each timetable year, so a change in either combines the network with "
+          "where people live and work; set the full-time jobs against the region's total in the last column. Where two "
+          "years share a grid (full-time jobs from 2024, residents from 2026), the change is the network alone.",
+          "Einwohner und Vollzeitstellen sind jene des jeweiligen Fahrplanjahrs; eine Änderung verbindet also das Netz "
+          "damit, wo Menschen wohnen und arbeiten. Die Vollzeitstellen lassen sich mit dem Total der Region in der letzten "
+          "Spalte vergleichen. Wo zwei Jahre dasselbe Raster nutzen (Vollzeitstellen ab 2024, Einwohner ab 2026), ist die "
+          "Änderung allein das Netz."),
     ]
     region = [f["regionJobs"] for f in figures if f.get("regionJobs")]
     if region:
         first, last = region[0], region[-1]
         gain = thousands(last["total"] - first["total"])
         paragraphs.append(t(
-            f"For scale, \"Jobs in the region\" is the actual STATENT count for the map's municipalities in each year, or the "
-            f"latest published year where none exists yet (STATENT {last['year']} is the newest): the region went from "
-            f"{thousands(first['total'])} jobs in {first['year']} to {thousands(last['total'])} in {last['year']}, +{gain}.",
-            f"Zum Vergleich ist «Arbeitsplätze in der Region» die tatsächliche STATENT-Zahl der Gemeinden auf der Karte im "
-            f"jeweiligen Jahr, oder das letzte veröffentlichte Jahr, wo es noch keine gibt (STATENT {last['year']} ist die "
-            f"neueste): Die Region ging von {thousands(first['total'])} Arbeitsplätzen {first['year']} auf "
+            f"For scale, \"Full-time jobs in the region\" is the actual STATENT count (full-time equivalents) for the map's "
+            f"municipalities in each year, or the latest published year where none exists yet (STATENT {last['year']} is the "
+            f"newest): the region went from {thousands(first['total'])} full-time jobs in {first['year']} to "
+            f"{thousands(last['total'])} in {last['year']}, +{gain}.",
+            f"Zum Vergleich ist «Vollzeitstellen in der Region» die tatsächliche STATENT-Zahl (Vollzeitäquivalente) der "
+            f"Gemeinden auf der Karte im jeweiligen Jahr, oder das letzte veröffentlichte Jahr, wo es noch keine gibt (STATENT "
+            f"{last['year']} ist die neueste): Die Region ging von {thousands(first['total'])} Vollzeitstellen {first['year']} auf "
             f"{thousands(last['total'])} {last['year']}, +{gain}.",
         ))
     if "2024" in by_year and "2026" in by_year:
         before, after = by_year["2024"], by_year["2026"]
         pop_change = after["population"]["30"] - before["population"]["30"]
         sign = "+" if pop_change >= 0 else "−"
+        core = percent(100 * (after["population"]["15"] / before["population"]["15"] - 1))
+        growth = percent(100 * (after["population"]["total"] / before["population"]["total"] - 1))
         paragraphs.append(t(
             f"2024 → 2026: residents within 30 min go from {thousands(before['population']['30'])} to "
-            f"{thousands(after['population']['30'])} ({sign}{thousands(abs(pop_change))}), jobs from "
+            f"{thousands(after['population']['30'])} ({sign}{thousands(abs(pop_change))}), full-time jobs from "
             f"{thousands(before['jobs']['30'])} to {thousands(after['jobs']['30'])}. The SZU lines S4 and S10 no longer call "
-            "at Zürich HB SZU but start at Selnau (works on the HB–Selnau section), so the Sihltal and Uetliberg need an extra "
-            "change from HB and slip past 30 minutes; trams also run construction diversions (temporary lines 50 and 51). "
-            f"The core got faster at the same time: residents within 15 min went from {thousands(before['population']['15'])} "
-            f"to {thousands(after['population']['15'])}.",
+            "at Zürich HB SZU but start at Selnau (works on the HB–Selnau section), so the Sihltal and the S10 stops in "
+            "town need an extra change from HB, and Adliswil, Leimbach, Manegg, Sood-Oberleimbach and Triemli slip past "
+            "30 minutes; trams also run construction diversions (temporary lines 50 and 51). The core got faster at the "
+            f"same time: residents within 15 min went from {thousands(before['population']['15'])} to "
+            f"{thousands(after['population']['15'])} ({core}, while the map's residents grew {growth.lstrip('+')}).",
             f"2024 → 2026: Die Einwohner innert 30 Minuten gehen von {thousands(before['population']['30'])} auf "
-            f"{thousands(after['population']['30'])} ({sign}{thousands(abs(pop_change))}), die Arbeitsplätze von "
+            f"{thousands(after['population']['30'])} ({sign}{thousands(abs(pop_change))}), die Vollzeitstellen von "
             f"{thousands(before['jobs']['30'])} auf {thousands(after['jobs']['30'])}. Die SZU-Linien S4 und S10 halten nicht "
-            "mehr in Zürich HB SZU, sondern beginnen in Selnau (Bauarbeiten auf dem Abschnitt HB–Selnau); Sihltal und "
-            "Uetliberg brauchen ab HB also einen zusätzlichen Umstieg und rutschen über 30 Minuten. Dazu fahren die Trams "
-            "Umleitungen wegen Bauarbeiten (provisorische Linien 50 und 51). Gleichzeitig wurde das Zentrum schneller: Die "
-            f"Einwohner innert 15 Minuten stiegen von {thousands(before['population']['15'])} auf "
-            f"{thousands(after['population']['15'])}.",
+            "mehr in Zürich HB SZU, sondern beginnen in Selnau (Bauarbeiten auf dem Abschnitt HB–Selnau); das Sihltal und "
+            "die S10-Haltestellen in der Stadt brauchen ab HB also einen zusätzlichen Umstieg, und Adliswil, Leimbach, "
+            "Manegg, Sood-Oberleimbach und Triemli rutschen über 30 Minuten. Dazu fahren die Trams Umleitungen wegen "
+            "Bauarbeiten (provisorische Linien 50 und 51). Gleichzeitig wurde das Zentrum schneller: Die Einwohner innert "
+            f"15 Minuten stiegen von {thousands(before['population']['15'])} auf {thousands(after['population']['15'])} "
+            f"({core}, bei {growth.lstrip('+')} mehr Einwohnern auf der Karte).",
         ))
     paragraphs.append(t(
         "Each year is one reference weekday of the published timetable, 7:00–20:00, with no delays or disruptions, "
@@ -630,19 +664,20 @@ def sources_block(city: dict) -> str:
          f'{esc(fetched(main.get("boundaries")))}. ' + t("Open government data.", "Offene Behördendaten.")),
         (t("Residents", "Einwohner"),
          f'<a href="https://www.bfs.admin.ch/bfs/{t("en", "de")}/home/statistics/catalogues-databases.assetdetail.36171301.html">'
-         f'STATPOP 2024</a> ' + t("hectare grid, Federal Statistical Office (BFS)", "Hektarraster, Bundesamt für Statistik (BFS)")
+         f'{esc(residents_grids(city))}</a> ' + t("hectare grids, Federal Statistical Office (BFS) via data.geo.admin.ch",
+                                                "Hektarraster, Bundesamt für Statistik (BFS) über data.geo.admin.ch")
          + f'{esc(fetched(main.get("population")))}.'),
-        (t("Jobs", "Arbeitsplätze"),
+        (t("Full-time jobs", "Vollzeitstellen"),
          '<a href="https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen">'
-         f'{esc(jobs_grids(city))}</a> ' + t("hectare grids (employees, all sectors), BFS via data.geo.admin.ch",
-                                             "Hektarraster (Beschäftigte, alle Sektoren), BFS über data.geo.admin.ch")
+         f'{esc(jobs_grids(city))}</a> ' + t("hectare grids (full-time equivalents, all sectors), BFS via data.geo.admin.ch",
+                                             "Hektarraster (Vollzeitäquivalente, alle Sektoren), BFS über data.geo.admin.ch")
          + f'{esc(fetched(main.get("jobs")))}.'),
-        (t("Jobs in the region", "Arbeitsplätze in der Region"),
+        (t("Full-time jobs in the region", "Vollzeitstellen in der Region"),
          t("BFS STAT-TAB table ", "BFS-STAT-TAB-Tabelle ")
          + '<a href="https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/">'
          'px-x-0602010000_102</a> '
-         + t("(STATENT employees by municipality and year), summed over the map's municipalities",
-             "(STATENT-Beschäftigte nach Gemeinde und Jahr), summiert über die Gemeinden auf der Karte")
+         + t("(STATENT full-time equivalents by municipality and year), summed over the map's municipalities",
+             "(STATENT-Vollzeitäquivalente nach Gemeinde und Jahr), summiert über die Gemeinden auf der Karte")
          + f'{esc(fetched(regional_jobs_source(city)))}.'),
         (t("Elevation", "Höhe"),
          t("swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the ",
@@ -686,6 +721,10 @@ def sources_block(city: dict) -> str:
 # Fixed page text in English and German, substituted into templates/index.html as ${ui_<key>}.
 UI = {
     "map": ("Map", "Karte"),
+    "map_desc": ("Pick a start and a destination on the map, the timetable year and how the map looks.",
+                 "Wähle Start und Ziel auf der Karte, dazu das Fahrplanjahr und die Darstellung der Karte."),
+    "content": ("Content", "Inhalt"),
+    "visuals": ("Display", "Darstellung"),
     "noscript": ("This interactive map needs JavaScript to compute travel times.",
                  "Diese interaktive Karte braucht JavaScript, um die Reisezeiten zu berechnen."),
     "start": ("Start", "Start"),
@@ -710,15 +749,13 @@ UI = {
     "streets": ("Streets", "Strassen"),
     "isochrones": ("Isochrones", "Isochronen"),
     "scale": ("Scale", "Skala"),
-    "my_location": ("My location", "Mein Standort"),
     "swap": ("Swap", "Tauschen"),
-    "share": ("Share", "Teilen"),
     "within_reach": ("Within reach", "In Reichweite"),
-    "within_reach_desc": ("Residents and jobs inside the isochrones ticked above.",
-                          "Einwohner und Arbeitsplätze innerhalb der oben gewählten Isochronen."),
+    "within_reach_desc": ("Residents and full-time jobs inside the isochrones ticked above.",
+                          "Einwohner und Vollzeitstellen innerhalb der oben gewählten Isochronen."),
     "travel_time": ("Travel time", "Reisezeit"),
     "residents": ("Residents", "Einwohner"),
-    "jobs": ("Jobs", "Arbeitsplätze"),
+    "jobs": ("Full-time jobs", "Vollzeitstellen"),
     "across_years": ("Across the years", "Über die Jahre"),
     "across_years_desc": ("This start (and destination) on each timetable year, 2022 → 2027.",
                           "Dieser Start (und dieses Ziel) in jedem Fahrplanjahr, 2022 → 2027."),
@@ -728,8 +765,10 @@ UI = {
     "every": ("Every", "Takt"),
     "official_data": ("Official data", "Offizielle Daten"),
     "over_time": ("The network over time", "Das Netz im Wandel"),
-    "over_time_desc": ("A big step up to 2024, flat since. Same model on each year's official timetable; residents held at 2024.",
-                       "Bis 2024 ein grosser Schritt, seither flach. Dasselbe Modell auf dem offiziellen Fahrplan jedes Jahres; Einwohner auf Stand 2024."),
+    "over_time_desc": ("From 2022 to 2024 Zurich becomes better connected, then come years of stagnation from major construction "
+                       "projects. What will the network look like once they are all finished?",
+                       "Von 2022 bis 2024 wird Zürich vernetzter, dann folgen Jahre der Stagnation durch Grossprojekte. Wie wird das "
+                       "Netz aussehen, wenn sie alle fertiggestellt sind?"),
     "insights": ("Insights", "Einblicke"),
     "prev_insight": ("Previous insight", "Vorheriger Einblick"),
     "next_insight": ("Next insight", "Nächster Einblick"),
@@ -740,13 +779,12 @@ UI = {
     "rail_stops": ("Rail stops", "Haltestellen"),
     "stops_30": ("Stops within 30 min", "Haltestellen innert 30 min"),
     "residents_30": ("Residents within 30 min", "Einwohner innert 30 min"),
-    "jobs_30": ("Jobs within 30 min", "Arbeitsplätze innert 30 min"),
-    "jobs_region": ("Jobs in the region", "Arbeitsplätze in der Region"),
+    "jobs_30": ("Full-time jobs within 30 min", "Vollzeitstellen innert 30 min"),
+    "jobs_region": ("Full-time jobs in the region", "Vollzeitstellen in der Region"),
     "everywhere": ("Reach from everywhere", "Erreichbarkeit von überall"),
     "everywhere_desc": ("Every hexagon is a starting point: what you reach from there by public transport.",
                         "Jedes Sechseck ist ein Startpunkt: was man von dort mit dem ÖV erreicht."),
     "all_lines": ("With buses", "Mit Bus"),
-    "area": ("Area", "Fläche"),
     "from_year": ("From", "Von"),
     "to_year": ("To", "Bis"),
     "hex_hint": ("Click a hexagon to start the map at the top from there.",

@@ -2,7 +2,7 @@
 
 Interactive travel time map of Zurich by **tram, S-Bahn and train** (optionally **bus and boat**) and by **bike**.
 Pick a starting point and every place in the City of Zurich and 20 neighbouring municipalities is coloured by how
-long it takes to get there, with 15/30/45/60-minute isochrones and the residents and jobs inside each of them.
+long it takes to get there, with 15/30/45/60-minute isochrones and the residents and full-time jobs inside each of them.
 
 A Zurich fork of [À portée de tram](https://github.com/camilleroux/montpellier-temps-transport) by Camille Roux,
 itself based on Anthony Castrio's [NYC Transit Time Cartogram](https://castrio.me/nyc/) and Jules Grandin's
@@ -12,7 +12,7 @@ In German at the site root (the default) and in English under `/en/`: `build_pag
 and `app.js` picks its texts from the page's `lang`.
 
 Features: heatmap and isochrones from a draggable start, destination on click with a detailed route, public transport
-or bike, **timetable years 2022 / 2024 / 2026 / 2027** to see the network change, residents and jobs within each
+or bike, **timetable years 2022 / 2024 / 2026 / 2027** to see the network change, residents and full-time jobs within each
 isochrone, share link, and **reach from everywhere**: two H3 hexagon maps of the residents (or land area) reachable
 within 15/30/45 min from every point on the map, in one year and as the change between two years.
 
@@ -39,8 +39,8 @@ Raw sources (`data/zurich/`: national GTFS per year, boundaries, OSM, BFS grids,
 |---|---|
 | Timetables | Swiss national GTFS, [opentransportdata.swiss](https://opentransportdata.swiss/) (2026, 2027); 2022 and 2024 from the [Mobility Database](https://mobilitydatabase.org/) archive (mdb-1092, mdb-2144). Clipped to the Zurich area at fetch time (3.7 GB of stop times → 300 MB). |
 | Boundaries | [swissBOUNDARIES3D](https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d) via api3.geo.admin.ch; the 12 Stadtkreise from [Stadt Zürich Open Data](https://data.stadt-zuerich.ch/) |
-| Residents / jobs | BFS hectare grids [STATPOP 2024](https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html) and STATENT ([data.geo.admin.ch](https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen)): the grid of each timetable year, 2022 for 2022 and 2024 for 2024–2027 |
-| Jobs in the region, by year | BFS STAT-TAB [px-x-0602010000_102](https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/) (STATENT employees per municipality, 2011 onwards), summed over the map's municipalities into `sources/zurich-jobs.json` |
+| Residents / full-time jobs | BFS hectare grids, each timetable year with its own: STATPOP 2022, 2024 and 2025 ([data.geo.admin.ch](https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.statistik-bevoelkerung_haushalte); 2022 for the 2022 timetable, 2024 for 2024, 2025 for 2026 and 2027) and STATENT full-time equivalents ([data.geo.admin.ch](https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen), column `B08VZAT`; 2022 for 2022, 2024 for 2024–2027, the newest published) |
+| Full-time jobs in the region, by year | BFS STAT-TAB [px-x-0602010000_102](https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/) (STATENT full-time equivalents per municipality, 2011 onwards), summed over the map's municipalities into `sources/zurich-jobs.json` |
 | Elevation | swisstopo terrain model sampled every 100 m via the geo.admin.ch profile service |
 | Lines, lakes, parks, cycling streets | © OpenStreetMap contributors (ODbL), via Overpass; line colours from the OSM route relations (the Swiss GTFS has none) |
 
@@ -58,7 +58,7 @@ Public transport (a weekday in late autumn, 7:00–20:00, per timetable year):
   wait; where the lines split, the rider changes to the specific line and waits for it. Routing takes the better of
   waiting for one's own line from the start or taking the first train and changing at the split, so shared corridors
   are fast and branch stops are not (an earlier version gave every line the pooled wait, which made single-line
-  branches look 15 minutes closer: 524k residents within 30 min of HB against 415k now);
+  branches look 15 minutes closer: at the time, 524k residents within 30 min of HB against 415k with the fix);
 - **pooled rides:** lines that reach the same later stop by different routes (S5 via Hardbrücke and S14 non-stop
   from HB to Hedingen; IC, S2, S16 and S24 from HB to the airport) also get a ride "any of them to that stop", with
   half the combined headway as wait, where that beats waiting for the best single line by 2 min or more;
@@ -91,11 +91,12 @@ time to every 200 m cell, for each timetable year and two networks: all lines wi
 `site/data/<city>-h3.json`, holds per hexagon the residents and the number of land cells within 15/30/45 min. Checks:
 from Zürich HB it reproduces the page's figures (rail only) and the browser with « Bus and boat » ticked.
 
-Residents and jobs: each BFS hectare is added to the 200 m cell its centre falls in; the BFS rounds small counts
-for privacy, so totals are approximate. Residents are held at STATPOP 2024 in every
-timetable year, so their changes are purely the network; jobs use the STATENT grid of each year (the latest
-published one for future timetables), so jobs within reach move with both the network and employment. The history
-table also shows the region's STATENT total per year (`sources/zurich-jobs.json`) for scale.
+Residents and full-time jobs: each BFS hectare is added to the 200 m cell its centre falls in; the BFS rounds small
+counts for privacy, so totals are approximate. Both move with the timetable year (STATPOP of that year, or the newest
+published; STATENT full-time equivalents likewise), so reach within a time combines the network with where people
+live and work. Where two timetables share a grid (full-time jobs from 2024, residents from 2026) the difference is the
+network alone. The history table also shows the region's STATENT full-time equivalents per year
+(`sources/zurich-jobs.json`) for scale.
 
 ## Notes and known gaps
 
@@ -107,7 +108,8 @@ table also shows the region's STATENT total per year (`sources/zurich-jobs.json`
   `routes.txt` and `excludeRouteCategories` in `cities/zurich.json`.
 - **2026 dip:** the 2026 timetable runs the SZU lines S4 and S10 from Zürich Selnau instead of Zürich HB
   (HB–Selnau works) and diverts trams for construction (temporary lines 50 and 51), so reach from HB is lower than in
-  2024 although most stops got slightly faster.
+  2024: the Sihltal stops are about 10 min further from HB, the S10 stops in town 11–12 min (Uetliberg itself barely
+  changes), while 215 of the 314 tram and rail stops change by a minute or less.
 - **2027** is the first published version of that timetable, with far fewer trips than the final one.
 - Straight-line walking is optimistic in hilly and fenced areas; rivers are crossed anywhere.
 

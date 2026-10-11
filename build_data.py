@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
-from cities import load_city, statent_file, statent_year
+from cities import load_city, statent_file, statent_year, statpop_file, statpop_year
 
 ROOT = Path(__file__).resolve().parent
 
@@ -1087,8 +1087,8 @@ def rail_routes_from_osm(data_dir: Path, city: dict, route_info: Dict[str, dict]
 # count). Jobs come from the STATENT grid of the timetable year (cities.statent_year).
 def hectare_sources(year: str) -> Dict[str, Tuple[str, Optional[str], str]]:
     return {
-        "pop": ("statpop.zip", "STATPOP", "BBTOT"),  # permanent residents (STATPOP 2024 in every year)
-        "jobs": (statent_file(year), None, "B08EMPT"),  # employees (jobs), all sectors
+        "pop": (statpop_file(year), None, "BBTOT"),  # permanent residents, STATPOP of the timetable year
+        "jobs": (statent_file(year), None, "B08VZAT"),  # full-time equivalent jobs, all sectors
     }
 
 
@@ -1309,7 +1309,7 @@ def write_provenance(city: dict, data_dir: Path, reference_date: date, route_inf
             "licence": "ODbL, © OpenStreetMap contributors",
             **{name.removesuffix(".json"): manifest[name] for name in ("osm_rail.json", "osm_water_parks.json", "osm_bike.json") if name in manifest},
         },
-        "population": manifest.get("statpop.zip"),
+        "population": {"statpopYear": statpop_year(city["year"]), **manifest.get(statpop_file(city["year"]), {})},
         "jobs": {"statentYear": statent_year(city["year"]), **manifest.get(statent_file(city["year"]), {})},
         "elevation": manifest.get("elevation.json"),
         "railGeometry": "OpenStreetMap" if city.get("railGeometry") == "osm" else "GTFS shapes.txt",

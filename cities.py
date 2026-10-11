@@ -16,8 +16,8 @@ CITIES_DIR = ROOT / "cities"
 OSM_HALF_SIZE = (0.14, 0.20)
 PARKS_HALF_SIZE = (0.08, 0.11)
 
-# Published STATENT hectare grids (jobs, BFS via data.geo.admin.ch). Each timetable year uses the latest grid not
-# after it, so 2026 and 2027 use 2024 until newer grids come out.
+# Published STATENT hectare grids (full-time equivalent jobs, BFS via data.geo.admin.ch). Each timetable year uses the
+# latest grid not after it, so 2026 and 2027 use 2024 until newer grids come out (STATENT 2025: about autumn 2027).
 STATENT_GRID_YEARS = ("2022", "2023", "2024")
 STATENT_GRID_URL = (
     "https://data.geo.admin.ch/ch.bfs.betriebszaehlungen/betriebszaehlungen_{year}/betriebszaehlungen_{year}_ha_2056.csv"
@@ -31,6 +31,24 @@ def statent_year(timetable_year: str) -> str:
 
 def statent_file(timetable_year: str) -> str:
     return f"statent_{statent_year(timetable_year)}.csv"
+
+
+# Published STATPOP hectare grids (permanent residents at 31 December, BFS via data.geo.admin.ch), same rule: 2026 and
+# 2027 use 2025, the newest.
+STATPOP_GRID_YEARS = ("2022", "2023", "2024", "2025")
+STATPOP_GRID_URL = (
+    "https://data.geo.admin.ch/ch.bfs.statistik-bevoelkerung_haushalte/statistik-bevoelkerung_haushalte_{year}/"
+    "statistik-bevoelkerung_haushalte_{year}_ha_2056.csv"
+)
+
+
+def statpop_year(timetable_year: str) -> str:
+    """The STATPOP grid year used for a timetable year."""
+    return max((y for y in STATPOP_GRID_YEARS if y <= timetable_year), default=STATPOP_GRID_YEARS[0])
+
+
+def statpop_file(timetable_year: str) -> str:
+    return f"statpop_{statpop_year(timetable_year)}_ha.csv"
 
 
 def with_defaults(raw: dict) -> dict:

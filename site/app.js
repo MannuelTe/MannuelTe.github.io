@@ -1319,7 +1319,7 @@ function setReach(percent, rest) {
 // German has no short form for thousands (410'200, not 410k): compact still shortens millions (1,2 Mio.).
 const compact = new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 });
 
-/** Residents and jobs in the cells reached within each isochrone (BFS hectare grids, summed per cell). */
+/** Residents and full-time jobs in the cells reached within each isochrone (BFS hectare grids, summed per cell). */
 function reachCounts(grid, limits) {
   const { cells } = app.data;
   const totals = { pop: 0, jobs: 0 };
@@ -1383,13 +1383,6 @@ async function tripAcrossYears() {
   );
 }
 
-/** The region's jobs in a timetable year (STATENT), with the STATENT year when it is an earlier one. */
-function regionJobsCell(year) {
-  const entry = (CITY.history ?? []).find((row) => row.year === year)?.regionJobs;
-  if (!entry) return "–";
-  return compact.format(entry.total) + (entry.year === year ? "" : ` (${entry.year})`);
-}
-
 async function updateYears() {
   if (app.from && insights.page?.id === "trip") renderInsight().catch((error) => console.error(error));
   if (!yearsVisible || !app.from) return;
@@ -1406,7 +1399,7 @@ async function updateYears() {
   table.innerHTML = `<thead><tr><th scope="col">${t("Timetable", "Fahrplan")}</th>${
     app.to ? `<th scope="col">${t("This trip", "Diese Fahrt")}</th><th scope="col">${t("Lines", "Linien")}</th>` : ""
   }
-    <th scope="col">${t("Residents within 30 min", "Einwohner innert 30 min")}</th><th scope="col">${t("Jobs within 30 min", "Arbeitsplätze innert 30 min")}</th><th scope="col">${t("Jobs in the region", "Arbeitsplätze in der Region")}</th></tr></thead>`;
+    <th scope="col">${t("Residents within 30 min of the start", "Einwohner innert 30 min ab Start")}</th><th scope="col">${t("Full-time jobs within 30 min of the start", "Vollzeitstellen innert 30 min ab Start")}</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   rows.forEach((row, k) => {
     const tr = document.createElement("tr");
@@ -1445,26 +1438,33 @@ async function updateYears() {
     const change = (value, before) => (before == null ? "" : ` (${value - before >= 0 ? "+" : "−"}${compact.format(Math.abs(value - before))})`);
     cell(compact.format(row.pop) + change(row.pop, previous?.pop));
     cell(compact.format(row.jobs) + change(row.jobs, previous?.jobs));
-    cell(regionJobsCell(row.year));
     tbody.append(tr);
   });
   table.append(tbody);
   const note = document.createElement("p");
-  note.className = "table-note";
   const start = app.from.label.replace(new RegExp(`^${t("Near", "Bei")} `), "");
   note.textContent = t(
     `Counted from the start on the map (${start})${app.to ? " with the same destination" : ""} on each year's timetable${
       app.includeBus ? ", buses and boats included" : ", tram and train only"
-    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents held at 2024; jobs, within reach and in the region, are each year's STATENT count (the latest published where none exists yet), so jobs within reach move with both the network and the jobs. Changes are against the previous row.${
+    }, so they match "The network over time" below only for a start at ${CITY.center} without buses. Residents and full-time jobs are each year's own (STATPOP and STATENT, the latest published where none exists yet), so they move with both the network and where people live and work. Changes are against the previous row.${
       app.to ? "" : " Click the map to add a destination."
     }`,
     `Gezählt ab dem Start auf der Karte (${start})${app.to ? " mit demselben Ziel" : ""} auf dem Fahrplan jedes Jahres${
       app.includeBus ? ", Busse und Schiffe inbegriffen" : ", nur Tram und Zug"
-    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Einwohner auf Stand 2024; Arbeitsplätze, erreichbar und in der Region, sind die STATENT-Zahl des Jahres (die letzte veröffentlichte, wo es noch keine gibt), die erreichbaren Arbeitsplätze ändern sich also mit dem Netz und mit den Stellen. Änderungen gegenüber der Zeile davor.${
+    }; sie stimmen mit «Das Netz im Wandel» unten also nur für einen Start ab ${CITY.center} ohne Busse überein. Einwohner und Vollzeitstellen sind jene des Jahres (STATPOP und STATENT, die letzten veröffentlichten, wo es noch keine gibt); sie ändern sich also mit dem Netz und damit, wo Menschen wohnen und arbeiten. Änderungen gegenüber der Zeile davor.${
       app.to ? "" : " Klicke auf die Karte, um ein Ziel hinzuzufügen."
     }`,
   );
-  body.replaceChildren(table, note);
+  // The fine print folds away under the table.
+  const details = document.createElement("details");
+  details.className = "expander table-details";
+  const summary = document.createElement("summary");
+  summary.textContent = t("More information", "Weitere Informationen");
+  const inner = document.createElement("div");
+  inner.className = "expander-body";
+  inner.append(note);
+  details.append(summary, inner);
+  body.replaceChildren(table, details);
 }
 
 function updateCounts() {
@@ -1731,37 +1731,6 @@ $("heatFrom").addEventListener("click", (event) => {
   }
 });
 
-$("locate").addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    toast(t("Geolocation is not available.", "Standortbestimmung ist nicht verfügbar."));
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    ({ coords }) => {
-      if (!setFrom(toWorld(coords.latitude, coords.longitude), t("My location", "Mein Standort"))) toast(t("You are outside the map.", "Du bist ausserhalb der Karte."));
-    },
-    () => toast(t("Could not get your location.", "Dein Standort konnte nicht bestimmt werden.")),
-  );
-});
-
-$("share").addEventListener("click", async () => {
-  const url = location.href;
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: document.title, url });
-      return;
-    } catch {
-      /* partage annulé : on retombe sur la copie */
-    }
-  }
-  try {
-    await navigator.clipboard.writeText(url);
-    toast(t("Link copied!", "Link kopiert!"));
-  } catch {
-    toast(url);
-  }
-});
-
 // --- Reach from everywhere: H3 hexagons, one starting point each (build_h3.py) ----------------------------
 
 const hexUrl = () => new URL(`./data/${CITY.slug}-h3.json?v=${CITY.h3Version}`, import.meta.url);
@@ -1785,27 +1754,18 @@ const hex = {
   hover: -1, // the hexagon under the pointer, outlined on both maps
 };
 
-/** A hexagon's value: residents, or km² of land, within the chosen time. */
+/** A hexagon's value: residents or full-time jobs within the chosen time. */
 function hexValues(year) {
   const values = hex.data.values[hex.network][year];
-  return hex.metric === "pop" ? values.pop[hex.limit] : values.cells[hex.limit].map((n) => n * hex.data.cellKm2);
+  return values[hex.metric][hex.limit];
 }
 
 function hexFormat(value) {
-  if (hex.metric === "pop") return new Intl.NumberFormat(LOCALE).format(Math.round(value));
-  return `${km2Number(value)} km²`;
-}
-
-/** Areas with a decimal comma in German, like the rest of the page (de-CH formatting would give a point). */
-function km2Number(value) {
-  const digits = Math.abs(value) < 1 ? 2 : Math.abs(value) < 10 ? 1 : 0;
-  const text = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: digits }).format(value);
-  return LANG === "de" ? text.replace(".", ",") : text;
+  return new Intl.NumberFormat(LOCALE).format(Math.round(value));
 }
 
 function hexFormatShort(value) {
-  if (hex.metric === "pop") return new Intl.NumberFormat(LOCALE).format(value);
-  return `${km2Number(value)} km²`;
+  return new Intl.NumberFormat(LOCALE).format(value);
 }
 
 /** Rounded to two significant digits, so legend breaks read as round numbers. */
@@ -1833,10 +1793,9 @@ function hexBreaks() {
     const before = hexValues(a);
     hexValues(b).forEach((value, k) => changes.push(Math.abs(value - before[k])));
   }));
-  // Thresholds from the places that changed at all (many do not, at 15 min), and never below one unit:
-  // one resident, or one 200 m cell of land.
+  // Thresholds from the places that changed at all (many do not, at 15 min), and never below one person.
   const moved = changes.filter((value) => value > 0).sort((a, b) => a - b);
-  const unit = hex.metric === "pop" ? 1 : hex.data.cellKm2;
+  const unit = 1;
   const diverging = [];
   for (const q of [0.3, 0.7, 0.92]) {
     const value = Math.max(unit, nice(quantile(moved, q)), (diverging.at(-1) ?? 0) + unit);
@@ -2051,7 +2010,7 @@ function hexPlace(index) {
 }
 
 function hexLabel() {
-  const what = hex.metric === "pop" ? t("Residents", "Einwohner") : t("Area", "Fläche");
+  const what = { pop: t("Residents", "Einwohner"), jobs: t("Full-time jobs", "Vollzeitstellen") }[hex.metric];
   return t(`${what} within ${hex.limit} min`, `${what} innert ${hex.limit} min`);
 }
 
@@ -2212,8 +2171,7 @@ function drawHexMap(map) {
 }
 
 function drawHexLegends() {
-  // Numbers only on the keys, the unit once at the end, so each legend fits on one line.
-  const short = (value) => (hex.metric === "pop" ? new Intl.NumberFormat(LOCALE).format(value) : km2Number(value));
+  const short = hexFormatShort;
   const legend = (id, keys) => {
     const items = keys.map(([colorValue, text]) => {
       const item = document.createElement("span");
@@ -2222,12 +2180,6 @@ function drawHexLegends() {
       item.textContent = text;
       return item;
     });
-    if (hex.metric === "area") {
-      const unit = document.createElement("span");
-      unit.className = "hex-unit";
-      unit.textContent = "km²";
-      items.push(unit);
-    }
     $(id).replaceChildren(...items);
   };
   const seq = hex.breaks.sequential;
@@ -2251,13 +2203,13 @@ function median(values) {
 
 function updateHexText() {
   const label = hexLabel();
-  const unit = hex.metric === "pop" ? t("residents", "Einwohner") : t("of land", "Land");
+  const unit = { pop: t("residents", "Einwohner"), jobs: t("full-time jobs", "Vollzeitstellen") }[hex.metric];
   $("hexTitleA").textContent = label;
   $("hexTitleB").textContent = t(`Change, ${hex.from} → ${hex.to}`, `Veränderung ${hex.from} → ${hex.to}`);
   const now = median(hexValues(hex.year));
   const first = hex.data.years[0];
   const then = median(hexValues(first));
-  const amount = (value) => (hex.metric === "pop" ? `${hexFormat(value)} ${unit}` : hexFormat(value));
+  const amount = (value) => `${hexFormat(value)} ${unit}`;
   const since = hex.year === first ? "" : ` (${first}: ${hexFormat(then)})`;
   $("hexSummaryA").textContent = t(`From the median starting point: ${amount(now)} within ${hex.limit} min${since}.`,
                                    `Vom mittleren Startpunkt aus: ${amount(now)} innert ${hex.limit} min${since}.`);
@@ -2387,7 +2339,7 @@ const metricOf = (key, limit) => (row) =>
   key === "stops" ? row[`within${limit}`] : (row[key === "pop" ? "population" : "jobs"][limit] ?? 0);
 const METRICS = {
   pop: { label: t("Residents", "Einwohner"), noun: t("residents", "Einwohner"), format: (v) => compact.format(v) },
-  jobs: { label: t("Jobs", "Arbeitsplätze"), noun: t("jobs", "Arbeitsplätze"), format: (v) => compact.format(v) },
+  jobs: { label: t("Full-time jobs", "Vollzeitstellen"), noun: t("full-time jobs", "Vollzeitstellen"), format: (v) => compact.format(v) },
   stops: { label: t("Rail stops", "Haltestellen"), noun: t("points of rail stops", "Prozentpunkte der Haltestellen"), format: (v) => `${v}%` },
 };
 // German nouns keep their capital in the middle of a sentence.

@@ -23,7 +23,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cities import STATENT_GRID_URL, load_city, statent_year
+from cities import STATENT_GRID_URL, STATPOP_GRID_URL, load_city, statent_year, statpop_year
 
 ROOT = Path(__file__).resolve().parent
 USER_AGENT = "zurich-temps-transport/0.1 (build script; github.com/MannuelTe/MannuelTe.github.io)"
@@ -44,12 +44,8 @@ KREISE_URL = (
 )
 
 
-# Hectare grid of residents (STATPOP) from the Federal Statistical Office; the jobs grids (STATENT, one per year)
-# are listed in cities.py.
-BFS_ASSETS = {
-    "statpop.zip": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",  # STATPOP 2024
-}
-# Employees per municipality and year (STATENT 2011 onwards), BFS STAT-TAB: the region's job total in each year.
+# The residents (STATPOP) and jobs (STATENT) hectare grids, one per year, are listed in cities.py.
+# Full-time equivalent jobs per municipality and year (STATENT 2011 onwards), BFS STAT-TAB: the region's total.
 STATENT_MUNICIPAL_URL = "https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0602010000_102/px-x-0602010000_102.px"
 
 
@@ -338,7 +334,8 @@ def fetch_bike_network(city: dict, out: Path) -> None:
 
 
 def fetch_bfs(city: dict, out: Path) -> None:
-    for name, url in BFS_ASSETS.items():
+    for year in sorted({statpop_year(y) for y in city["timetables"]}):
+        name, url = f"statpop_{year}_ha.csv", STATPOP_GRID_URL.format(year=year)
         print(f"BFS hectare grid {name}…")
         download_to(url, out / name)
         record(out, name, url)
@@ -350,8 +347,8 @@ def fetch_bfs(city: dict, out: Path) -> None:
 
 
 def fetch_regional_jobs(city: dict) -> None:
-    """Employees in the map's municipalities for every STATENT year, into sources/<city>-jobs.json (committed)."""
-    print("BFS STATENT employees by municipality…")
+    """Full-time equivalent jobs in the map's municipalities for every STATENT year, into sources/<city>-jobs.json."""
+    print("BFS STATENT full-time equivalents by municipality…")
     meta = json.loads(download(STATENT_MUNICIPAL_URL))
     places = next(v for v in meta["variables"] if v["code"] == "Gemeinde")
     names = set(city["municipalities"])
@@ -362,7 +359,7 @@ def fetch_regional_jobs(city: dict) -> None:
         "query": [
             {"code": "Gemeinde", "selection": {"filter": "item", "values": codes}},
             {"code": "Wirtschaftssektor", "selection": {"filter": "item", "values": ["999"]}},  # all sectors
-            {"code": "Beobachtungseinheit", "selection": {"filter": "item", "values": ["2"]}},  # employees
+            {"code": "Beobachtungseinheit", "selection": {"filter": "item", "values": ["5"]}},  # full-time equivalents
         ],
         "response": {"format": "json-stat2"},
     }
@@ -374,10 +371,10 @@ def fetch_regional_jobs(city: dict) -> None:
     out.write_text(json.dumps({
         "source": STATENT_MUNICIPAL_URL,
         "table": "px-x-0602010000_102",
-        "measure": "employees, all sectors, summed over the map's municipalities",
+        "measure": "full-time equivalents, all sectors, summed over the map's municipalities",
         "municipalities": len(codes),
         "fetchedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "employees": totals,
+        "fte": totals,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

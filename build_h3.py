@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Reach from everywhere: for every H3 hexagon on the map, the residents and the land area reachable by public
-transport within 15, 30 and 45 minutes, on each timetable year. Written to site/data/<city>-h3.json for the two
+"""Reach from everywhere: for every H3 hexagon on the map, the residents, the full-time equivalent jobs and the land area
+reachable by public transport within 15, 30 and 45 minutes, on each timetable year (each year's own STATPOP and
+STATENT grids, as in the bundles). Written to site/data/<city>-h3.json for the two
 hexagon maps on the page (reach in one year, change between two years).
 
 Two networks: rail only (tram, S-Bahn, train, funiculars: the interactive map's default view) and all lines, buses and
@@ -77,6 +78,7 @@ class Bundle:
         self.cell_xy = np.array([c["point"] for c in cells])
         self.cell_z = np.array([c.get("z") if c.get("z") is not None else np.nan for c in cells], dtype=float)
         self.cell_pop = np.array([c.get("pop", 0) for c in cells], dtype=float)
+        self.cell_jobs = np.array([c.get("jobs", 0) for c in cells], dtype=float)
         access = [(i, station, minutes) for i, c in enumerate(cells) for station, minutes in c["access"]]
         self.access_cell = np.array([a[0] for a in access])
         self.access_station = np.array([a[1] for a in access])
@@ -252,17 +254,22 @@ def travel_times(bundle: Bundle, origins: np.ndarray) -> np.ndarray:
 
 
 def reach(bundle: Bundle, origins: np.ndarray) -> dict:
+    """Per origin: residents, full-time equivalent jobs and land cells within each limit, all of the bundle's year."""
     pop = {limit: [] for limit in LIMITS}
+    jobs = {limit: [] for limit in LIMITS}
     area = {limit: [] for limit in LIMITS}
     for start in range(0, len(origins), BATCH):
         times = travel_times(bundle, origins[start : start + BATCH])
         for limit in LIMITS:
             within = times <= limit
             pop[limit].append(within @ bundle.cell_pop)
+            jobs[limit].append(within @ bundle.cell_jobs)
             area[limit].append(within.sum(axis=1))
+    as_ints = lambda parts: np.rint(np.concatenate(parts)).astype(int).tolist()  # noqa: E731
     return {
-        "pop": {str(limit): np.rint(np.concatenate(pop[limit])).astype(int).tolist() for limit in LIMITS},
-        "cells": {str(limit): np.concatenate(area[limit]).astype(int).tolist() for limit in LIMITS},
+        "pop": {str(limit): as_ints(pop[limit]) for limit in LIMITS},
+        "jobs": {str(limit): as_ints(jobs[limit]) for limit in LIMITS},
+        "cells": {str(limit): as_ints(area[limit]) for limit in LIMITS},
     }
 
 
@@ -344,7 +351,8 @@ def main() -> None:
         "years": years,
         "networks": list(networks),
         "bounds": first.meta["viewBounds"],
-        "totals": {"pop": int(first.cell_pop.sum()), "cells": len(first.cell_xy)},
+        "totals": {year: {"pop": int(bundles["rail"][year].cell_pop.sum()), "jobs": int(bundles["rail"][year].cell_jobs.sum())}
+                   for year in years},
         "hexes": [round_ring(to_world(lat, lon, lat0) for lat, lon in h3.cell_to_boundary(h)) for h in hexes],
         "ids": hexes,
         "communeNames": [commune["name"] for commune in first.boroughs],

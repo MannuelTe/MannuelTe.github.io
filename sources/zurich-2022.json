@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-07T21:15:29+00:00",
+  "builtAt": "2026-10-10T23:55:12+00:00",
   "referenceDate": "2022-10-25",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -81,11 +81,12 @@
     }
   },
   "population": {
-    "source": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",
+    "statpopYear": "2022",
+    "source": "https://data.geo.admin.ch/ch.bfs.statistik-bevoelkerung_haushalte/statistik-bevoelkerung_haushalte_2022/statistik-bevoelkerung_haushalte_2022_ha_2056.csv",
     "how": "download",
-    "fetchedAt": "2026-10-05T18:37:54+00:00",
-    "bytes": 13156696,
-    "sha256": "af09dda6c013a30b5de1b567298fa7e791ff6fecb8339da1067eada3f217c053"
+    "fetchedAt": "2026-10-10T23:54:42+00:00",
+    "bytes": 68637187,
+    "sha256": "f13c057cba16e89d9575f9d0f1f6b87ccc7ac9cd2497641d2e7318e0e9570414"
   },
   "jobs": {
     "statentYear": "2022",
@@ -413,16 +414,16 @@
     "within15": 32,
     "within30": 93,
     "population": {
-      "total": 717159,
-      "45": 663291,
-      "30": 420460,
-      "15": 62452
+      "total": 700364,
+      "45": 647494,
+      "30": 411737,
+      "15": 62214
     },
     "jobs": {
-      "total": 745860,
-      "45": 722700,
-      "30": 614290,
-      "15": 224188
+      "total": 582216,
+      "45": 563602,
+      "30": 477791,
+      "15": 171481
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 49,

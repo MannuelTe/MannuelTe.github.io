@@ -19,6 +19,7 @@ ${header}
       <section class="block" aria-labelledby="map-title">
         <header class="block-head">
           <h2 id="map-title">${ui_map}</h2>
+          <span class="block-desc">${ui_map_desc}</span>
         </header>
         <div class="map-card">
           <noscript>
@@ -67,45 +68,53 @@ ${header}
           </div>
 
           <div class="controls">
-            <div class="control-group">
-              <span class="control-label">${ui_mode}</span>
-              <div id="modePicker" class="segmented" role="group" aria-label="${ui_mode_label}">
-                <button type="button" data-mode="transit" aria-pressed="true">${ui_transit}</button>
-                <button type="button" data-mode="bike" aria-pressed="false">${ui_bike}</button>
-              </div>
-            </div>
-            <div class="control-group transit-only">
-              <span class="control-label">${ui_timetable}</span>
-              <div id="yearPicker" class="segmented" role="group" aria-label="${ui_timetable_year}">
+            <div class="controls-row">
+              <span class="controls-title">${ui_content}</span>
+              <div class="controls-groups">
+                <div class="control-group">
+                  <span class="control-label">${ui_mode}</span>
+                  <div id="modePicker" class="segmented" role="group" aria-label="${ui_mode_label}">
+                    <button type="button" data-mode="transit" aria-pressed="true">${ui_transit}</button>
+                    <button type="button" data-mode="bike" aria-pressed="false">${ui_bike}</button>
+                  </div>
+                </div>
+                <div class="control-group transit-only">
+                  <span class="control-label">${ui_timetable}</span>
+                  <div id="yearPicker" class="segmented" role="group" aria-label="${ui_timetable_year}">
 ${year_buttons}
+                  </div>
+                  <small id="yearNote" class="year-note"></small>
+                </div>
+                <div class="control-group transit-only">
+                  <span class="control-label">${ui_network}</span>
+                  <label class="chip-toggle"><input type="checkbox" checked disabled /><span>${rail_label}</span></label>
+                  <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>${bus_label}</span></label>
+                </div>
+                <div class="control-group actions">
+                  <button id="swap" type="button" class="button">${ui_swap}</button>
+                </div>
               </div>
-              <small id="yearNote" class="year-note"></small>
             </div>
-            <div class="control-group transit-only">
-              <span class="control-label">${ui_network}</span>
-              <label class="chip-toggle"><input type="checkbox" checked disabled /><span>${rail_label}</span></label>
-              <label class="chip-toggle"><input id="busToggle" type="checkbox" /><span>${bus_label}</span></label>
-            </div>
-            <div class="control-group">
-              <span class="control-label">${ui_base_map}</span>
-              <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>${ui_streets}</span></label>
-            </div>
-            <div id="isoToggles" class="control-group">
-              <span class="control-label">${ui_isochrones}</span>
-              <label class="chip-toggle"><input type="checkbox" value="15" checked /><span>15 min</span></label>
-              <label class="chip-toggle"><input type="checkbox" value="30" checked /><span>30 min</span></label>
-              <label class="chip-toggle"><input type="checkbox" value="45" /><span>45 min</span></label>
-              <label class="chip-toggle"><input type="checkbox" value="60" /><span>60 min</span></label>
-            </div>
-            <div class="control-group">
-              <label class="control-label" for="maxRange">${ui_scale}</label>
-              <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
-              <output id="maxValue" for="maxRange">45 min</output>
-            </div>
-            <div class="control-group actions">
-              <button id="locate" type="button" class="button">${ui_my_location}</button>
-              <button id="swap" type="button" class="button">${ui_swap}</button>
-              <button id="share" type="button" class="button primary">${ui_share}</button>
+            <div class="controls-row">
+              <span class="controls-title">${ui_visuals}</span>
+              <div class="controls-groups">
+                <div class="control-group">
+                  <span class="control-label">${ui_base_map}</span>
+                  <label class="chip-toggle"><input id="basemapToggle" type="checkbox" checked /><span>${ui_streets}</span></label>
+                </div>
+                <div id="isoToggles" class="control-group">
+                  <span class="control-label">${ui_isochrones}</span>
+                  <label class="chip-toggle"><input type="checkbox" value="15" checked /><span>15 min</span></label>
+                  <label class="chip-toggle"><input type="checkbox" value="30" checked /><span>30 min</span></label>
+                  <label class="chip-toggle"><input type="checkbox" value="45" /><span>45 min</span></label>
+                  <label class="chip-toggle"><input type="checkbox" value="60" /><span>60 min</span></label>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="maxRange">${ui_scale}</label>
+                  <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
+                  <output id="maxValue" for="maxRange">45 min</output>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -136,7 +145,7 @@ ${year_buttons}
             <span class="control-label">${ui_measure}</span>
             <div id="hexMetric" class="segmented" role="group" aria-label="${ui_measure}">
               <button type="button" data-metric="pop" aria-pressed="true">${ui_residents}</button>
-              <button type="button" data-metric="area" aria-pressed="false">${ui_area}</button>
+              <button type="button" data-metric="jobs" aria-pressed="false">${ui_jobs}</button>
             </div>
           </div>
           <div class="control-group">

@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-07T21:15:50+00:00",
+  "builtAt": "2026-10-10T23:55:40+00:00",
   "referenceDate": "2024-10-22",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -81,11 +81,12 @@
     }
   },
   "population": {
-    "source": "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36171301/master",
+    "statpopYear": "2024",
+    "source": "https://data.geo.admin.ch/ch.bfs.statistik-bevoelkerung_haushalte/statistik-bevoelkerung_haushalte_2024/statistik-bevoelkerung_haushalte_2024_ha_2056.csv",
     "how": "download",
-    "fetchedAt": "2026-10-05T18:37:54+00:00",
-    "bytes": 13156696,
-    "sha256": "af09dda6c013a30b5de1b567298fa7e791ff6fecb8339da1067eada3f217c053"
+    "fetchedAt": "2026-10-10T23:54:42+00:00",
+    "bytes": 68831413,
+    "sha256": "a4123c976bda6dab6f7f4634c7f82544d9939e249ca1b4e9e328f5ed80a759d2"
   },
   "jobs": {
     "statentYear": "2024",
@@ -433,10 +434,10 @@
       "15": 78939
     },
     "jobs": {
-      "total": 767020,
-      "45": 734631,
-      "30": 624360,
-      "15": 240103
+      "total": 601447,
+      "45": 575613,
+      "30": 488470,
+      "15": 185202
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 48,

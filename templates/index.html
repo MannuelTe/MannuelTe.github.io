@@ -67,6 +67,8 @@ ${header}
             </div>
           </div>
 
+          <details id="mapConfig" class="expander map-config">
+            <summary>${ui_config}</summary>
           <div class="controls">
             <div class="controls-row">
               <span class="controls-title">${ui_content}</span>
@@ -117,6 +119,7 @@ ${year_buttons}
               </div>
             </div>
           </div>
+          </details>
         </div>
       </section>
 
@@ -133,38 +136,10 @@ ${year_buttons}
           <h2 id="hex-title">${ui_everywhere}</h2>
           <span class="block-desc">${ui_everywhere_desc}</span>
         </header>
-        <div class="controls hex-controls">
-          <div class="control-group">
-            <span class="control-label">${ui_network}</span>
-            <div id="hexNetwork" class="segmented" role="group" aria-label="${ui_network}">
-              <button type="button" data-network="all" aria-pressed="true">${ui_all_lines}</button>
-              <button type="button" data-network="rail" aria-pressed="false">${rail_label}</button>
-            </div>
-          </div>
-          <div class="control-group">
-            <span class="control-label">${ui_measure}</span>
-            <div id="hexMetric" class="segmented" role="group" aria-label="${ui_measure}">
-              <button type="button" data-metric="pop" aria-pressed="true">${ui_residents}</button>
-              <button type="button" data-metric="jobs" aria-pressed="false">${ui_jobs}</button>
-            </div>
-          </div>
-          <div class="control-group">
-            <span class="control-label">${ui_travel_time}</span>
-            <div id="hexLimit" class="segmented" role="group" aria-label="${ui_travel_time}">
-              <button type="button" data-limit="15" aria-pressed="false">15 min</button>
-              <button type="button" data-limit="30" aria-pressed="true">30 min</button>
-              <button type="button" data-limit="45" aria-pressed="false">45 min</button>
-            </div>
-          </div>
-        </div>
         <div class="hex-grid">
           <figure class="card hex-card">
             <figcaption class="hex-head">
               <strong id="hexTitleA"></strong>
-              <div class="control-group">
-                <span class="control-label">${ui_timetable}</span>
-                <div id="hexYear" class="segmented" role="group" aria-label="${ui_timetable_year}"></div>
-              </div>
             </figcaption>
             <div class="hex-stage">
               <canvas id="hexMapA" role="img"></canvas>
@@ -181,12 +156,6 @@ ${year_buttons}
           <figure class="card hex-card">
             <figcaption class="hex-head">
               <strong id="hexTitleB"></strong>
-              <div class="control-group">
-                <span class="control-label">${ui_from_year}</span>
-                <div id="hexFrom" class="segmented" role="group" aria-label="${ui_from_year}"></div>
-                <span class="control-label">${ui_to_year}</span>
-                <div id="hexTo" class="segmented" role="group" aria-label="${ui_to_year}"></div>
-              </div>
             </figcaption>
             <div class="hex-stage">
               <canvas id="hexMapB" role="img"></canvas>
@@ -201,6 +170,36 @@ ${year_buttons}
             <p id="hexSummaryB" class="hex-summary"></p>
           </figure>
         </div>
+        <details class="card expander map-config hex-config">
+          <summary>${ui_config}</summary>
+          <div class="hex-controls">
+            <div class="control-group">
+              <span class="control-label">${ui_measure}</span>
+              <div id="hexMetric" class="segmented" role="group" aria-label="${ui_measure}">
+                <button type="button" data-metric="pop" aria-pressed="true">${ui_residents}</button>
+                <button type="button" data-metric="jobs" aria-pressed="false">${ui_jobs}</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">${ui_travel_time}</span>
+              <div id="hexLimit" class="segmented" role="group" aria-label="${ui_travel_time}">
+                <button type="button" data-limit="15" aria-pressed="false">15 min</button>
+                <button type="button" data-limit="30" aria-pressed="true">30 min</button>
+                <button type="button" data-limit="45" aria-pressed="false">45 min</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">${ui_timetable}</span>
+              <div id="hexYear" class="segmented" role="group" aria-label="${ui_timetable_year}"></div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">${ui_from_year}</span>
+              <div id="hexFrom" class="segmented" role="group" aria-label="${ui_from_year}"></div>
+              <span class="control-label">${ui_to_year}</span>
+              <div id="hexTo" class="segmented" role="group" aria-label="${ui_to_year}"></div>
+            </div>
+          </div>
+        </details>
         <p class="hex-hint">${ui_hex_hint}</p>
 ${hex_notes}
       </section>
@@ -210,6 +209,9 @@ ${hex_notes}
           <h2 id="history-title">${ui_over_time}</h2>
           <span class="block-desc">${ui_over_time_desc}</span>
         </header>
+${bento_2027}
+        <details class="expander more-history">
+          <summary>${ui_over_time_more}</summary>
 ${trend_tiles}
         <div id="insights" class="insights">
           <div class="insights-head">
@@ -253,6 +255,7 @@ ${history_rows}
           </details>
         </div>
 ${history_notes}
+        </details>
       </section>
 
       <section class="block" aria-labelledby="reach-title">

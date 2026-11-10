@@ -556,6 +556,20 @@ output {
   padding: 4px 10px 4px;
 }
 
+/* All map settings sit in one expander under the map, closed by default. */
+.map-config {
+  border-bottom: 0;
+}
+
+.map-config > summary {
+  padding: 12px 10px;
+  font-size: 13px;
+}
+
+.map-config[open] > summary {
+  border-bottom: 1px dashed var(--dash);
+}
+
 /* Two rows: what the map computes (content), then how it looks (display). */
 .controls-row {
   display: grid;
@@ -790,6 +804,117 @@ output {
   font-size: 12.5px;
 }
 
+/* The 2027 step in three boxes; everything else behind « every year, insights and table ». */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bento {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  background: var(--card);
+}
+
+.bento-title {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bento-kpi {
+  color: var(--ink);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.bento-sub {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: auto;
+  overflow: visible;
+}
+
+.spark-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spark-line.draft {
+  stroke-dasharray: 4 4;
+}
+
+.spark-year {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.bento-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  margin-top: auto;
+}
+
+.bento-bar span:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.bento-bar span:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.bento-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 4px 0 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  list-style: none;
+}
+
+.bento-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 2px;
+}
+
+.bento-legend strong {
+  color: var(--ink);
+}
+
+.more-history {
+  margin-top: 16px;
+}
+
+.more-history > .trend-grid {
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .bento-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* --- Reach from everywhere: hexagon maps ------------------------------------------------ */
 
 .hex-controls {
@@ -797,7 +922,12 @@ output {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 22px;
-  padding: 0 0 14px;
+  padding: 12px 10px 14px;
+}
+
+.hex-config {
+  margin-top: 16px;
+  padding: 0;
 }
 
 .hex-grid {
@@ -996,7 +1126,7 @@ output {
   font-size: 12.5px;
 }
 
-.hex-grid + .hex-hint + .expander {
+.hex-hint + .expander {
   margin-top: 14px;
 }
 

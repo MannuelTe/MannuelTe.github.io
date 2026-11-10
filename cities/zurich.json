@@ -15,7 +15,7 @@
   },
   "network": "ZVV",
   "region": "City of Zurich and neighbouring municipalities",
-  "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020",
+  "gtfsDataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020",
   "gtfsLicence": "opentransportdata",
   "gtfsClipBbox": [
     47.28,
@@ -121,7 +121,7 @@
       "draft": true
     }
   },
-  "defaultTimetable": "2026",
+  "defaultTimetable": "2027",
   "bikePatchBboxes": [
     [
       47.28,

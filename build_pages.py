@@ -485,10 +485,14 @@ def hero_lede(city: dict, trend: list[dict]) -> str:
     return t(
         f"From {first['from']} to {first['to']}, {city['name']} became clearly better connected: in those two years, about "
         f"{gain} % more residents and {jobs} % more full-time jobs came within a 30-minute public transport trip. Since then the average has barely "
-        "changed. Major construction projects are slowing down how well the city and its agglomeration are connected.",
+        "changed. Major construction projects are slowing down how well the city and the surrounding agglomeration are "
+        f"connected. Several projects and changes are due with the {city['defaultTimetable']} timetable, but will they "
+        "substantially improve how well it is connected?",
         f"Von {first['from']} bis {first['to']} ist {city['name']} klar vernetzter geworden: Rund {gain} % mehr Einwohner "
         f"und {jobs} % mehr Vollzeitstellen wurden in diesen zwei Jahren durch ÖV-Fahrten von 30 Minuten erschlossen. Seitdem hat sich der Mittelwert kaum "
-        "verändert. Grossprojekte bremsen die Vernetzung der Stadt und der Agglomeration.",
+        "verändert. Grossprojekte bremsen die Vernetzung der Stadt und der umliegenden Agglomeration. Für den Fahrplan "
+        f"{city['defaultTimetable']} sind mehrere Projekte und Veränderungen fällig, doch werden sie die Vernetzung "
+        "massgebend verbessern?",
     )
 
 
@@ -532,19 +536,87 @@ def hex_notes(city: dict) -> str:
           f"gewählten Reisezeit. Einwohner und Vollzeitstellen sind jene des Fahrplanjahrs ({residents_grids(city)}; "
           f"{jobs_grids(city)}); eine Änderung zwischen zwei Jahren verbindet also das Netz mit Zu- und Wegzug und mit "
           "neuen oder verschwundenen Stellen."),
-        t("« With buses » uses every line in the timetable, city buses, regional buses and lake boats included, as "
+        t("These maps use every line in the timetable, city buses, regional buses and lake boats included, as "
           "with « Bus and boat » ticked on the map. Inside the city the buses matter most: from the median hexagon in "
-          f"the twelve Kreise they add {bus_gain} % more residents within 30 minutes ({year}). The other choice is the map's "
-          "default network, tram, S-Bahn and train only.",
-          "«Mit Bus» nutzt alle Linien im Fahrplan, Stadtbusse, Regionalbusse und Schiffe inbegriffen, wie mit "
+          f"the twelve Kreise they add {bus_gain} % more residents within 30 minutes ({year}).",
+          "Diese Karten nutzen alle Linien im Fahrplan, Stadtbusse, Regionalbusse und Schiffe inbegriffen, wie mit "
           "angekreuztem «Bus und Schiff» auf der Karte. In der Stadt zählen die Busse am meisten: Vom mittleren "
-          f"Sechseck in den zwölf Kreisen aus bringen sie {bus_gain} % mehr Einwohner innert 30 Minuten ({year}). Die andere "
-          "Wahl ist das Standardnetz der Karte, nur Tram, S-Bahn und Zug."),
+          f"Sechseck in den zwölf Kreisen aus bringen sie {bus_gain} % mehr Einwohner innert 30 Minuten ({year})."),
         t("The colour classes stay the same across years, so two years can be compared by eye. The change map counts "
           "small differences as « about the same ».",
           "Die Farbklassen bleiben über die Jahre gleich, so lassen sich zwei Jahre direkt vergleichen. Die "
           "Änderungskarte zählt kleine Unterschiede als «etwa gleich»."),
     ])
+
+
+CHART_COLOR = "#3b32d4"  # SERIES_COLOR in app.js
+GAIN_COLOR, SAME_COLOR, LOSS_COLOR = "#3987e5", "#d9d8d3", "#e34948"  # the hexagon change map's middle steps
+
+
+def sparkline(years: list[str], values: list[float], drafts: list[bool], unit: str) -> str:
+    """A small line over the timetable years: dashed into a draft year, the last point ringed, a tooltip per point."""
+    width, height, pad_x, top, bottom = 340, 76, 12, 8, 18
+    low, high = min(values), max(values)
+    span = (high - low) or 1
+    xs = [pad_x + i * (width - 2 * pad_x) / max(len(values) - 1, 1) for i in range(len(values))]
+    ys = [top + (high - v) / span * (height - top - bottom) for v in values]
+    solid_end = next((i for i, d in enumerate(drafts) if d), len(values)) - 1
+    path = lambda a, b: "M" + " L".join(f"{xs[i]:.1f},{ys[i]:.1f}" for i in range(a, b + 1))
+    parts = [f'<path d="{path(0, solid_end)}" class="spark-line" stroke="{CHART_COLOR}" />']
+    if solid_end < len(values) - 1:
+        parts.append(f'<path d="{path(solid_end, len(values) - 1)}" class="spark-line draft" stroke="{CHART_COLOR}" />')
+    for i, (x, y) in enumerate(zip(xs, ys)):
+        last = i == len(values) - 1
+        fill, stroke = ("#ffffff", CHART_COLOR) if last else (CHART_COLOR, "#ffffff")
+        label = f"{years[i]}{t(' (draft)', ' (Entwurf)') if drafts[i] else ''}: {thousands(round(values[i]))} {unit}"
+        parts.append(f'<g class="spark-point"><circle cx="{x:.1f}" cy="{y:.1f}" r="12" fill="transparent" />'
+                     f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{fill}" stroke="{stroke}" stroke-width="2" />'
+                     f'<title>{esc(label)}</title></g>')
+        anchor = "start" if i == 0 else "end" if last else "middle"
+        parts.append(f'<text x="{x:.1f}" y="{height - 3}" text-anchor="{anchor}" class="spark-year">{years[i]}</text>')
+    return (f'<svg class="sparkline" viewBox="0 0 {width} {height}" role="img" '
+            f'aria-label="{esc(", ".join(f"{y}: {thousands(round(v))}" for y, v in zip(years, values)))}">{"".join(parts)}</svg>')
+
+
+def bento_2027(city: dict, trend: list[dict]) -> str:
+    """Three boxes on the newest timetable step: residents and full-time jobs within 30 min, and where it changes."""
+    path = SITE / "data" / f"{city['slug']}-h3.json"
+    if not trend or not path.exists():
+        return ""
+    h3 = json.loads(path.read_text(encoding="utf-8"))
+    years = h3["years"]
+    drafts = [bool(city["timetables"][y].get("draft")) for y in years]
+    last = trend[-1]
+    span = f"{last['from']} → {last['to']}" + (t(" (draft)", " (Entwurf)") if last["draft"] else "")
+    boxes = []
+    for metric, key, title, unit in (
+        ("pop", "change", t("Residents within 30 min", "Einwohner innert 30 min"), t("residents", "Einwohner")),
+        ("jobs", "jobs", t("Full-time jobs within 30 min", "Vollzeitstellen innert 30 min"), t("full-time jobs", "Vollzeitstellen")),
+    ):
+        means = [sum(h3["values"]["all"][y][metric]["30"]) / len(h3["values"]["all"][y][metric]["30"]) for y in years]
+        boxes.append(
+            f'          <div class="card bento">'
+            f'<span class="bento-title">{esc(title)}</span>'
+            f'<strong class="bento-kpi">{esc(percent(last[key]))}</strong>'
+            f'<span class="bento-sub">{esc(span)} · {esc(t("average over all starting points", "Durchschnitt aller Startpunkte"))}</span>'
+            f'{sparkline(years, means, drafts, unit)}</div>'
+        )
+    same = 100 - last["up"] - last["down"]
+    segments = [(last["up"], GAIN_COLOR, t("over 5 % more", "über 5 % mehr")), (same, SAME_COLOR, t("about the same", "etwa gleich")),
+                (last["down"], LOSS_COLOR, t("over 5 % fewer", "über 5 % weniger"))]
+    bar = "".join(f'<span style="flex:{share} 1 0;background:{color}" title="{share} % {esc(label)}"></span>'
+                  for share, color, label in segments if share > 0)
+    legend = "".join(f'<li><i style="background:{color}"></i><strong>{share} %</strong> {esc(label)}</li>'
+                     for share, color, label in segments)
+    boxes.append(
+        f'          <div class="card bento">'
+        f'<span class="bento-title">{esc(t("Where it changes", "Wo es sich ändert"))}</span>'
+        f'<strong class="bento-kpi">{same} %</strong>'
+        f'<span class="bento-sub">{esc(t(f"of starting points reach about as many residents within 30 min (within 5 %), {span}", f"der Startpunkte erreichen etwa gleich viele Einwohner innert 30 min (±5 %), {span}"))}</span>'
+        f'<div class="bento-bar" role="img" aria-label="{esc(", ".join(f"{share} % {label}" for share, _, label in segments))}">{bar}</div>'
+        f'<ul class="bento-legend">{legend}</ul></div>'
+    )
+    return '        <div class="bento-grid">\n' + "\n".join(boxes) + "\n        </div>"
 
 
 def history_notes(figures: list[dict], trend: list[dict]) -> str:
@@ -733,6 +805,7 @@ UI = {
     "remove": ("Remove", "Entfernen"),
     "map_from": ("Map from", "Karte ab"),
     "map_from_label": ("Where the map starts from", "Wovon die Karte ausgeht"),
+    "config": ("Config", "Einstellungen"),
     "click_hint": ("Click the map to set a destination.", "Klicke auf die Karte, um ein Ziel zu setzen."),
     "zoom_in": ("Zoom in", "Hineinzoomen"),
     "zoom_out": ("Zoom out", "Herauszoomen"),
@@ -765,10 +838,9 @@ UI = {
     "every": ("Every", "Takt"),
     "official_data": ("Official data", "Offizielle Daten"),
     "over_time": ("The network over time", "Das Netz im Wandel"),
-    "over_time_desc": ("From 2022 to 2024 Zurich becomes better connected, then come years of stagnation from major construction "
-                       "projects. What will the network look like once they are all finished?",
-                       "Von 2022 bis 2024 wird Zürich vernetzter, dann folgen Jahre der Stagnation durch Grossprojekte. Wie wird das "
-                       "Netz aussehen, wenn sie alle fertiggestellt sind?"),
+    "over_time_desc": ("What the 2027 timetable changes compared with 2026.",
+                       "Was der Fahrplan 2027 gegenüber 2026 verändert."),
+    "over_time_more": ("Every year, insights and table", "Alle Jahre, Einblicke und Tabelle"),
     "insights": ("Insights", "Einblicke"),
     "prev_insight": ("Previous insight", "Vorheriger Einblick"),
     "next_insight": ("Next insight", "Nächster Einblick"),
@@ -890,8 +962,10 @@ def render_page(template: Template, city: dict) -> str:
         "footer": footer(city),
         "base": base,
         "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
-        "headline": esc(t(f"{city['name']}'s public transport: a big step up to 2024, flat since",
-                          f"ÖV in {city['name']}: ein grosser Schritt bis 2024, seither Stillstand")),
+        "headline": esc(t(f"Can the {city['defaultTimetable']} timetable continue the progress {city['name']}'s public "
+                          "transport made up to 2024?",
+                          f"Kann der Fahrplan {city['defaultTimetable']} den Fortschritt des Zürcher ÖV-Netzes bis 2024 "
+                          "fortsetzen?")),
         "ui_lede": esc(hero_lede(city, trend)),
         "ui_lede_map": esc(hero_map_lede(city, list(timetables))),
         "ui_in_numbers": esc(t(f"{city['name']} in numbers", f"{city['name']} in Zahlen")),
@@ -909,6 +983,7 @@ def render_page(template: Template, city: dict) -> str:
         "reach_notes": reach_notes(city),
         "history_notes": history_notes(figures, trend),
         "trend_tiles": trend_tiles(city, trend),
+        "bento_2027": bento_2027(city, trend),
         "hex_notes": hex_notes(city),
         "faq_html": faq_block(faq) + "\n" + sources_block(city),
         "styles_version": short_hash(SITE / "styles.css"),

@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-11-10T03:49:17+00:00",
+  "builtAt": "2026-11-10T04:45:14+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -146,7 +146,7 @@
         "mode": "tram",
         "color": "#70492C",
         "stations": 46,
-        "headway": 14.2
+        "headway": 7.5
       },
       {
         "name": "6",

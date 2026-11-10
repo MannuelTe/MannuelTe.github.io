@@ -1197,8 +1197,12 @@ def network_stats(city: dict, route_info, stations, route_states, station_states
             continue
         waits = sorted(own_waits.get((route_states[i]["stationIndex"], route_id), MAX_WAIT)
                        for i in rail_states if route_states[i]["routeId"] == route_id)
-        # Diversions add a few sparsely served stops to a line: the headway is read on its regular section.
+        # Diversions, depot runs and peak-only extensions (tram 5 to Rehalp and Albisgütli in 2027) add sparsely served
+        # stops to a line: when they outnumber its all-day section (median over 1.5× the shortest wait), the headway is
+        # read on that section, the stops within 1.5× of the shortest wait.
         regular = [wait for wait in waits if wait < MAX_WAIT] or waits
+        if statistics.median(regular) > regular[0] * 1.5:
+            regular = [wait for wait in regular if wait <= regular[0] * 1.5]
         lines.append(
             {
                 "name": info["name"],

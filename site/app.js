@@ -2204,7 +2204,7 @@ function median(values) {
 function updateHexText() {
   const label = hexLabel();
   const unit = { pop: t("residents", "Einwohner"), jobs: t("full-time jobs", "Vollzeitstellen") }[hex.metric];
-  $("hexTitleA").textContent = label;
+  $("hexTitleA").textContent = `${label}, ${hex.year}`;
   $("hexTitleB").textContent = t(`Change, ${hex.from} → ${hex.to}`, `Veränderung ${hex.from} → ${hex.to}`);
   const now = median(hexValues(hex.year));
   const first = hex.data.years[0];
@@ -2235,7 +2235,6 @@ function setPressed(group, attribute, value) {
 function updateHexMaps({ rescale = true } = {}) {
   if (!hex.data) return;
   if (rescale) hex.breaks = hexBreaks();
-  setPressed("hexNetwork", "network", hex.network);
   setPressed("hexMetric", "metric", hex.metric);
   setPressed("hexLimit", "limit", hex.limit);
   setPressed("hexYear", "year", hex.year);
@@ -2268,7 +2267,6 @@ async function setupHexPanel() {
       const value = event.target.closest("button")?.dataset[attribute];
       if (value) apply(value);
     });
-  on("hexNetwork", "network", (value) => { hex.network = value; updateHexMaps(); });
   on("hexMetric", "metric", (value) => { hex.metric = value; updateHexMaps(); });
   on("hexLimit", "limit", (value) => { hex.limit = value; updateHexMaps(); });
   on("hexYear", "year", (value) => { hex.year = value; updateHexMaps({ rescale: false }); });

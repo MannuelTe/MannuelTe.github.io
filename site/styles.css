@@ -425,19 +425,16 @@ output {
   color: var(--muted);
 }
 
+/* No outline boxes: content sits straight on the page. Filled boxes (bento, the subpage link) keep their padding. */
 .card,
 .map-card {
   border-radius: var(--radius);
   background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--ring);
 }
 
-.card {
-  padding: 16px 18px;
-}
-
+.card,
 .map-card {
-  padding: 6px;
+  padding: 0;
 }
 
 /* --- Map ----------------------------------------------------------------------------- */
@@ -449,7 +446,6 @@ output {
   overflow: hidden;
   border-radius: 0;
   background: #eef0f3;
-  box-shadow: 0 0 0 1px var(--ring);
 }
 
 .map-stage:fullscreen {
@@ -886,6 +882,7 @@ output {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  padding: 16px 18px;
   background: var(--card);
 }
 
@@ -989,6 +986,7 @@ output {
 .more-card {
   display: grid;
   gap: 4px;
+  padding: 16px 18px;
   background: var(--card);
   color: var(--ink);
   text-decoration: none;
@@ -1052,7 +1050,6 @@ output {
 
 .hex-stage {
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--ring);
 }
 
 .hex-stage canvas {
@@ -1284,6 +1281,11 @@ output {
 
 .expander summary:hover {
   color: var(--blue);
+}
+
+/* The last expander of a group needs no closing line under it. */
+.expander:last-child {
+  border-bottom: 0;
 }
 
 .expander-body {
@@ -1617,7 +1619,6 @@ output {
   overflow: hidden;
   border-radius: 0;
   background: var(--white);
-  box-shadow: 0 0 0 1px var(--ring);
 }
 
 .chart-bar {

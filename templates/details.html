@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="${lang}">
+  <head>
+${head}
+    <link rel="stylesheet" href="${base}styles.css?v=${styles_version}" />
+  </head>
+  <body>
+    <div class="frame">
+${header}
+
+    <main class="page">
+      <section class="hero">
+        <h1>${ui_details_title}</h1>
+        <p class="lede"><a href="${home_href}">← ${ui_back_to_map}</a></p>
+      </section>
+
+      <section class="block" aria-labelledby="reach-title">
+        <header class="block-head">
+          <h2 id="reach-title">${ui_within_reach}</h2>
+          <span class="block-desc">${reach_desc}</span>
+        </header>
+        <div class="card">
+          <table class="data-table reach-counts">
+            <thead><tr><th scope="col">${ui_travel_time}</th><th scope="col">${ui_residents}</th><th scope="col">${ui_jobs}</th></tr></thead>
+            <tbody>
+${reach_rows}
+            </tbody>
+          </table>
+        </div>
+${reach_notes}
+      </section>
+
+      <section class="block" aria-labelledby="stats-title">
+        <header class="block-head">
+          <h2 id="stats-title">${ui_in_numbers}</h2>
+          <span class="block-desc">${ui_in_numbers_desc}</span>
+        </header>
+        <div class="stat-grid">
+${stat_tiles}
+        </div>
+        <details class="expander">
+          <summary>${ui_lines_summary} <span class="muted">${network}</span></summary>
+          <div class="expander-body">
+            <table class="data-table">
+              <thead><tr><th scope="col">${ui_line}</th><th scope="col">${ui_stops}</th><th scope="col">${ui_every}</th><th scope="col">${ui_official_data}</th></tr></thead>
+              <tbody>
+${line_rows}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
+      <section class="block" aria-labelledby="faq-title">
+        <details class="expander faq-all" open>
+          <summary class="block-head"><h2 id="faq-title">${ui_questions}</h2><span class="block-desc">${ui_questions_desc}</span></summary>
+          <div class="expander-body faq-list">
+${faq_html}
+          </div>
+        </details>
+      </section>
+    </main>
+
+${footer}
+    </div>
+  </body>
+</html>

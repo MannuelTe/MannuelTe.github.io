@@ -42,82 +42,13 @@
           ],
           "datePublished": "2026-10-05",
           "dateModified": "2026-11-10"
-        },
-        {
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "How long does it take to cross Zurich by public transport?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "From Zürich HB, 33% of the 288 tram and rail stops on the map are less than 15 minutes away and 87% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 51 minutes."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Where do the timetables come from?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 10 November 2026 and valid until 11 December 2027. Times are those of Tuesday 23 November 2027, between 7:00 and 20:00."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Are buses included?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How are travel times computed?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. On a section that several lines share (HB to Hardbrücke, tram trunks) the rider takes whichever comes first and changes where the lines split; a stop served by one line waits for that line. No real-time data or disruptions: this is the city « on paper »."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do hills and the lake count?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Walking is slower uphill and a little faster on gentle descents (Tobler's hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How are bike times computed?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 20 km/h on the flat, about 10 km/h on a 5 % climb, 25 km/h on a 3 % descent and 30 km/h on 5 % or steeper, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Where do the resident and full-time job figures come from?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "From the Federal Statistical Office's hectare grids, each timetable year with its own: STATPOP 2022 for the 2022 timetable, 2024 for the 2024 timetable, 2025 for the 2026–2027 timetables (permanent residents) and STATENT 2022 for the 2022 timetable, 2024 for the 2024–2027 timetables (full-time equivalents, all sectors; newer grids are not published yet). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Why do some tram lines look unusual?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example)."
-              }
-            }
-          ]
         }
       ]
     }
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net" />
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" />
-    <link rel="stylesheet" href="../styles.css?v=f893f397" />
+    <link rel="stylesheet" href="../styles.css?v=8aae44c1" />
   </head>
   <body>
     <script id="city-config" type="application/json">{"slug": "zurich", "name": "Zurich", "timetables": {"2022": {"version": "b4d88967", "draft": false, "label": "2022 timetable, Tuesday 25 October 2022"}, "2024": {"version": "5a538176", "draft": false, "label": "2024 timetable, Tuesday 22 October 2024"}, "2026": {"version": "fd8cd619", "draft": false, "label": "2026 timetable, Tuesday 20 October 2026"}, "2027": {"version": "bf593985", "draft": true, "label": "Draft 2027 timetable, Tuesday 23 November 2027"}}, "defaultTimetable": "2027", "history": [{"year": "2022", "draft": false, "day": "Tuesday 25 October 2022", "population": {"total": 700364, "45": 647494, "30": 411737, "15": 62214}, "jobs": {"total": 582216, "45": 563602, "30": 477791, "15": 171481}, "within15": 32, "within30": 93, "railStations": 265, "tramLines": 14, "regionJobs": {"year": "2022", "total": 577033}}, {"year": "2024", "draft": false, "day": "Tuesday 22 October 2024", "population": {"total": 717159, "45": 656025, "30": 429785, "15": 78939}, "jobs": {"total": 601447, "45": 575613, "30": 488470, "15": 185202}, "within15": 34, "within30": 88, "railStations": 289, "tramLines": 16, "regionJobs": {"year": "2024", "total": 596632}}, {"year": "2026", "draft": false, "day": "Tuesday 20 October 2026", "population": {"total": 723331, "45": 651733, "30": 422192, "15": 81811}, "jobs": {"total": 601447, "45": 574525, "30": 485487, "15": 187032}, "within15": 34, "within30": 85, "railStations": 286, "tramLines": 19, "regionJobs": {"year": "2024", "total": 596632}}, {"year": "2027", "draft": true, "day": "Tuesday 23 November 2027", "population": {"total": 723331, "45": 662102, "30": 433782, "15": 87502}, "jobs": {"total": 601447, "45": 575794, "30": 492963, "15": 186522}, "within15": 33, "within30": 87, "railStations": 288, "tramLines": 16, "regionJobs": {"year": "2024", "total": 596632}}], "center": "Zürich HB", "bikeVersion": "d16caca8", "streetsVersion": "6767497f", "busesVersion": "ebd60ce7", "h3Version": "949653f1", "defaultFrom": {"lat": 47.37802, "lon": 8.5402, "label": "Zürich HB"}, "railNoun": "tram and train", "railStations": "tram and rail stops", "busNoun": "bus and boat", "searchBbox": [2670000, 1235000, 2697000, 1262000]}</script>
@@ -128,23 +59,29 @@
         <a href="./#map-title">Map</a>
         <a href="./#hex-title">Everywhere</a>
         <a href="./#history-title">Over time</a>
-        <a href="./#faq-title">Questions</a>
+        <a href="./details/">Numbers & FAQ</a>
         <a class="topbar-pill lang-switch" href="../" hreflang="de" lang="de" title="Deutsch">DE</a>
         <a class="topbar-pill github-link" href="https://github.com/MannuelTe/MannuelTe.github.io" aria-label="GitHub" title="GitHub"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
       </nav>
     </header>
 
     <main class="page">
-      <section class="hero">
-        <h1>Can the 2027 timetable continue the progress Zurich&#x27;s public transport made up to 2024?</h1>
-        <p class="lede">From 2022 to 2024, Zurich became clearly better connected: in those two years, about 19 % more residents and 23 % more full-time jobs came within a 30-minute public transport trip. Since then the average has barely changed. Major construction projects are slowing down how well the city and the surrounding agglomeration are connected. Several projects and changes are due with the 2027 timetable, but will they substantially improve how well it is connected?</p>
-        <p class="lede">The map below colours Zurich by travel time from Zürich HB, walking and waiting included: switch between 2022, 2024, 2026 and 2027, drag the start anywhere or click to set a destination.</p>
+      <section class="hero hero-split">
+        <div class="hero-text">
+          <h1>Can the 2027 timetable continue the progress Zurich&#x27;s public transport made up to 2024?</h1>
+          <p class="lede">From 2022 to 2024, Zurich became clearly better connected: in those two years, about 19 % more residents and 23 % more full-time jobs came within a 30-minute public transport trip. Since then the average has barely changed. Major construction projects are slowing down how well the city and the surrounding agglomeration are connected. Several projects and changes are due with the 2027 timetable, but will they substantially improve how well it is connected?</p>
+          <p class="lede">The map below colours Zurich by travel time from Zürich HB, walking and waiting included: switch between 2022, 2024, 2026 and 2027, drag the start anywhere or click to set a destination.</p>
+        </div>
+        <figure class="hero-chart">
+          <figcaption>Share of the map&#x27;s full-time jobs (city and agglomeration) within 15 min of Zürich HB, 2022 → 2026</figcaption>
+          <svg viewBox="0 0 300 120" role="img" aria-label="Share of the map&#x27;s full-time jobs (city and agglomeration) within 15 min of Zürich HB, 2022 → 2026: 2022: 29.5 %, 2024: 30.8 %, 2026: 31.1 %"><line x1="24" x2="276" y1="98" y2="98" class="hero-chart-base" /><path d="M34.0,68.4 L150.0,41.9 L266.0,35.9 L266.0,98 L34.0,98 Z" class="hero-chart-area" /><path d="M34.0,68.4 L150.0,41.9 L266.0,35.9" class="hero-chart-line" /><circle cx="34.0" cy="68.4" r="3.5" class="hero-chart-dot"><title>2022: 29.5 %</title></circle><text x="34.0" y="58.4" text-anchor="middle" class="hero-chart-value">29.5 %</text><text x="34.0" y="116" text-anchor="middle" class="hero-chart-year">2022</text><circle cx="150.0" cy="41.9" r="3.5" class="hero-chart-dot"><title>2024: 30.8 %</title></circle><text x="150.0" y="31.9" text-anchor="middle" class="hero-chart-value">30.8 %</text><text x="150.0" y="116" text-anchor="middle" class="hero-chart-year">2024</text><circle cx="266.0" cy="35.9" r="3.5" class="hero-chart-dot"><title>2026: 31.1 %</title></circle><text x="266.0" y="25.9" text-anchor="middle" class="hero-chart-value">31.1 %</text><text x="266.0" y="116" text-anchor="middle" class="hero-chart-year">2026</text></svg>
+        </figure>
       </section>
 
       <section class="block" aria-labelledby="map-title">
         <header class="block-head">
           <h2 id="map-title">Map</h2>
-          <span class="block-desc">Pick a start and a destination on the map, the timetable year and how the map looks.</span>
+          <span class="block-desc">Set the start and destination by clicking and dragging. The map&#x27;s colour and the blue isochrones show the computed travel time.</span>
         </header>
         <div class="map-card">
           <noscript>
@@ -241,8 +178,8 @@
                 </div>
                 <div class="control-group">
                   <label class="control-label" for="maxRange">Scale</label>
-                  <input id="maxRange" type="range" min="20" max="90" step="5" value="45" />
-                  <output id="maxValue" for="maxRange">45 min</output>
+                  <input id="maxRange" type="range" min="20" max="90" step="5" value="30" />
+                  <output id="maxValue" for="maxRange">30 min</output>
                 </div>
               </div>
             </div>
@@ -254,7 +191,7 @@
       <section id="yearsPanel" class="block" aria-labelledby="years-title">
         <header class="block-head">
           <h2 id="years-title">Across the years</h2>
-          <span class="block-desc">This start (and destination) on each timetable year, 2022 → 2027.</span>
+          <span class="block-desc">The start (and destination) set on the map above, in every timetable year from 2022 to 2027.</span>
         </header>
         <div id="yearsBody" class="card years-body"></div>
       </section>
@@ -398,118 +335,11 @@
         </details>
       </section>
 
-      <section class="block" aria-labelledby="reach-title">
-        <header class="block-head">
-          <h2 id="reach-title">Within reach</h2>
-          <span class="block-desc">Residents and full-time jobs inside the isochrones ticked above.</span>
-        </header>
-        <div class="card">
-          <p id="reach" class="reach"></p>
-          <table id="reachCounts" class="data-table reach-counts">
-            <thead><tr><th scope="col">Travel time</th><th scope="col">Residents</th><th scope="col">Full-time jobs</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <details class="expander data-note"><summary>What these resident and full-time job counts mean</summary><div class="expander-body"><p>Both move with the timetable year. Residents are the BFS STATPOP grid (STATPOP 2022 for the 2022 timetable, 2024 for the 2024 timetable, 2025 for the 2026–2027 timetables; permanent residents, by home address); full-time jobs the STATENT grid (STATENT 2022 for the 2022 timetable, 2024 for the 2024–2027 timetables; full-time equivalents of all sectors, counted where people work). The map covers the city of Zurich and neighbouring municipalities: 723k residents and 601k full-time jobs in all on the 2027 timetable, more than the city alone.</p><p>Full-time jobs are full-time equivalents: two half-time posts count as one. Staff are counted at the workplace their employer registers, which for firms with several sites is not always where they actually sit.</p><p>The BFS rounds small hectare counts for privacy, and each 100 m hectare goes to the 200 m map cell its centre falls in, so figures for a few streets are rough; totals over a whole isochrone hold up much better.</p><p>Switching timetable years changes how far the network reaches and also where people live and work. Where two timetables share a grid (full-time jobs from 2024 on, residents from 2026 on), the difference between them is the network alone.</p></div></details>
-      </section>
-
-      <section class="block" aria-labelledby="stats-title">
-        <header class="block-head">
-          <h2 id="stats-title">Zurich in numbers</h2>
-          <span class="block-desc">From Zürich HB, on a weekday of the 2027 timetable.</span>
-        </header>
-        <div class="stat-grid">
-          <div class="stat"><strong>87%</strong><span>of the tram and rail stops within 30 min of Zürich HB</span></div>
-          <div class="stat"><strong>288</strong><span>tram and rail stops on the map</span></div>
-          <div class="stat"><strong>7.4 min</strong><span>between two trams on line 8, the most frequent</span></div>
-          <div class="stat stat-egg" tabindex="0"><div class="stat-face"><strong>51 min</strong><span>from Zürich HB to Felsenegg, the farthest stop</span></div><div class="stat-face stat-egg-face"><strong>46 min</strong><span>Adliswil (Luftseilbahnstation) is the runner-up. So close.</span></div></div>
-        </div>
-        <details class="expander">
-          <summary>Tram, S-Bahn and funicular lines <span class="muted">ZVV</span></summary>
-          <div class="expander-body">
-            <table class="data-table">
-              <thead><tr><th scope="col">Line</th><th scope="col">Stops</th><th scope="col">Every</th><th scope="col">Official data</th></tr></thead>
-              <tbody>
-            <tr><td><span class="line-badge" style="background:#CB0A25;color:#fff">2</span> Tram</td><td>30</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 2">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#00923C;color:#fff">3</span> Tram</td><td>24</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 3">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#322E71;color:#fff">4</span> Tram</td><td>43</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 4">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#70492C;color:#fff">5</span> Tram</td><td>46</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 5">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#BE8543;color:#fff">6</span> Tram</td><td>30</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 6">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#000000;color:#fff">7</span> Tram</td><td>31</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 7">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#8BC036;color:#111">8</span> Tram</td><td>50</td><td>~7.4 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 8">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#322E71;color:#fff">9</span> Tram</td><td>34</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 9">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#CE1F75;color:#fff">10</span> Tram</td><td>34</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 10">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#00923C;color:#fff">11</span> Tram</td><td>39</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 11">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#92D6E3;color:#111">12</span> Tram</td><td>22</td><td>~15 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 12">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#F6C828;color:#111">13</span> Tram</td><td>54</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 13">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#0093D0;color:#fff">14</span> Tram</td><td>36</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 14">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#CB0A25;color:#fff">15</span> Tram</td><td>29</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 15">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#8D1D2C;color:#fff">17</span> Tram</td><td>51</td><td>~7.5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 17">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#A0216E;color:#fff">20</span> Tram</td><td>25</td><td>~15 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 20">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#5DA526;color:#fff">S2</span> S-Bahn</td><td>6</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S2">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#0097D8;color:#fff">S3</span> S-Bahn</td><td>8</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S3">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#E67D63;color:#111">S4</span> S-Bahn</td><td>11</td><td>~14.4 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S4">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#48B4CA;color:#111">S5</span> S-Bahn</td><td>9</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S5">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#7751A1;color:#fff">S6</span> S-Bahn</td><td>17</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S6">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#FEBE10;color:#111">S7</span> S-Bahn</td><td>9</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S7">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#5E2D91;color:#fff">S8</span> S-Bahn</td><td>10</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S8">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#00A34F;color:#fff">S9</span> S-Bahn</td><td>11</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S9">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#F6C454;color:#111">S10</span> S-Bahn</td><td>9</td><td>~12.4 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S10">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#CCAAFF;color:#111">S11</span> S-Bahn</td><td>8</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S11">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#D8242B;color:#fff">S12</span> S-Bahn</td><td>8</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S12">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#6C421B;color:#fff">S14</span> S-Bahn</td><td>11</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S14">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#BDA07C;color:#111">S15</span> S-Bahn</td><td>9</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S15">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#64B97A;color:#111">S16</span> S-Bahn</td><td>12</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S16">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#198EA3;color:#fff">S17</span> S-Bahn</td><td>8</td><td>~15 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S17">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#EB3C2E;color:#fff">S18</span> S-Bahn</td><td>14</td><td>~15 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S18">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#F58220;color:#111">S19</span> S-Bahn</td><td>6</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S19">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#F05B94;color:#fff">S20</span> S-Bahn</td><td>4</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S20">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#799CCD;color:#111">S21</span> S-Bahn</td><td>5</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S21">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#2b74c7;color:#fff">S23</span> S-Bahn</td><td>2</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S23">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#946644;color:#fff">S24</span> S-Bahn</td><td>11</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S24">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#9A6B31;color:#fff">S42</span> S-Bahn</td><td>3</td><td>~30 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line S42">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">23</span> Funicular</td><td>5</td><td>~6 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 23">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">24</span> Funicular</td><td>2</td><td>~5 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 24">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">25</span> Funicular</td><td>4</td><td>~11.3 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 25">ZVV timetable</a></td></tr>
-            <tr><td><span class="line-badge" style="background:#6b4c9a;color:#fff">26</span> Cable car</td><td>2</td><td>~17.7 min</td><td><a href="https://online.fahrplaninfo.zvv.ch/" rel="noopener" aria-label="Official ZVV timetable for line 26">ZVV timetable</a></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </details>
-      </section>
-
-      <section class="block" aria-labelledby="faq-title">
-        <details class="expander faq-all">
-          <summary class="block-head"><h2 id="faq-title">Questions</h2><span class="block-desc">How the times are computed, and where the data comes from.</span></summary>
-          <div class="expander-body faq-list">
-        <details class="expander faq"><summary>How long does it take to cross Zurich by public transport?</summary><div class="expander-body"><p>From Zürich HB, 33% of the 288 tram and rail stops on the map are less than 15 minutes away and 87% less than 30 minutes, walking and waiting included. The farthest, Felsenegg, takes about 51 minutes.</p></div></details>
-        <details class="expander faq"><summary>Where do the timetables come from?</summary><div class="expander-body"><p>From the official Swiss timetable published by opentransportdata.swiss (GTFS), clipped to the Zurich area, downloaded on 10 November 2026 and valid until 11 December 2027. Times are those of Tuesday 23 November 2027, between 7:00 and 20:00.</p></div></details>
-        <details class="expander faq"><summary>Are buses included?</summary><div class="expander-body"><p>Yes, as an option: tick « Bus and boat » under the map. By default only trams, S-Bahn and trains, funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.</p></div></details>
-        <details class="expander faq"><summary>How are travel times computed?</summary><div class="expander-body"><p>Walk to the stop at 4.5 km/h in a straight line, wait half the interval between two departures, ride for the scheduled time between stops, change with 1.5 minutes of walking, and allow 1.5 minutes to reach a railway platform. On a section that several lines share (HB to Hardbrücke, tram trunks) the rider takes whichever comes first and changes where the lines split; a stop served by one line waits for that line. No real-time data or disruptions: this is the city « on paper ».</p></div></details>
-        <details class="expander faq"><summary>Do hills and the lake count?</summary><div class="expander-body"><p>Yes. Walking is slower uphill and a little faster on gentle descents (Tobler&#x27;s hiking function on swisstopo elevation), and no walk crosses the Zürichsee, Greifensee or Türlersee. Rivers count as crossable, since bridges are close together in town.</p></div></details>
-        <details class="expander faq"><summary>How are bike times computed?</summary><div class="expander-body"><p>On the streets open to bicycles in OpenStreetMap, one-way streets included where cycling against the traffic is allowed: 20 km/h on the flat, about 10 km/h on a 5 % climb, 25 km/h on a 3 % descent and 30 km/h on 5 % or steeper, plus a minute to unlock and a minute to park. The street network comes from the GIS_playground_ZH cycling project.</p></div></details>
-        <details class="expander faq"><summary>Where do the resident and full-time job figures come from?</summary><div class="expander-body"><p>From the Federal Statistical Office&#x27;s hectare grids, each timetable year with its own: STATPOP 2022 for the 2022 timetable, 2024 for the 2024 timetable, 2025 for the 2026–2027 timetables (permanent residents) and STATENT 2022 for the 2022 timetable, 2024 for the 2024–2027 timetables (full-time equivalents, all sectors; newer grids are not published yet). Each 100 m square is added to the 200 m map cell it falls in; small counts are rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached within each isochrone.</p></div></details>
-        <details class="expander faq"><summary>Why do some tram lines look unusual?</summary><div class="expander-body"><p>The timetable is the published one for the reference day, construction diversions included (lines 50 and 51 in 2026, for example).</p></div></details>
-        <details class="expander sources">
-          <summary>Data sources</summary>
-          <div class="expander-body">
-            <dl>
-          <dt>Timetables (GTFS)</dt><dd>Swiss national timetable, published by <a href="https://opentransportdata.swiss/">opentransportdata.swiss</a> (<a href="https://opentransportdata.swiss/en/terms-of-use/">terms of use</a>); older years from the <a href="https://mobilitydatabase.org/">Mobility Database</a> archive. Clipped to the Zurich area.<ul><li><a href="https://mobilitydatabase.org/feeds/mdb-1092">Swiss timetable 2022, last version archived by the Mobility Database (mdb-1092)</a>, valid 2021-12-12 → 2022-12-14, downloaded 5 October 2026.</li><li><a href="https://mobilitydatabase.org/feeds/mdb-2144">Swiss timetable 2024, last version archived by the Mobility Database (mdb-2144)</a>, valid 2023-12-10 → 2024-12-19, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020">Swiss timetable 2026 (opentransportdata.swiss)</a>, valid 2025-12-14 → 2026-12-12, downloaded 5 October 2026.</li><li><a href="https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020">Swiss timetable 2027, pre-season version (opentransportdata.swiss)</a>, valid 2026-12-13 → 2027-12-11, downloaded 10 November 2026.</li></ul></dd>
-          <dt>Municipal and district boundaries</dt><dd><a href="https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d">swissBOUNDARIES3D</a> (swisstopo, via api3.geo.admin.ch) and the 12 Stadtkreise from <a href="https://data.stadt-zuerich.ch/">Stadt Zürich Open Data</a>, downloaded 5 October 2026. Open government data.</dd>
-          <dt>Residents</dt><dd><a href="https://www.bfs.admin.ch/bfs/en/home/statistics/catalogues-databases.assetdetail.36171301.html">STATPOP 2022 for the 2022 timetable, 2024 for the 2024 timetable, 2025 for the 2026–2027 timetables</a> hectare grids, Federal Statistical Office (BFS) via data.geo.admin.ch, downloaded 10 October 2026.</dd>
-          <dt>Full-time jobs</dt><dd><a href="https://data.geo.admin.ch/browser/index.html#/collections/ch.bfs.betriebszaehlungen">STATENT 2022 for the 2022 timetable, 2024 for the 2024–2027 timetables</a> hectare grids (full-time equivalents, all sectors), BFS via data.geo.admin.ch, downloaded 7 October 2026.</dd>
-          <dt>Full-time jobs in the region</dt><dd>BFS STAT-TAB table <a href="https://www.pxweb.bfs.admin.ch/pxweb/de/px-x-0602010000_102/px-x-0602010000_102/px-x-0602010000_102.px/">px-x-0602010000_102</a> (STATENT full-time equivalents by municipality and year), summed over the map's municipalities, downloaded 10 October 2026.</dd>
-          <dt>Elevation</dt><dd>swisstopo terrain model (swissALTI3D / DHM25) sampled every 100 m through the <a href="https://api3.geo.admin.ch/services/sdiservices.html#profile">geo.admin.ch profile service</a>, downloaded 5 October 2026.</dd>
-          <dt>Lines, lakes, parks and cycling streets</dt><dd>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), via the Overpass API, downloaded 5 October 2026.</dd>
-          <dt>Base map</dt><dd>Faint street layer drawn from the same OpenStreetMap network as the bike layer (major roads, streets and paths; service roads left out), © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Untick « Streets » to hide it.</dd>
-          <dt>Bus lines</dt><dd>Drawn from OpenStreetMap bus and trolleybus route relations, matched to the timetable by line number (the Swiss GTFS has no line shapes); shown with « Bus and boat ».</dd>
-          <dt>Hexagons</dt><dd><a href="https://h3geo.org/">H3</a> grid (Apache 2.0), resolution 9, via the h3 Python library; reach computed by build_h3.py from the same timetables.</dd>
-          <dt>Method</dt><dd>Fork of <a href="https://github.com/camilleroux/montpellier-temps-transport">À portée de tram</a> by Camille Roux (MIT). Full provenance (URLs, SHA-256, dates) in <a href="https://github.com/MannuelTe/MannuelTe.github.io/tree/main/sources">sources/</a>.</dd>
-            </dl>
-          </div>
-        </details>
-          </div>
-        </details>
+      <section class="block more-link">
+        <a class="card more-card" href="details/">
+          <strong>Numbers and questions →</strong>
+          <span>Reach from the main station, the network in numbers, every line, and how the model works.</span>
+        </a>
       </section>
     </main>
 
@@ -540,6 +370,6 @@
     </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
-    <script type="module" src="../app.js?v=e991ecb6"></script>
+    <script type="module" src="../app.js?v=0aac6a37"></script>
   </body>
 </html>

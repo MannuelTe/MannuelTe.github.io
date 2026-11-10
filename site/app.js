@@ -21,7 +21,7 @@ const MODE_LABELS = {
   busway: "Busway",
   bus: "Bus",
 };
-const DEFAULT_MAX = 45;
+const DEFAULT_MAX = 30;
 const ISOCHRONE_OPTIONS = [15, 30, 45, 60];
 const DEFAULT_ISOCHRONES = [15, 30];
 const REACH_MINUTES = 30;
@@ -1313,7 +1313,7 @@ function setReach(percent, rest) {
   const share = document.createElement("strong");
   share.className = "reach-share";
   share.textContent = `${percent}%`;
-  $("reach").replaceChildren(share, rest);
+  $("reach")?.replaceChildren(share, rest);
 }
 
 // German has no short form for thousands (410'200, not 410k): compact still shortens millions (1,2 Mio.).

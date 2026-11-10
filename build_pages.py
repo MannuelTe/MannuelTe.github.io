@@ -34,6 +34,9 @@ def t(en: str, de: str) -> str:
     return de if LANG == "de" else en
 
 
+DETAILS = "details/"  # the subpage with the numbers and the questions, under each language's page
+
+
 def page_path(lang: str) -> str:
     """Where each language lives, relative to the site root: German at the root, English under en/."""
     return "" if lang == "de" else f"{lang}/"
@@ -107,9 +110,9 @@ def json_ld(data: dict) -> str:
     return '    <script type="application/ld+json">\n    ' + body.replace("\n", "\n    ") + "\n    </script>"
 
 
-def head(*, title: str, description: str, url: str, base: str, graph: list) -> str:
-    alternates = [f'    <link rel="alternate" hreflang="{lang}" href="{SITE_URL}{page_path(lang)}" />' for lang in LANGS]
-    alternates.append(f'    <link rel="alternate" hreflang="x-default" href="{SITE_URL}" />')
+def head(*, title: str, description: str, url: str, base: str, graph: list, sub: str = "") -> str:
+    alternates = [f'    <link rel="alternate" hreflang="{lang}" href="{SITE_URL}{page_path(lang)}{sub}" />' for lang in LANGS]
+    alternates.append(f'    <link rel="alternate" hreflang="x-default" href="{SITE_URL}{sub}" />')
     return "\n".join(
         [
             '    <meta charset="utf-8" />',
@@ -135,18 +138,20 @@ def head(*, title: str, description: str, url: str, base: str, graph: list) -> s
     )
 
 
-def header(base: str, home: str | None = None) -> str:
-    """Top bar; `home` is this language's page (the brand link), `base` the site root (shared files)."""
+def header(base: str, home: str | None = None, sub: str = "") -> str:
+    """Top bar; `home` is this language's map page (the brand link), `base` the site root (shared files), `sub` the
+    subpage being shown ("" for the map page, "details/")."""
     home = home or base
     other = "en" if LANG == "de" else "de"
-    switch = f'{base}{page_path(other)}'
+    switch = f'{base}{page_path(other)}{sub}'
+    details = f"{home}{DETAILS}"
     return f"""    <header class="topbar">
       <a class="brand" href="{home}"><img src="{base}favicon.svg" width="22" height="22" alt="" /> {esc(SITE_NAMES[LANG])}</a>
       <nav class="topbar-links" aria-label="{t("Main navigation", "Hauptnavigation")}">
         <a href="{home}#map-title">{t("Map", "Karte")}</a>
         <a href="{home}#hex-title">{t("Everywhere", "Überall")}</a>
         <a href="{home}#history-title">{t("Over time", "Im Wandel")}</a>
-        <a href="{home}#faq-title">{t("Questions", "Fragen")}</a>
+        <a href="{details}">{t("Numbers & FAQ", "Zahlen & Fragen")}</a>
         <a class="topbar-pill lang-switch" href="{switch}" hreflang="{other}" lang="{other}" title="{t("Deutsch", "English")}">{other.upper()}</a>
         <a class="topbar-pill github-link" href="{GITHUB_URL}" aria-label="GitHub" title="GitHub">{GITHUB_ICON}</a>
       </nav>
@@ -220,9 +225,9 @@ def city_faq(city: dict) -> list[tuple]:
         ),
         (
             t("Are buses included?", "Sind Busse enthalten?"),
-            t(f"Yes, as an option: tick « {city['busLabel']} » under the map. By default only trams, S-Bahn and trains, "
+            t(f"Yes, as an option: tick « {city['busLabel']} » in the map's settings. By default only trams, S-Bahn and trains, "
               "funiculars and the Adliswil–Felsenegg cable car are used. Waits at rarely served stops are capped at 15 minutes.",
-              f"Ja, als Option: «{city['busLabel']}» unter der Karte ankreuzen. Standardmässig zählen nur Tram, S-Bahn und Züge, "
+              f"Ja, als Option: «{city['busLabel']}» in den Einstellungen der Karte ankreuzen. Standardmässig zählen nur Tram, S-Bahn und Züge, "
               "die Standseilbahnen und die Luftseilbahn Adliswil–Felsenegg. Wartezeiten an selten bedienten Haltestellen "
               "sind auf 15 Minuten begrenzt."),
         ),
@@ -264,13 +269,13 @@ def city_faq(city: dict) -> list[tuple]:
             t(f"From the Federal Statistical Office's hectare grids, each timetable year with its own: {residents_grids(city)} "
               f"(permanent residents) and {jobs_grids(city)} (full-time equivalents, all sectors; newer grids are not "
               "published yet). Each 100 m square is added to the 200 m map cell it falls in; small counts are "
-              "rounded by the BFS for privacy, so totals are approximate. The table under the map sums the cells reached "
-              "within each isochrone.",
+              "rounded by the BFS for privacy, so totals are approximate. « Within reach » sums the cells reached "
+              "within each travel time.",
               f"Aus den Hektarrastern des Bundesamts für Statistik, jedes Fahrplanjahr mit seinem eigenen: {residents_grids(city)} "
               f"(ständige Wohnbevölkerung) und {jobs_grids(city)} (Vollzeitäquivalente, alle Sektoren; neuere Raster sind "
               "noch nicht veröffentlicht). Jedes 100-m-Quadrat wird der 200-m-Kartenzelle zugeschlagen, in der es liegt; "
-              "kleine Zahlen rundet das BFS aus Datenschutzgründen, die Summen sind also Näherungen. Die Tabelle unter der "
-              "Karte summiert die Zellen innerhalb jeder Isochrone."),
+              "kleine Zahlen rundet das BFS aus Datenschutzgründen, die Summen sind also Näherungen. «In Reichweite» "
+              "summiert die Zellen innerhalb jeder Reisezeit."),
         ),
         (
             t("Why do some tram lines look unusual?", "Warum sehen manche Tramlinien ungewohnt aus?"),
@@ -578,6 +583,41 @@ def sparkline(years: list[str], values: list[float], drafts: list[bool], unit: s
             f'aria-label="{esc(", ".join(f"{y}: {thousands(round(v))}" for y, v in zip(years, values)))}">{"".join(parts)}</svg>')
 
 
+def hero_chart(city: dict, figures: list[dict]) -> str:
+    """A light line beside the intro: the share of the map's full-time jobs within 15 min of the centre, over the final
+    timetable years."""
+    rows = [f for f in figures if not f["draft"]]
+    if len(rows) < 2:
+        return ""
+    years = [f["year"] for f in rows]
+    values = [100 * f["jobs"]["15"] / f["jobs"]["total"] for f in rows]
+    width, height, pad_x, top, bottom = 300, 120, 34, 26, 22
+    low, high = min(values) - 1.5, max(values) + 0.5
+    xs = [pad_x + i * (width - 2 * pad_x) / (len(values) - 1) for i in range(len(values))]
+    ys = [top + (high - v) / (high - low) * (height - top - bottom) for v in values]
+    line = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in zip(xs, ys))
+    area = f"{line} L{xs[-1]:.1f},{height - bottom} L{xs[0]:.1f},{height - bottom} Z"
+    rounded = lambda v: f"{v:.1f} %".replace(".", t(".", ","))
+    marks = "".join(
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.5" class="hero-chart-dot"><title>{year}: {esc(rounded(v))}</title></circle>'
+        f'<text x="{x:.1f}" y="{y - 10:.1f}" text-anchor="middle" class="hero-chart-value">{esc(rounded(v))}</text>'
+        f'<text x="{x:.1f}" y="{height - 4}" text-anchor="middle" class="hero-chart-year">{year}</text>'
+        for x, y, v, year in zip(xs, ys, values, years)
+    )
+    center = city["stats"]["center"]
+    title = t(f"Share of the map's full-time jobs (city and agglomeration) within 15 min of {center}, "
+              f"{years[0]} → {years[-1]}",
+              f"Anteil der Vollzeitstellen der Karte (Stadt und Agglomeration) innert 15 min ab {center}, "
+              f"{years[0]} → {years[-1]}")
+    label = ", ".join(f"{year}: {rounded(v)}" for year, v in zip(years, values))
+    return (f'        <figure class="hero-chart">\n'
+            f'          <figcaption>{esc(title)}</figcaption>\n'
+            f'          <svg viewBox="0 0 {width} {height}" role="img" aria-label="{esc(title)}: {esc(label)}">'
+            f'<line x1="{pad_x - 10}" x2="{width - pad_x + 10}" y1="{height - bottom}" y2="{height - bottom}" class="hero-chart-base" />'
+            f'<path d="{area}" class="hero-chart-area" /><path d="{line}" class="hero-chart-line" />{marks}</svg>\n'
+            f'        </figure>')
+
+
 def bento_2027(city: dict, trend: list[dict]) -> str:
     """Three boxes on the newest timetable step: residents and full-time jobs within 30 min, and where it changes."""
     path = SITE / "data" / f"{city['slug']}-h3.json"
@@ -793,8 +833,14 @@ def sources_block(city: dict) -> str:
 # Fixed page text in English and German, substituted into templates/index.html as ${ui_<key>}.
 UI = {
     "map": ("Map", "Karte"),
-    "map_desc": ("Pick a start and a destination on the map, the timetable year and how the map looks.",
-                 "Wähle Start und Ziel auf der Karte, dazu das Fahrplanjahr und die Darstellung der Karte."),
+    "details_title": ("Numbers and questions", "Zahlen und Fragen"),
+    "details_teaser": ("Reach from the main station, the network in numbers, every line, and how the model works.",
+                       "Erreichbarkeit ab dem Hauptbahnhof, das Netz in Zahlen, alle Linien und wie das Modell rechnet."),
+    "back_to_map": ("Back to the map", "Zurück zur Karte"),
+    "map_desc": ("Set the start and destination by clicking and dragging. The map's colour and the blue isochrones show the "
+                 "computed travel time.",
+                 "Start und Ziel sind durch Klicken und Ziehen wählbar. Die Farbe der Karte sowie die blauen Isochronen zeigen "
+                 "die berechnete Reisezeit an."),
     "content": ("Content", "Inhalt"),
     "visuals": ("Display", "Darstellung"),
     "noscript": ("This interactive map needs JavaScript to compute travel times.",
@@ -830,8 +876,8 @@ UI = {
     "residents": ("Residents", "Einwohner"),
     "jobs": ("Full-time jobs", "Vollzeitstellen"),
     "across_years": ("Across the years", "Über die Jahre"),
-    "across_years_desc": ("This start (and destination) on each timetable year, 2022 → 2027.",
-                          "Dieser Start (und dieses Ziel) in jedem Fahrplanjahr, 2022 → 2027."),
+    "across_years_desc": ("The start (and destination) set on the map above, in every timetable year from 2022 to 2027.",
+                          "Der auf der Karte oberhalb definierte Start (und Zielpunkt) in jedem Fahrplanjahr von 2022 bis 2027."),
     "lines_summary": ("Tram, S-Bahn and funicular lines", "Tram-, S-Bahn- und Seilbahnlinien"),
     "line": ("Line", "Linie"),
     "stops": ("Stops", "Haltestellen"),
@@ -872,9 +918,26 @@ def localized(city: dict) -> dict:
     return {**city, **city.get("de", {})} if LANG == "de" else city
 
 
-def render_page(template: Template, city: dict) -> str:
-    url = SITE_URL + page_path(LANG)
-    base = "./" if LANG == "de" else "../"  # the site root, where app.js, styles.css and data/ live
+def reach_rows(city: dict) -> str:
+    """« Within reach » for the default start and timetable: residents and full-time jobs within 15, 30 and 45 min."""
+    stats = city["stats"]
+    pop, jobs = stats["population"], stats["jobs"]
+    share = lambda value, total: f" ({round(100 * value / total)}%)" if total else ""
+    rows = [(t(f"Within {limit} min", f"Innert {limit} min"), pop[limit], jobs[limit]) for limit in ("15", "30", "45")]
+    rows.append((t("Whole map", "Ganze Karte"), pop["total"], jobs["total"]))
+    return "\n".join(
+        f"              <tr><td>{esc(label)}</td><td>{thousands(p)}{share(p, pop['total'])}</td>"
+        f"<td>{thousands(j)}{share(j, jobs['total'])}</td></tr>"
+        for label, p, j in rows
+    )
+
+
+def render_page(template: Template, city: dict, sub: str = "") -> str:
+    """The map page (sub="") or the numbers-and-questions subpage (sub=DETAILS) of the current language."""
+    url = SITE_URL + page_path(LANG) + sub
+    depth = (LANG != "de") + (sub != "")
+    base = "../" * depth or "./"  # the site root, where app.js, styles.css and data/ live
+    home = "../" if sub else "./"  # this language's map page
     stats = city["stats"]
     center = stats["center"]
     description = t(
@@ -899,8 +962,7 @@ def render_page(template: Template, city: dict) -> str:
             "datePublished": city["published"],
             "dateModified": city["sources"]["builtAt"][:10],
         },
-        faq_schema(faq),
-    ]
+    ] if not sub else [faq_schema(faq)]
     table_lines = [line for line in stats["lines"] if any(c.isdigit() for c in line["name"])]
     trams = [line for line in table_lines if line["mode"] == "tram"]
     fastest = min(trams or table_lines, key=lambda line: line["headway"])
@@ -957,8 +1019,17 @@ def render_page(template: Template, city: dict) -> str:
     }
     values = {
         "lang": LANG,
-        "head": head(title=f"{city['title']} · {city['titleSuffix']}", description=description, url=url, base=base, graph=graph),
-        "header": header(base, home="./"),
+        "head": head(title=(f"{t('Numbers and questions', 'Zahlen und Fragen')} · {city['title']}" if sub
+                            else f"{city['title']} · {city['titleSuffix']}"),
+                     description=description, url=url, base=base, graph=graph, sub=sub),
+        "header": header(base, home=home, sub=sub),
+        "home_href": home,
+        "details_href": DETAILS,
+        "reach_rows": reach_rows(city),
+        "reach_desc": esc(t(f"Residents and full-time jobs within reach of {center} by {city['railNoun']}, on a weekday of "
+                            f"the {city['defaultTimetable']} timetable. The map shows the same for any start.",
+                            f"Einwohner und Vollzeitstellen, die ab {center} mit {city['railNoun']} erreichbar sind, an einem "
+                            f"Werktag des Fahrplans {city['defaultTimetable']}. Die Karte zeigt dasselbe für jeden Start.")),
         "footer": footer(city),
         "base": base,
         "city_config": json.dumps(config, ensure_ascii=False).replace("</", "<\\/"),
@@ -984,6 +1055,7 @@ def render_page(template: Template, city: dict) -> str:
         "history_notes": history_notes(figures, trend),
         "trend_tiles": trend_tiles(city, trend),
         "bento_2027": bento_2027(city, trend),
+        "hero_chart": hero_chart(city, figures),
         "hex_notes": hex_notes(city),
         "faq_html": faq_block(faq) + "\n" + sources_block(city),
         "styles_version": short_hash(SITE / "styles.css"),
@@ -1047,22 +1119,25 @@ def main() -> None:
     (city,) = load_cities()  # a single-city fork
     city["sources"] = json.loads((ROOT / "sources" / f"{city['slug']}-{city['defaultTimetable']}.json").read_text(encoding="utf-8"))
     city["stats"] = city["sources"]["stats"]
+    details = Template((ROOT / "templates" / "details.html").read_text(encoding="utf-8"))
     for LANG in LANGS:
-        out = SITE / page_path(LANG) / "index.html"
-        out.parent.mkdir(exist_ok=True)
-        out.write_text(render_page(template, localized(city)), encoding="utf-8")
+        for page, sub in ((template, ""), (details, DETAILS)):
+            out = SITE / page_path(LANG) / sub / "index.html"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(render_page(page, localized(city), sub), encoding="utf-8")
     LANG = "de"
     (SITE / "404.html").write_text(render_404(), encoding="utf-8")
     write_sources_readme(city)
     lastmod = city["sources"]["builtAt"][:10]
-    urls = "".join(f"  <url><loc>{SITE_URL}{page_path(lang)}</loc><lastmod>{lastmod}</lastmod></url>\n" for lang in LANGS)
+    urls = "".join(f"  <url><loc>{SITE_URL}{page_path(lang)}{sub}</loc><lastmod>{lastmod}</lastmod></url>\n"
+                   for lang in LANGS for sub in ("", DETAILS))
     (SITE / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         f"{urls}</urlset>\n",
         encoding="utf-8",
     )
     (SITE / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8")
-    print("Wrote site/index.html (de), site/en/index.html, site/404.html, site/sitemap.xml, site/robots.txt, sources/README.md")
+    print("Wrote site/index.html (de), site/en/index.html, their details/ subpages, site/404.html, site/sitemap.xml, site/robots.txt, sources/README.md")
 
 
 if __name__ == "__main__":

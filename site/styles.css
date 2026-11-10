@@ -140,7 +140,77 @@ a:hover {
 
 .hero {
   padding: 48px 0 32px;
-  text-align: center;
+  text-align: left;
+}
+
+/* Intro text on the left, a light chart beside it (under it on narrow screens). */
+.hero-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: end;
+  gap: 24px 48px;
+}
+
+.hero-chart {
+  margin: 0;
+}
+
+.hero-chart figcaption {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hero-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.hero-chart-base {
+  stroke: var(--ring);
+  stroke-width: 1;
+}
+
+.hero-chart-area {
+  fill: var(--blue-soft);
+  opacity: 0.6;
+}
+
+.hero-chart-line {
+  fill: none;
+  stroke: #9c97e6;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-chart-dot {
+  fill: #9c97e6;
+  stroke: var(--ground);
+  stroke-width: 2;
+}
+
+.hero-chart-value {
+  fill: var(--ink-soft);
+  font-size: 11px;
+}
+
+.hero-chart-year {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+@media (max-width: 900px) {
+  .hero-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-chart {
+    max-width: 360px;
+  }
 }
 
 h1 {
@@ -153,7 +223,7 @@ h1 {
 
 .lede {
   max-width: 760px;
-  margin: 0 auto;
+  margin: 0;
   color: var(--ink-soft);
   font-size: 15px;
 }
@@ -913,6 +983,31 @@ output {
   .bento-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The link from the map page to « Numbers and questions ». */
+.more-card {
+  display: grid;
+  gap: 4px;
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.more-card strong {
+  color: var(--blue);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.more-card span {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.more-card:hover strong {
+  color: var(--blue-hover);
+  text-decoration: underline;
 }
 
 /* --- Reach from everywhere: hexagon maps ------------------------------------------------ */

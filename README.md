@@ -110,7 +110,7 @@ network alone. The history table also shows the region's STATENT full-time equiv
   (HB–Selnau works) and diverts trams for construction (temporary lines 50 and 51), so reach from HB is lower than in
   2024: the Sihltal stops are about 10 min further from HB, the S10 stops in town 11–12 min (Uetliberg itself barely
   changes), while 215 of the 314 tram and rail stops change by a minute or less.
-- **2027** is the first published version of that timetable, with far fewer trips than the final one.
+- **2027** is a pre-season version of that timetable (published 7 November 2026), with fewer trips than the final one.
 - Straight-line walking is optimistic in hilly and fenced areas; rivers are crossed anywhere.
 
 ## Licences

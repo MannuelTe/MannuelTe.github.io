@@ -117,7 +117,7 @@
       "url": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020/permalink",
       "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020",
       "referenceNotBefore": "2027-10-26",
-      "note": "Swiss timetable 2027, first published version (opentransportdata.swiss)",
+      "note": "Swiss timetable 2027, pre-season version (opentransportdata.swiss)",
       "draft": true
     }
   },

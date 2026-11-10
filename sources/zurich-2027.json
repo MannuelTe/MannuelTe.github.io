@@ -1,6 +1,6 @@
 {
   "city": "Zurich",
-  "builtAt": "2026-10-10T23:56:17+00:00",
+  "builtAt": "2026-11-10T03:49:17+00:00",
   "referenceDate": "2027-11-23",
   "serviceWindow": "7h–20h",
   "gtfs": {
@@ -8,18 +8,18 @@
     "dataset": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020",
     "source": "https://data.opentransportdata.swiss/en/dataset/timetable-2027-gtfs2020/permalink",
     "how": "download",
-    "fetchedAt": "2026-10-05T18:40:27+00:00",
-    "bytes": 90237206,
-    "sha256": "886b206071e28b9160f4a14ef3584bc76338c9215d206bb5f8f2084302d1c7cd",
+    "fetchedAt": "2026-11-10T03:45:12+00:00",
+    "bytes": 108582174,
+    "sha256": "9bf06471a9243989527561b034b7d67e1b752da34607db521c5eacc8e4d4d388",
     "timetableYear": "2027",
-    "note": "Swiss timetable 2027, first published version (opentransportdata.swiss)",
+    "note": "Swiss timetable 2027, pre-season version (opentransportdata.swiss)",
     "feedInfo": {
       "feed_publisher_name": "SBB",
       "feed_publisher_url": "https://sbb.ch",
       "feed_lang": "DE",
       "feed_start_date": "20261213",
       "feed_end_date": "20271211",
-      "feed_version": "20261003"
+      "feed_version": "20261107"
     },
     "servicePeriod": [
       "2026-12-13",
@@ -107,16 +107,16 @@
   "excludedRoutes": [],
   "network": {
     "lines": {
-      "bus": 162,
+      "bus": 163,
       "ferry": 4,
       "train": 17,
       "funicular": 3,
       "cable": 1,
-      "sbahn": 22,
+      "sbahn": 23,
       "tram": 17
     },
-    "stops": 1310,
-    "railStations": 305
+    "stops": 1321,
+    "railStations": 315
   },
   "stats": {
     "lines": [
@@ -352,6 +352,13 @@
         "headway": 15.0
       },
       {
+        "name": "S18",
+        "mode": "sbahn",
+        "color": "#EB3C2E",
+        "stations": 14,
+        "headway": 15.0
+      },
+      {
         "name": "S19",
         "mode": "sbahn",
         "color": "#F58220",
@@ -422,22 +429,22 @@
         "headway": 17.7
       }
     ],
-    "railStations": 280,
-    "busLines": 166,
+    "railStations": 288,
+    "busLines": 167,
     "center": "Zürich HB",
-    "within15": 34,
-    "within30": 89,
+    "within15": 33,
+    "within30": 87,
     "population": {
       "total": 723331,
-      "45": 652863,
+      "45": 662102,
       "30": 433782,
-      "15": 88574
+      "15": 87502
     },
     "jobs": {
       "total": 601447,
-      "45": 573224,
+      "45": 575794,
       "30": 492963,
-      "15": 186679
+      "15": 186522
     },
     "farthestStation": "Felsenegg",
     "farthestMinutes": 51,

@@ -370,15 +370,15 @@ def history(city: dict) -> tuple[str, str, dict]:
         "S10 start at Zürich Selnau instead of Zürich HB (works on the HB–Selnau section), which puts the Sihltal stops "
         "about 10 minutes further from HB and the S10 stops in town (Giesshübel, Triemli) 11–12 minutes; Uetliberg "
         "itself barely changes. Trams run diversions for construction work (temporary lines 50 and 51). Of the 314 "
-        "tram and rail stops, 215 changed by a minute or less. 2027: first published version of the timetable, with fewer "
-        "trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed.",
+        "tram and rail stops, 215 changed by a minute or less. 2027: pre-season version of the timetable (November "
+        "2026), with fewer trips than the final one. 2022 and 2024 come from the Mobility Database's archive of the Swiss feed.",
         "2022: vor der zweiten Etappe der Limmattalbahn (Tram 20 bis Killwangen, Dezember 2022). 2026: Die SZU-Linien S4 "
         "und S10 beginnen in Zürich Selnau statt in Zürich HB (Bauarbeiten auf dem Abschnitt HB–Selnau); dadurch liegen "
         "die Haltestellen im Sihltal rund 10 Minuten weiter vom HB entfernt und jene der S10 in der Stadt (Giesshübel, "
         "Triemli) 11–12 Minuten; der Uetliberg selbst ändert sich kaum. Die Trams fahren Umleitungen wegen Bauarbeiten "
         "(provisorische Linien 50 und 51). Von den 314 Tram- und Bahnhaltestellen änderten sich 215 um höchstens eine "
-        "Minute. 2027: erste "
-        "veröffentlichte Fassung des Fahrplans, mit weniger Kursen als die endgültige. 2022 und 2024 stammen aus dem "
+        "Minute. 2027: Vorabfassung des Fahrplans "
+        "(November 2026), mit weniger Kursen als die endgültige. 2022 und 2024 stammen aus dem "
         "Archiv des Schweizer Datensatzes in der Mobility Database.",
     )
     return "\n".join(rows), note, timetables, figures
